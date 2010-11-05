@@ -1,0 +1,9 @@
+switch input:		2-pin polarized header
+12V input:		screw terminal
+Fan output:		Two polarized 3-pin headers
+Relay On output:	2-pin JST connector
+Thermistor input:	spring terminal
+ICSP Connector:		5x2 pin header
+USB Connector:		Mini-B SMD
+Pin Breakout:		PTH
+App Inhibit:		2-pin jumpers

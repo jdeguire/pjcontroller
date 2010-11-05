@@ -1,0 +1,79 @@
+#!/usr/bin/env python
+
+import os
+
+Import(['env', 'commonpath'])
+
+#---------------
+# Bootloader-specific project options
+#---------------
+outputname = 'pjc-bootloader'      # output file name (withut extensions)
+imagename  = 'pjc-flash-image'     # name of file to read flash into (no extension)
+
+icspdevice = 'usbtiny'             # name of programming device for avrdude 
+
+# fuses and lock bits
+# be sure your settings are correct before changing these (search online for "AVR fuse calculator")
+lfuse = '0xF7'           # external full-swing crystal and longest startup time
+hfuse = '0xD8'           # defaults except use boot reset vector
+efuse = '0xFC'           # brown-out detection enabled at 4.3V
+lockbits = '0xEF'        # read/write app space; app cannot write to bootloader space
+
+# source files to build
+# just pull in everything for now; we can be more specific if needed later
+commonfiles = Glob(commonpath + '*.c')
+allfiles = Glob('*.c') + commonfiles
+
+#---------------
+# End of bootloader options
+#---------------
+
+
+
+# full file names ("something.hex")
+outputfile = outputname + env['HEXSUFFIX']
+imagefile  = imagename + env['HEXSUFFIX']
+
+# Generate file paths from our output name for use below
+ourdir  = env.Dir('.').path        # where we are now relative to top SConstruct file
+elffile = ourdir + os.sep + outputname + env['PROGSUFFIX']
+hexfile = ourdir + os.sep + outputfile
+
+# an action to create the hex file using objcopy
+boothex_act = Action(env['OBJCOPY'] + ' -O ihex \"' + elffile  + '\" \"' + hexfile + '\"')
+
+# a string forming a base avrdude command that we can just add on to in the targets
+avrdude_base = 'avrdude -p ' + env['MCU'] + ' -c ' + icspdevice
+
+
+# target to build the bootloader
+# paths and files in these commands are relative to the directory of this script
+bb = env.Program(outputname, allfiles)
+env.Alias('build-bootloader', bb)
+env.AddPostAction(bb, boothex_act)
+env.Clean(bb, outputfile)
+
+# Note to self:  env.Command(target, [sources], cmd_string)
+# We can pass in a dummy file for 'target' if the command doesn't generate an output
+# We can also pass in an empty list "[]" if the command doesn't accept input files
+
+# target to write the bootloader to the AVR using avrdude
+wb = env.Command('wb.dummy', outputfile, avrdude_base + ' -U flash:w:\"$SOURCE\":i')
+wba = env.Alias('write-bootloader', wb)
+env.AlwaysBuild(wba)
+
+# target to read the AVR's flash memory into an output hex file
+rf = env.Command(imagefile, [], avrdude_base + ' -U flash:r:\"$TARGET\":i')
+rfa = env.Alias('read-flash', rf)
+env.AlwaysBuild(rfa)
+
+# target to erase everything--flash, EEPROM, and lock bits (but not fuse bits)
+ed = env.Command('ed.dummy', [], avrdude_base + ' -e')
+eda = env.Alias('erase-device', ed)
+env.AlwaysBuild(eda)
+
+# target to write the AVR fuses and lock bits
+wu = env.Command('wu.dummy', [], avrdude_base + ' -U lfuse:w:' + lfuse + ':m -U hfuse:w:' + hfuse + 
+                    ':m -U efuse:w:' + efuse + ':m -U lock:w:' + lockbits + ':m')
+wua = env.Alias('write-fuses', wu)
+env.AlwaysBuild(wua)

@@ -1,0 +1,22 @@
+Circuit: * C:\Users\J\Desktop\spice\powersupply.asc
+
+Direct Newton iteration for .op point succeeded.
+
+Date: Sun Oct 10 00:13:58 2010
+Total elapsed time: 0.245 seconds.
+
+tnom = 27
+temp = 27
+method = modified trap
+totiter = 7260
+traniter = 7250
+tranpoints = 2418
+accept = 1462
+rejected = 956
+matrix size = 14
+fillins = 13
+solver = Normal
+Matrix Compiler1: 2.17 KB object code size  2.9/2.8/[1.7]
+Matrix Compiler2: 1.53 KB object code size  1.8/2.0/[1.7]
+
+

@@ -1,0 +1,103 @@
+#!/usr/bin/env python
+
+import os
+
+#---------------
+# Global project options
+# These apply to both the bootloader and app
+#---------------
+avr_c   = 'avr-gcc'       # AVR GCC
+avr_as  = 'avr-as'        # AVR Assembler
+avr_oc  = 'avr-objcopy'   # AVR Object Copy
+optlev  = 's'             # optimization level (0, 1, 2, 3, s)
+fcy     = '20000000'      # oscillator frequency in Hertz
+mcu     = 'atmega328p'    # microcontroller
+
+cstd    = 'gnu99'         # C99 standard with GCC extensions
+cdebug  = '-g'            # debug options
+
+
+# Seprate individual options with commas and enclose them all in brackets.
+
+# warning options
+cwarn   = ['-Wall', '-Wstrict-prototypes']
+
+# additional options to pass to GCC
+copts   = ['-funsigned-char', '-funsigned-bitfields', '-fpack-struct', '-fshort-enums']
+
+# library search paths (do not prepend -L; SCons does that automatically)
+clibp   = []
+
+# libraries to include (do not prepend -l; SCons does that automatically, too)
+clibs   = ['m']
+
+# additional include directories (do not prepend -I; '.' and 'common/' already included)
+cinc    = []
+
+# additional preprocessor defines (do not prepend -D)
+cdefs = ['DEBUG']
+
+# linker options (you may need to use '-Wl,option' to pass to linker)
+lopts = []
+
+#---------------
+# End global project options
+# App- and bootloader-specific options are in their respective SConscript files.
+# --------------
+
+
+
+# create a new scons build environment, importing the system's PATH
+env = Environment(ENV = {'PATH' : os.environ['PATH']})
+env.Program(target = 'test', source = Glob('*.c'))
+
+
+# location of common directory 
+# The '#' symbol at beginning of the path makes it relative to this file rather than relative to 
+# whatever SConscript file it is referenced in.
+commonpath = '#common' + os.sep
+
+
+# SCons tries to determine the appropriate compiler based on platform and what it finds.  We need to
+# make sure that we use avr-gcc regardless of platform.
+env.Replace(CC = avr_c)
+env.Replace(AS = avr_as)
+env.Replace(CPPDEFPREFIX = '-D')
+env.Replace(CPPDEFSUFFIX = '')
+env.Replace(INCPREFIX = '-I')
+env.Replace(INCSUFFIX = '')
+env.Replace(LIBDIRPREFIX = '-L')
+env.Replace(LIBDIRSUFFIX = '')
+env.Replace(LIBLINKPREFIX = '-l')
+env.Replace(LIBLINKSUFFIX = '')
+env.Replace(PROGSUFFIX = '.elf')        # avr-gcc creates elf files by default
+
+# feed in our options from the top of this file
+env.Append(CCFLAGS = ['-O' + optlev, '-mmcu=' + mcu, '-std=' + cstd, cdebug])
+env.Append(CCFLAGS = cwarn)
+env.Append(CCFLAGS = copts)
+env.Append(CPPPATH = ['.', commonpath])      # include local and common dirs by default
+env.Append(CPPPATH = cinc)
+env.Append(LIBS = clibs)
+env.Append(LIBPATH = clibp)
+env.Append(CPPDEFINES = 'F_CPU=' + fcy)      # standard macro for oscillator frequency
+env.Append(CPPDEFINES = cdefs)
+env.Append(LINKFLAGS = lopts)
+
+# add our own variables to the environement
+env['OBJCOPY'] = avr_oc
+env['HEXSUFFIX'] = '.hex'
+env['MCU'] = mcu
+
+
+# Export variables for use by the SConscript files and process the files.  The SConscript files
+# contain the actual targets used for building.  Build output is set to go into the directory given
+# by variant_dir and sources are not duplicated in the output directory.
+env.Export(['env', 'commonpath'])
+SConscript('app/SConscript', variant_dir = 'app/output', duplicate = 0)
+SConscript('bootloader/SConscript', variant_dir = 'bootloader/output', duplicate = 0)
+
+# printed with 'scons -h'
+Help("""
+TODO: Actually put something useful here...
+""")
