@@ -15,9 +15,12 @@ icspdevice = 'usbtiny'             # name of programming device for avrdude
 # fuses and lock bits
 # be sure your settings are correct before changing these (search online for "AVR fuse calculator")
 lfuse = '0xF7'           # external full-swing crystal and longest startup time
-hfuse = '0xD8'           # defaults except use boot reset vector
+hfuse = '0xD9'           # defaults except use boot reset vector
 efuse = '0xFC'           # brown-out detection enabled at 4.3V
 lockbits = '0xEF'        # read/write app space; app cannot write to bootloader space
+
+print "WARNING: Using app reset vector for bootloader."
+print "Set high fuse bit 0 to 0 to re-enable boot vector."
 
 # source files to build
 # just pull in everything for now; we can be more specific if needed later
