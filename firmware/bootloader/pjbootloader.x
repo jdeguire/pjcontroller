@@ -1,7 +1,7 @@
 /* 
  * Custom linker script for the PJC bootloader.  Modified from the avr5.x script included with
  * avr-libc.  This script locates the text section in the bootloader space for the ATmega328P
- * device and defines the addresses for the special function registers.
+ * device and allow us to experiment without affecting the "official" scripts.
  */
 
 OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
@@ -232,6 +232,3 @@ SECTIONS
   .debug_loc      0 : { *(.debug_loc) }
   .debug_macinfo  0 : { *(.debug_macinfo) }
 }
-
-/* Define the locations of SFRs.  Access them in C by declaring them 'extern volatile'. */
-TESTSYM = 0x110;
