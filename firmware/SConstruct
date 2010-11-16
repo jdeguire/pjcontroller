@@ -76,11 +76,11 @@ env.Replace(PROGSUFFIX = '.elf')        # avr-gcc creates elf files by default
 env.Append(CCFLAGS = ['-O' + optlev, '-mmcu=' + mcu, '-std=' + cstd, cdebug])
 env.Append(CCFLAGS = cwarn)
 env.Append(CCFLAGS = copts)
-env.Append(CPPPATH = ['.', commonpath])      # include local and common dirs by default
+env.Append(CPPPATH = ['.', commonpath])           # include local and common dirs by default
 env.Append(CPPPATH = cinc)
 env.Append(LIBS = clibs)
 env.Append(LIBPATH = clibp)
-env.Append(CPPDEFINES = 'F_CPU=' + fcy)      # standard macro for oscillator frequency
+env.Append(CPPDEFINES = 'F_CPU=' + fcy)    # standard macro for oscillator frequency
 env.Append(CPPDEFINES = cdefs)
 env.Append(LINKFLAGS = lopts)
 

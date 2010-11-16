@@ -1,7 +1,13 @@
+/* main.c
+ *
+ * Main code module for the bootloader.
+ */
+
 #include <stdint.h>
 #include <avr/io.h>
 #include <util/delay.h>
 #include "regmap.h"
+
 
 int main(void)
 {
