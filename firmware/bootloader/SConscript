@@ -28,6 +28,7 @@ allfiles = Glob('*.c') + commonfiles
 # linker script
 ldscript = 'bootloader' + os.sep + 'pjbootloader.x'
 
+
 #---------------
 # End of bootloader options
 #---------------

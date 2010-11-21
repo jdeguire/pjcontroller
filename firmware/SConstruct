@@ -20,10 +20,10 @@ cdebug  = '-g'            # debug options
 # Seprate individual options with commas and enclose them all in brackets.
 
 # warning options
-cwarn   = ['-Wall', '-Wstrict-prototypes']
+cwarn   = ['-Wall']
 
 # additional options to pass to GCC
-copts   = ['-funsigned-char', '-funsigned-bitfields', '-fpack-struct', '-fshort-enums']
+copts   = ['-funsigned-bitfields', '-fpack-struct', '-fshort-enums']
 
 # library search paths (do not prepend -L; SCons does that automatically)
 clibp   = []
@@ -35,10 +35,10 @@ clibs   = ['m']
 cinc    = []
 
 # additional preprocessor defines (do not prepend -D)
-cdefs = ['DEBUG']
+cdefs = []
 
 # linker options (you may need to use '-Wl,option' to pass to linker)
-lopts = []
+lopts = ['-Wl,-Map,temp.map']
 
 #---------------
 # End global project options
@@ -82,6 +82,7 @@ env.Append(LIBS = clibs)
 env.Append(LIBPATH = clibp)
 env.Append(CPPDEFINES = 'F_CPU=' + fcy)    # standard macro for oscillator frequency
 env.Append(CPPDEFINES = cdefs)
+env.Append(LINKFLAGS = '-mmcu=' + mcu)
 env.Append(LINKFLAGS = lopts)
 
 # add our own variables to the environement
