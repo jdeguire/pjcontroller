@@ -5,7 +5,6 @@
  * data out of the buffers.
  */
 
-#include "regmap.h"
 #include "uart.h"
 #include <avr/interrupt.h>
 #include <string.h>

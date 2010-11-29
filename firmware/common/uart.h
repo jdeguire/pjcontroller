@@ -8,6 +8,7 @@
 #ifndef INCLUDE_UART_H_
 #define INCLUDE_UART_H_
 
+#include "regmap.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
