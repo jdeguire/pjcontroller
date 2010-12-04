@@ -9,6 +9,7 @@
 #define INCLUDE_UART_H_
 
 #include "regmap.h"
+#include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -30,10 +31,13 @@
 #  define UART_RX_BUFSIZE 64
 #endif
 
+#define UART_TxString(str)   UART_TxData(str, strlen(str))
+#define UART_TxString_P(str) UART_TxData_P(str, strlen_P(str))
 
 void UART_Init();
 bool UART_TxChar(char c);
-uint8_t UART_TxData(char *data, uint8_t len);
+uint8_t UART_TxData(const char *data, uint8_t len);
+uint8_t UART_TxData_P(const prog_char *data, uint8_t len);
 char UART_RxChar();
 uint8_t UART_RxData(char *data, uint8_t len);
 uint8_t UART_TxAvailable();
@@ -46,5 +50,15 @@ uint8_t UART_RxAvailable();
 		snprintf(buf_123xyz_, UART_TX_BUFSIZE, fmt, ##args);			\
 		UART_TxData(buf_123xyz_, strlen(buf_123xyz_));					\
 	} while(0)
+
+/* The format string 'fmt' should be in program space when using this. */
+#define UART_Printf_P(fmt, args...)										\
+	do																	\
+	{																	\
+		char buf_123xyz_[UART_TX_BUFSIZE];								\
+		snprintf_P(buf_123xyz_, UART_TX_BUFSIZE, fmt, ##args);			\
+		UART_TxData(buf_123xyz_, strlen(buf_123xyz_));					\
+	} while(0)
+
 
 #endif // INCLUDE_UART_H_

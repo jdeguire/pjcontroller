@@ -69,7 +69,7 @@ bool UART_TxChar(char c)
 /* Put a string of length 'len' into the buffer or however many characters will fit.  Returns the
  * number of characters sent.
  */
-uint8_t UART_TxData(char *data, uint8_t len)
+uint8_t UART_TxData(const char *data, uint8_t len)
 {
 	uint8_t i;
 
@@ -80,6 +80,21 @@ uint8_t UART_TxData(char *data, uint8_t len)
 	}
 
 	return i;
+}
+
+/* Same as above, but the data string is in program space.
+ */
+uint8_t UART_TxData_P(const prog_char *data, uint8_t len)
+{
+	uint8_t i;
+
+	for(i = 0; i < len; i++)
+	{
+		if(false == UART_TxChar(pgm_read_byte(data+i)))
+			break;
+	}
+
+	return i;	
 }
 
 /* Returns 0 if no characters are available. 

@@ -1,4 +1,6 @@
-/* A register map for the ATmega328P (and the related 168/88/48/etc.) allowing access to the
+/* regmap.h
+ *
+ * A register map for the ATmega328P (and the related 168/88/48/etc.) allowing access to the
  * device's special function registers as though they were structures.  The addresses are known at
  * compile time, meaning that the compiler can use the faster SBI/CBI/IN/OUT instructions as
  * appropriate.

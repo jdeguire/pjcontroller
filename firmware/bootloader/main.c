@@ -9,7 +9,6 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-
 int main(void)
 {
 	uint8_t count = 0;
@@ -25,7 +24,7 @@ int main(void)
 
 	while(1)
 	{
-		UART_Printf("%u\r", count);
+//		UART_Printf_P(PSTR("Seconds: %u\r"), count);
 		++count;
 		_delay_ms(1000);
 

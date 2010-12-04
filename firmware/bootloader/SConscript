@@ -25,8 +25,8 @@ lockbits = '0x2F'        # read/write app space; app cannot write to bootloader 
 commonfiles = Glob(commonpath + '*.c')
 allfiles = Glob('*.c') + commonfiles
 
-# linker script
-ldscript = 'bootloader' + os.sep + 'pjbootloader.x'
+# linker script (leave empty to use the default script chosen by avr-libc)
+ldscript = 'bootloader' + os.sep + 'pjcbootloader.x'
 
 
 #---------------
@@ -53,7 +53,6 @@ avrdude_base = 'avrdude -p ' + env['MCU'] + ' -c ' + icspdevice
 
 # Create a clone of the base environment we can set up just for the bootloader
 bootenv = env.Clone()
-bootenv.Append(LINKFLAGS = ['-T' + ldscript])
 
 
 # target to build the bootloader
@@ -62,6 +61,10 @@ bb = bootenv.Program(outputname, allfiles)
 bootenv.Alias('build-bootloader', bb)
 bootenv.AddPostAction(bb, boothex_act)
 bootenv.Clean(bb, outputfile)
+
+if ldscript != '':
+    bootenv.Append(LINKFLAGS = ['-T' + ldscript])
+    bootenv.Depends(bb, '#'+ldscript)
 
 # Note to self:  env.Command(target, [sources], cmd_string)
 # We can pass in a dummy file for 'target' if the command doesn't generate an output

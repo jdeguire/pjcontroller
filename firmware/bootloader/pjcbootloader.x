@@ -1,4 +1,5 @@
-/* 
+/* pjcbootloader.x
+ *
  * Custom linker script for the PJC bootloader.  Modified from the avr5.x script included with
  * avr-libc.  This script locates the text section in the bootloader space for the ATmega328P
  * device and allow us to experiment without affecting the "official" scripts.
@@ -15,6 +16,9 @@ MEMORY
   lock      (rw!x) : ORIGIN = 0x830000, LENGTH = 1K
   signature (rw!x) : ORIGIN = 0x840000, LENGTH = 1K
 }
+
+_app_space_start = 0;
+_app_space_end = ORIGIN(text) - 1;
 
 SECTIONS
 {
@@ -78,8 +82,10 @@ SECTIONS
   /* Internal text space or external memory.  */
   .text   :
   {
-    *(.vectors)
+	_ivt_start = .;
+   	*(.vectors)
     KEEP(*(.vectors))
+	_ivt_end = .;
     /* For data that needs to reside in the lower 64k of progmem.  */
     *(.progmem.gcc*)
     *(.progmem*)
