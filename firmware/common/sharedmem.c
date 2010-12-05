@@ -23,15 +23,17 @@ static volatile bool m_loadApplication __attribute__((section(".shareddata")));
 
 
 /* Return True if the application reset the device (using the watchdog) and requested that the
- * bootloader restart the app.  This is done using the RestartApp() function below.
+ * bootloader restart the app.  If the device was _not_ reset by the watchdog, then restart the app
+ * so that powering up the device runs the app as exptected.
  */
 bool AppRestartRequested()
 {
-	return (ResetByWatchdog()  &&  m_loadApplication);
+	return (!ResetByWatchdog()  ||  (ResetByWatchdog()  &&  m_loadApplication));
 }
 
-/* Clear the request to restart the app on reset.  This is done so that an unintentional watchdog
- * reset will land in the bootloader rather than restarting the (probably) faulty application.
+/* Clear the request to restart the app on reset.  This is done in the bootloader so that an
+ * unintentional watchdog reset will land in the bootloader rather than restarting the (probably)
+ * faulty application.
  */
 void ClearAppRestartRequest()
 {
