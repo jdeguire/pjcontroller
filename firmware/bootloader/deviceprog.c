@@ -4,12 +4,11 @@
  */
 
 #include "deviceprog.h"
-#include <stdint.h>
+#include "misc.h"
 #include <avr/boot.h>
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
-#include <util/crc16.h>
 
 
 /* Program the given page from the data in 'buf'.  The buffer must have at least one full page of
@@ -41,34 +40,56 @@ bool Flash_VerifyPage(uint16_t page, uint16_t *buf)
 	uint16_t page_addr = page * SPM_PAGESIZE;
 	uint16_t offset;
 
-	for(offset = 0; offset < SPM_PAGESIZE; ++offset)
+	for(offset = 0; offset < SPM_PAGESIZE; offset += 2)
 	{
-		if(pgm_read_byte(page_addr + offset) != buf[offset])
+		if(pgm_read_word(page_addr + offset) != buf[offset >> 1])
 			return false;
 	}
 	return true;
 }
 
-/* Calculate 16-bit CRC for entire application space.
- */
-uint16_t Flash_CalculateAppCRC()
+bool Flash_WriteAppInfo(appinfo_t *appinfo)
 {
-	uint16_t crc = 0xFFFF;
-	uint16_t addr;
-	
-	for(addr = APP_SPACE_START; addr <= APP_SPACE_END; ++addr)
-		crc = _crc_ccitt_update(crc, pgm_read_byte(addr));
+	uint8_t buf[SPM_PAGESIZE];
+	uint16_t count = 0;
+	uint16_t n;
+	bool writeOK;
 
-	return crc;
+	// Covers the case of appinfo crossing page boundaries
+	do
+	{
+		uint16_t pageaddr = ((APPINFO_ADDR + count) / SPM_PAGESIZE) * SPM_PAGESIZE;
+		uint16_t pageoffset = (APPINFO_ADDR + count) % SPM_PAGESIZE;
+
+		n = MIN(sizeof(appinfo_t) - count, SPM_PAGESIZE - pageoffset);
+
+		memcpy_P(buf, (PGM_VOID_P)pageaddr, SPM_PAGESIZE);            // read page into buf
+		memcpy(&buf[pageoffset], (PGM_VOID_P)appinfo + count, n);     // copy appinfo to buf
+
+		count += n;
+
+		Flash_ProgramPage(pageaddr / SPM_PAGESIZE, (uint16_t *)buf);
+		writeOK = Flash_VerifyPage(pageaddr / SPM_PAGESIZE, (uint16_t *)buf);
+	}
+	while(count < sizeof(appinfo_t)  &&  writeOK);
+
+	return writeOK;
 }
 
-/* Erase the entire application space.
+/* Erase the application.
  */
 void Flash_EraseApp()
 {
+	appinfo_t appinfo;
 	uint16_t addr;
+	uint16_t end_addr = APP_SPACE_END;
 	
-	for(addr = APP_SPACE_START; addr < APP_SPACE_END; addr += SPM_PAGESIZE)
+	GetAppInfo(&appinfo);
+
+	if(APPINFO_VALID == appinfo.valid)
+		end_addr = MIN(appinfo.num_pages * SPM_PAGESIZE, APP_SPACE_END);
+
+	for(addr = APP_SPACE_START; addr < end_addr; addr += SPM_PAGESIZE)
 		boot_page_erase(addr);
 }
 

@@ -2,7 +2,8 @@
  *
  * Custom linker script for the PJC bootloader.  Modified from the avr5.x script included with
  * avr-libc.  This script locates the text section in the bootloader space for the ATmega328P
- * device and allow us to experiment without affecting the "official" scripts.
+ * device, sets the proper memory sizes, and adds a section for data shared between the bootloader
+ * and application.
  */
 
 OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
@@ -79,6 +80,7 @@ SECTIONS
   .rela.bss      : { *(.rela.bss)		}
   .rel.plt       : { *(.rel.plt)		}
   .rela.plt      : { *(.rela.plt)		}
+
   /* Internal text space or external memory.  */
   .text   :
   {
@@ -158,9 +160,26 @@ SECTIONS
     KEEP (*(.fini0))
      _etext = . ;
   }  > text
-  .data	  : AT (ADDR (.text) + SIZEOF (.text))
+
+  /* Output section for data to be shared between the app and bootloader.  This section needs to be
+   * in the same memory location for the app and bootloader, so the beginning of data space was chosen.
+   */
+  .shareddata (NOLOAD) : AT(ADDR(.text) + SIZEOF(.text))
   {
-     PROVIDE (__data_start = .) ;
+	PROVIDE(__shareddata_start = .);
+	*(.shareddata)
+	PROVIDE(__shareddata_end = .);
+  }  > data
+
+  /* avr-gcc fixes the .data output section VMA to 0x800100, which overlaps with the .shareddata
+   * output section defined above.  Renaming the .data section to .qdata gets around this since the 
+   * linker will not allocate the now-empty .data section and will put the .qdata section after 
+   * .shareddata.  See the AVRFreaks.net forum topic "Specifying the beginning of the .noinit 
+   * section" for more info. 
+   */
+  .qdata : AT(ADDR(.text) + SIZEOF(.text) + SIZEOF(.shareddata))
+  {
+     PROVIDE(__data_start = .) ;
     *(.data)
     *(.data*)
     *(.rodata)  /* We need to include .rodata here if gcc is used */
@@ -168,32 +187,37 @@ SECTIONS
     *(.gnu.linkonce.d*)
     . = ALIGN(2);
      _edata = . ;
-     PROVIDE (__data_end = .) ;
+     PROVIDE(__data_end = .) ;
   }  > data
-  .bss   : AT (ADDR (.bss))
+
+  .bss   : AT(ADDR(.bss))
   {
-     PROVIDE (__bss_start = .) ;
+     PROVIDE(__bss_start = .) ;
     *(.bss)
     *(.bss*)
     *(COMMON)
-     PROVIDE (__bss_end = .) ;
+     PROVIDE(__bss_end = .) ;
   }  > data
-   __data_load_start = LOADADDR(.data);
-   __data_load_end = __data_load_start + SIZEOF(.data);
+
+   __data_load_start = LOADADDR(.qdata);
+   __data_load_end = __data_load_start + SIZEOF(.qdata);
+
   /* Global data not cleared after reset.  */
   .noinit  :
   {
-     PROVIDE (__noinit_start = .) ;
+     PROVIDE(__noinit_start = .) ;
     *(.noinit*)
-     PROVIDE (__noinit_end = .) ;
+     PROVIDE(__noinit_end = .) ;
      _end = . ;
-     PROVIDE (__heap_start = .) ;
+     PROVIDE(__heap_start = .) ;
   }  > data
+
   .eeprom  :
   {
     *(.eeprom*)
      __eeprom_end = . ;
   }  > eeprom
+
   .fuse  :
   {
     KEEP(*(.fuse))
@@ -201,14 +225,17 @@ SECTIONS
     KEEP(*(.hfuse))
     KEEP(*(.efuse))
   }  > fuse
+
   .lock  :
   {
     KEEP(*(.lock*))
   }  > lock
+
   .signature  :
   {
     KEEP(*(.signature*))
   }  > signature
+
   /* Stabs debugging sections.  */
   .stab 0 : { *(.stab) }
   .stabstr 0 : { *(.stabstr) }

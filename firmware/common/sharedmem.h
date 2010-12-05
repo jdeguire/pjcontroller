@@ -1,12 +1,16 @@
-/* memlayout.h
+/* sharedmem.h
  *
- * Contains constructs and functions pertaining to the device's memory layout that would be used by
- * both the bootloader and the application, such as the end of app space and a function for
- * calculating the checksum of the application.
+ * The bootloader and application need to be able to share parts of program memory and RAM.  For
+ * example, the bootloader and app need to be able to access a portion of flash where the app's
+ * checksum will be stored.  Also, a location in RAM is reserved so that the app can tell the
+ * bootloader to reload the app on startup.
+ *
+ * Functions for dealing with app space and these shared spaces are here, such as a function to jump
+ * to the bootloader, restart the app, and get the application's checksum.
  */
 
-#ifndef INCLUDE_MEMLAYOUT_H_
-#define INCLUDE_MEMLAYOUT_H_
+#ifndef INCLUDE_SHAREDMEM_H_
+#define INCLUDE_SHAREDMEM_H_
 
 #include <avr/pgmspace.h>
 #include <avr/io.h>
@@ -24,7 +28,7 @@ extern uint8_t PROGMEM _ivt_end;
 #define APP_SPACE_START ((uint16_t)&_app_space_start)
 #define APP_SPACE_END   ((uint16_t)&_app_space_end)
 
-#define NUM_APP_PAGES   (((uint16_t)&_app_space_end + (SPM_PAGESIZE - 1)) / SPM_PAGESIZE)
+#define MAX_APP_PAGES   ((APP_SPACE_END + (SPM_PAGESIZE - 1)) / SPM_PAGESIZE)
 
 // The bootloader will write the app's info (see below) to the address immediately following the
 // app's IVT.  This macro will allow the app and bootloader to figure out where exactly that is,
@@ -35,10 +39,17 @@ extern uint8_t PROGMEM _ivt_end;
 typedef struct appinfo_tag
 {
 	uint16_t valid;           // set to 0xAA55 to indicate this data is valid
-	uint16_t last_page;       // last page containing app data
+	uint16_t num_pages;       // number of pages the app spans
 	uint16_t checksum;        // 16-bit crc validated by bootloader on startup
 } appinfo_t;
 
 #define APPINFO_VALID 0xAA55
 
-#endif // INCLUDE_MEMLAYOUT_H_
+bool AppRestartRequested();
+void ClearAppRestartRequest();
+void RestartApp() __attribute__((noreturn));
+void RestartBootloader() __attribute__((noreturn));
+void GetAppInfo(appinfo_t *appinfo);
+uint16_t CalculateAppCRC();
+
+#endif // INCLUDE_SHAREDMEM_H_

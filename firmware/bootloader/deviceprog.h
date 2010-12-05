@@ -6,12 +6,13 @@
 #ifndef INCLUDE_DEVICEPROG_H_
 #define INCLUDE_DEVICEPROG_H_
 
+#include "sharedmem.h"
 #include <stdint.h>
 #include <stdbool.h>
 
 void Flash_ProgramPage(uint16_t page, uint16_t *buf);
 bool Flash_VerifyPage(uint16_t page, uint16_t *buf);
-uint16_t Flash_CalculateAppCRC();
+bool Flash_WriteAppInfo(appinfo_t *appinfo);
 void Flash_EraseApp();
 void EEPROM_EraseData();
 
