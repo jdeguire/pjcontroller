@@ -5,6 +5,7 @@
 
 #include "regmap.h"
 #include "uart.h"
+#include "bootcmd.h"
 #include "sharedmem.h"
 #include "deviceprog.h"
 #include "watchdog.h"
@@ -25,24 +26,26 @@ int main(void)
 	MCUCR = (1 << IVSEL);     // set IVT to boot space
 	sei();                    // enable interrupts
 	UART_Init();
-	
+	Cmd_InitInterface();
+
 	if(led_on)
 	{
 		PORTCbits.pc5 = 1;
-		UART_TxString("Yup\r");
+		UART_TxString("\rYup");
 	}
 	else
 	{
 		PORTCbits.pc5 = 0;
-		UART_TxString("Nope\r");
+		UART_TxString("\rNope");
 	}
 
 	while(1)
 	{
-		_delay_ms(2000);
-		if(led_on)
-			RestartBootloader();
-		else
-			RestartApp();
+		Cmd_ProcessInterface();
+//		_delay_ms(2000);
+//		if(led_on)
+//			RestartBootloader();
+//		else
+//			RestartApp();
 	}
 }

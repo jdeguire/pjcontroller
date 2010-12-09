@@ -21,9 +21,8 @@ efuse = '0x04'           # brown-out detection enabled at 4.3V
 lockbits = '0x2F'        # read/write app space; app cannot write to bootloader space
 
 # source files to build
-# just pull in everything for now; we can be more specific if needed later
-commonfiles = Glob(commonpath + '*.c')
-allfiles = Glob('*.c') + commonfiles
+commonfiles = ['uart.c', 'sharedmem.c', 'watchdog.c']
+allfiles = Glob('*.c') + [commonpath + s for s in commonfiles]
 
 # linker script (leave empty to use the default script chosen by avr-libc)
 ldscript = 'bootloader' + os.sep + 'pjcbootloader.x'

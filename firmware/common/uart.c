@@ -21,17 +21,17 @@
 
 
 static volatile char m_txbuffer[UART_TX_BUFSIZE];
-static volatile uint8_t m_txstart = 0;
-static volatile uint8_t m_txcount = 0;
+static volatile uint16_t m_txstart = 0;
+static volatile uint16_t m_txcount = 0;
 
 static volatile char m_rxbuffer[UART_RX_BUFSIZE];
-static volatile uint8_t m_rxstart = 0;
-static volatile uint8_t m_rxcount = 0;
+static volatile uint16_t m_rxstart = 0;
+static volatile uint16_t m_rxcount = 0;
 
 
-/* Setup the UART device.  The baud rate is set to the value above, the module is enabled and set to
- * the proper settings, and the UART recieve interrupt is enabled.  The transmit interrupt is
- * enabled when we want to transmit data.
+/* Setup the UART device.  The baud rate is set to what the BUADRATE macro is defined as, the module
+ * is enabled and set to the proper settings, and the UART recieve interrupt is enabled.  The
+ * transmit interrupt is enabled when we want to transmit data.
  */
 void UART_Init()
 {
@@ -69,9 +69,9 @@ bool UART_TxChar(char c)
 /* Put a string of length 'len' into the buffer or however many characters will fit.  Returns the
  * number of characters sent.
  */
-uint8_t UART_TxData(const char *data, uint8_t len)
+uint16_t UART_TxData(const char *data, uint16_t len)
 {
-	uint8_t i;
+	uint16_t i;
 
 	for(i = 0; i < len; i++)
 	{
@@ -84,9 +84,9 @@ uint8_t UART_TxData(const char *data, uint8_t len)
 
 /* Same as above, but the data string is in program space.
  */
-uint8_t UART_TxData_P(const prog_char *data, uint8_t len)
+uint16_t UART_TxData_P(const prog_char *data, uint16_t len)
 {
-	uint8_t i;
+	uint16_t i;
 
 	for(i = 0; i < len; i++)
 	{
@@ -97,7 +97,8 @@ uint8_t UART_TxData_P(const prog_char *data, uint8_t len)
 	return i;	
 }
 
-/* Returns 0 if no characters are available. 
+/* Remove and return the next character from the receive buffer.  Returns 0 if no characters are
+ * available.
  */
 char UART_RxChar()
 {
@@ -114,11 +115,11 @@ char UART_RxChar()
 	return c;
 }
 
-/* Returns the number of characters received.
+/* Return the number of characters received and remove those characters from the buffer.
  */
-uint8_t UART_RxData(char *data, uint8_t len)
+uint16_t UART_RxData(char *data, uint16_t len)
 {
-	uint8_t i;
+	uint16_t i;
 	
 	for(i = 0; i < len  &&  m_rxcount > 0; i++)
 		data[i] = UART_RxChar();
@@ -128,14 +129,14 @@ uint8_t UART_RxData(char *data, uint8_t len)
 
 /* Number of spaces left in the TX buffer for new data.
  */
-uint8_t UART_TxAvailable()
+uint16_t UART_TxAvailable()
 {
 	return UART_TX_BUFSIZE - m_txcount;
 }
 
 /* Number of characters in the receive buffer.
  */
-uint8_t UART_RxAvailable()
+uint16_t UART_RxAvailable()
 {
 	return m_rxcount;
 }

@@ -9,6 +9,7 @@
 #define INCLUDE_UART_H_
 
 #include "regmap.h"
+#include "system.h"
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +23,6 @@
 #  define BAUDRATE 57600
 #endif
 
-// Note that the code assumes that the buffer size will be at most 255
 #ifndef UART_TX_BUFSIZE
 #  define UART_TX_BUFSIZE 64
 #endif
@@ -36,12 +36,12 @@
 
 void UART_Init();
 bool UART_TxChar(char c);
-uint8_t UART_TxData(const char *data, uint8_t len);
-uint8_t UART_TxData_P(const prog_char *data, uint8_t len);
+uint16_t UART_TxData(const char *data, uint16_t len);
+uint16_t UART_TxData_P(const prog_char *data, uint16_t len);
 char UART_RxChar();
-uint8_t UART_RxData(char *data, uint8_t len);
-uint8_t UART_TxAvailable();
-uint8_t UART_RxAvailable();
+uint16_t UART_RxData(char *data, uint16_t len);
+uint16_t UART_TxAvailable();
+uint16_t UART_RxAvailable();
 
 #define UART_Printf(fmt, args...)										\
 	do																	\

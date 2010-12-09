@@ -7,6 +7,7 @@
 #include "misc.h"
 #include <avr/boot.h>
 #include <avr/io.h>
+#include <string.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 

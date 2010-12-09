@@ -40,7 +40,7 @@ typedef struct appinfo_tag
 {
 	uint16_t valid;           // set to 0xAA55 to indicate this data is valid
 	uint16_t num_pages;       // number of pages the app spans
-	uint16_t checksum;        // 16-bit crc validated by bootloader on startup
+	uint16_t crc16;           // 16-bit crc validated by bootloader on startup
 } appinfo_t;
 
 #define APPINFO_VALID 0xAA55
