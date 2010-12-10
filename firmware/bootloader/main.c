@@ -31,12 +31,12 @@ int main(void)
 	if(led_on)
 	{
 		PORTCbits.pc5 = 1;
-		UART_TxString("\rYup");
+		UART_TxString("Yup\r");
 	}
 	else
 	{
 		PORTCbits.pc5 = 0;
-		UART_TxString("\rNope");
+		UART_TxString("Nope\r");
 	}
 
 	while(1)

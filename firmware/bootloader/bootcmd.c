@@ -5,14 +5,18 @@
  */
 
 #include "uart.h"
+#include "sharedmem.h"
 #include "cmd.h"
 #include <string.h>
+#include <stdlib.h>
 
 static void ShowVersion_CMD(const char *cmdbuf, uint8_t count);
 static void HelloTest_CMD(const char *cmdbuf, uint8_t count);
+static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count);
 
 static cmdinfo_t m_cmds[] = {{"v", ShowVersion_CMD},
-							 {"hello", HelloTest_CMD}};
+							 {"hello", HelloTest_CMD},
+							 {"crc", CalcAppCRC_CMD}};
 
 static uint8_t m_numcmds = sizeof(m_cmds) / sizeof(cmdinfo_t);
 
@@ -30,7 +34,7 @@ static enum cmdstate_t
 void Cmd_InitInterface()
 {
 	m_cmdstate = eCmd_Prompt;
-	UART_TxString("\r\r" VERSION_STRING);
+	UART_TxString("\r\r" VERSION_STRING "\r");
 }
 
 static void ShowVersion_CMD(const char *cmdbuf, uint8_t count)
@@ -44,12 +48,22 @@ static void HelloTest_CMD(const char *cmdbuf, uint8_t count)
 	UART_TxString(cmdbuf+strlen("hello "));
 }
 
+static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count)
+{
+	char crcstr[5];
+
+	utoa(CalculateAppCRC(), crcstr, 16);
+	UART_TxString("App CRC: 0x");
+	UART_TxString(crcstr);
+	UART_TxChar('\r');
+}
+
 void Cmd_ProcessInterface()
 {
 	switch(m_cmdstate)
 	{
 		case eCmd_Prompt:
-			UART_TxString("\r\r#> ");
+			UART_TxString("\r#> ");
 			memset(m_cmdbuf, 0, CMD_BUFSIZE+1);
 			m_cmdcount = 0;
 			++m_cmdstate;
@@ -58,13 +72,25 @@ void Cmd_ProcessInterface()
 			if(UART_RxAvailable() > 0)
 			{
 				char c = UART_RxChar();
-				
-				m_cmdbuf[m_cmdcount] = c;
-				++m_cmdcount;
-				
-				// either got a command or buffer is full
-				if(c == '\r'  ||  m_cmdcount >= CMD_BUFSIZE)
-					++m_cmdstate;
+
+				if(0x08 == c)           // backspace -- remove last character
+				{
+					if(m_cmdcount > 0)
+						m_cmdbuf[--m_cmdcount] = '\0';
+				}
+				else if(0x1B == c)      // escape -- clear prompt
+				{
+					m_cmdstate = eCmd_Prompt;
+				}
+				else                    // add the character to the buffer
+				{
+					m_cmdbuf[m_cmdcount] = c;
+					++m_cmdcount;
+
+					// either got a command or buffer is full
+					if(c == '\r'  ||  m_cmdcount >= CMD_BUFSIZE)
+						++m_cmdstate;
+				}
 			}
 			break;
 		case eCmd_Run:
@@ -84,10 +110,10 @@ void Cmd_ProcessInterface()
 						break;
 					}
 				}
-				
+
 				// didn't find the command
 				if(i == m_numcmds)
-					UART_TxString("Unknown command");
+					UART_TxString("Unknown command\r");
 			}
 			m_cmdstate = eCmd_Prompt;
 			break;
