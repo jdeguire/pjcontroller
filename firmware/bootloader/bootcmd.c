@@ -6,7 +6,7 @@
 
 #include "uart.h"
 #include "sharedmem.h"
-#include "cmd.h"
+#include "bootcmd.h"
 #include <string.h>
 #include <stdlib.h>
 
@@ -14,11 +14,11 @@ static void ShowVersion_CMD(const char *cmdbuf, uint8_t count);
 static void HelloTest_CMD(const char *cmdbuf, uint8_t count);
 static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count);
 
-static cmdinfo_t m_cmds[] = {{"v", ShowVersion_CMD},
-							 {"hello", HelloTest_CMD},
-							 {"crc", CalcAppCRC_CMD}};
+static cmdinfo_t m_cmds[MAX_CMDS] = {{"v", ShowVersion_CMD},
+									 {"hello", HelloTest_CMD},
+									 {"crc", CalcAppCRC_CMD}};
 
-static uint8_t m_numcmds = sizeof(m_cmds) / sizeof(cmdinfo_t);
+static uint8_t m_numcmds = 3;
 
 static char m_cmdbuf[CMD_BUFSIZE+1];    // one extra for null terminator
 static uint8_t m_cmdcount;
@@ -37,25 +37,13 @@ void Cmd_InitInterface()
 	UART_TxString("\r\r" VERSION_STRING "\r");
 }
 
-static void ShowVersion_CMD(const char *cmdbuf, uint8_t count)
+void Cmd_RegisterCommand(const char *cmdname, cmdhandler_t cmdfunc)
 {
-	UART_TxString(VERSION_STRING);
-}
-
-static void HelloTest_CMD(const char *cmdbuf, uint8_t count)
-{
-	UART_TxString("Hello, world and ");
-	UART_TxString(cmdbuf+strlen("hello "));
-}
-
-static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count)
-{
-	char crcstr[5];
-
-	utoa(CalculateAppCRC(), crcstr, 16);
-	UART_TxString("App CRC: 0x");
-	UART_TxString(crcstr);
-	UART_TxChar('\r');
+	if(m_numcmds < MAX_CMDS)
+	{
+		m_cmds[m_numcmds].name = cmdname;
+		m_cmds[m_numcmds].cmdfunc = cmdfunc;
+	}
 }
 
 void Cmd_ProcessInterface()
@@ -63,7 +51,7 @@ void Cmd_ProcessInterface()
 	switch(m_cmdstate)
 	{
 		case eCmd_Prompt:
-			UART_TxString("\r#> ");
+ 			UART_TxString("\r#> ");
 			memset(m_cmdbuf, 0, CMD_BUFSIZE+1);
 			m_cmdcount = 0;
 			++m_cmdstate;
@@ -121,3 +109,26 @@ void Cmd_ProcessInterface()
 			break;
 	}
 }
+
+
+static void ShowVersion_CMD(const char *cmdbuf, uint8_t count)
+{
+	UART_TxString(VERSION_STRING);
+}
+
+static void HelloTest_CMD(const char *cmdbuf, uint8_t count)
+{
+	UART_TxString("Hello, world and ");
+	UART_TxString(cmdbuf+strlen("hello "));
+}
+
+static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count)
+{
+	char crcstr[5];
+
+	utoa(CalculateAppCRC(), crcstr, 16);
+	UART_TxString("App CRC: 0x");
+	UART_TxString(crcstr);
+	UART_TxChar('\r');
+}
+

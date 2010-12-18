@@ -17,6 +17,7 @@
 #include <util/crc16.h>
 #include <stdlib.h>
 
+
 // Not initialized by the startup module, so that memory contents are retained after a watchdog
 // reset.  Note that the memory state is not trustworthy for other reset sources.
 static volatile bool m_loadApplication __attribute__((section(".shareddata")));
@@ -86,7 +87,7 @@ uint16_t CalculateAppCRC()
 
 	for(addr = APP_SPACE_START; addr < end_addr; ++addr)
 	{
-		if(addr < APPINFO_ADDR  &&  addr > (APPINFO_ADDR + sizeof(appinfo_t)))
+		if(addr < APPINFO_ADDR  ||  addr > (APPINFO_ADDR + sizeof(appinfo_t)))
 			crc = _crc_ccitt_update(crc, pgm_read_byte(addr));
 	}
 	return crc;

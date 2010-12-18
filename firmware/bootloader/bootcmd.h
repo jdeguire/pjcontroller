@@ -11,7 +11,13 @@
 #include "system.h"
 #include <stdint.h>
 
-#define CMD_BUFSIZE  32
+#ifndef CMD_BUFSIZE
+#  define CMD_BUFSIZE  32
+#endif
+
+#ifndef MAX_CMDS
+#  define MAX_CMDS 10
+#endif
 
 typedef void (*cmdhandler_t)(const char *, uint8_t);
 
@@ -22,6 +28,7 @@ typedef struct cmdinfo_tag
 } cmdinfo_t;
 
 void Cmd_InitInterface();
+void Cmd_RegisterCommand(const char *cmdname, cmdhandler_t cmdfunc);
 void Cmd_ProcessInterface();
 
 #endif // INCLUDE_BOOTCMD_H

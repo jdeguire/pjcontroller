@@ -16,8 +16,18 @@
 
 int main(void)
 {
-	bool led_on = AppRestartRequested();
+	bool led_on;
+
+	wdt_enable(WDTO_250MS);
+
+	led_on = AppRestartRequested();
 	ClearAppRestartRequest();
+
+	UART_Init();
+	Cmd_InitInterface();
+
+	if(ResetByWatchdog())
+		UART_TxString("Watchdog Reset\r");
 
 	// LED on PC5
 	DDRC |= (1 << DD5);       // 1 sets pin to output
@@ -25,8 +35,8 @@ int main(void)
 	MCUCR = (1 << IVCE);
 	MCUCR = (1 << IVSEL);     // set IVT to boot space
 	sei();                    // enable interrupts
-	UART_Init();
-	Cmd_InitInterface();
+	
+	wdt_reset();
 
 	if(led_on)
 	{
@@ -41,6 +51,7 @@ int main(void)
 
 	while(1)
 	{
+		wdt_reset();
 		Cmd_ProcessInterface();
 //		_delay_ms(2000);
 //		if(led_on)
