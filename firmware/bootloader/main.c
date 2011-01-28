@@ -5,7 +5,7 @@
 
 #include "regmap.h"
 #include "uart.h"
-#include "bootcmd.h"
+#include "cmd.h"
 #include "sharedmem.h"
 #include "deviceprog.h"
 #include "watchdog.h"

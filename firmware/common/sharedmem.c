@@ -15,7 +15,6 @@
 #include <avr/io.h>
 #include <avr/pgmspace.h>
 #include <util/crc16.h>
-#include <stdlib.h>
 
 
 // Not initialized by the startup module, so that memory contents are retained after a watchdog
@@ -38,28 +37,28 @@ bool AppRestartRequested()
  */
 void ClearAppRestartRequest()
 {
-	m_loadApplication = 0;
+	m_loadApplication = false;
 }
 
 /* Restart the application by requesting the bootloader to restart the app, enabling the shortest
- * watchdog time, and calling exit(), which goes to an infinite loop.  Note that other conditions
- * (such as a bad checksum) can still cause the bootloader to not start the app.
+ * watchdog time, and looping until the device restarts.  Note that other conditions (such as a bad
+ * checksum) can still cause the bootloader to not start the app.
  */
 void RestartApp()
 {
 	m_loadApplication = true;
     wdt_enable(WDTO_15MS);
-	exit(0);
+	for(;;) ;
 }
 
-/* Restart and stay in the bootloader by enabling the shortest watchdog timer and calling exit(),
- * which just goes to an infinite loop.
+/* Restart and stay in the bootloader by enabling the shortest watchdog timer and running an
+ * infinite loop.
  */
 void RestartBootloader()
 {
 	m_loadApplication = false;
     wdt_enable(WDTO_15MS);
-	exit(0);
+	for(;;)	;
 }
 
 /* Read the app info data from program memory.  The data is written to flash after the bootloader

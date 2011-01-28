@@ -10,7 +10,7 @@
 
 #include "misc.h"
 
-#define _PJC_BOOTLOADER_
+#define __PJC_BOOTLOADER__
 
 #define FIRMWARE_VERSION 0
 #define VERSION_STRING "PJC Bootloader v"STRINGIFY(FIRMWARE_VERSION)
