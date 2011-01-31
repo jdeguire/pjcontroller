@@ -11,14 +11,12 @@
 #include <stdlib.h>
 
 
-static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count);
-static void PrintHelp_CMD(const char *cmdbuf, uint8_t count);
-static void JumpToOther_CMD(const char *cmdbuf, uint8_t count) __attribute__((noreturn));
-static void ResetDevice_CMD(const char *cmdbuf, uint8_t count) __attribute__((noreturn));
-static void ShowVersion_CMD(const char *cmdbuf, uint8_t count);
+static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len);
+static void PrintHelp_CMD(const char *cmdbuf, uint8_t len);
+static void ShowVersion_CMD(const char *cmdbuf, uint8_t len);
 
 static char m_cmdbuf[CMD_BUFSIZE+1];    // one extra for null terminator
-static uint8_t m_cmdcount;
+static uint8_t m_cmdlen;
 
 static enum cmdstate_t
 {
@@ -32,20 +30,10 @@ static const prog_char m_crchelp[]   = "Calculate application crc";
 static const prog_char m_helphelp[]  = "Print this help";
 static const prog_char m_verhelp[]   = "Show version info";
 
-#ifdef __PJC_BOOTLOADER__
-static const prog_char m_jumphelp[]  = "Force app start";
-static const prog_char m_resethelp[] = "Restart bootloader";
-#else
-static const prog_char m_jumphelp[]  = "Jump to bootloader";
-static const prog_char m_resethelp[] = "Restart app";
-#endif
-
 static cmdinfo_t m_cmds[MAX_CMDS] = {{"crc", CalcAppCRC_CMD, m_crchelp},
 									 {"h", PrintHelp_CMD, m_helphelp},
-									 {"j", JumpToOther_CMD, m_jumphelp},
-									 {"r", ResetDevice_CMD, m_resethelp},
 									 {"v", ShowVersion_CMD, m_verhelp}};
-static uint8_t m_numcmds = 5;
+static uint8_t m_numcmds = 3;
 
 
 /* Initialize the interface by printing out version info and setting up the interface state machine.
@@ -87,9 +75,8 @@ void Cmd_ProcessInterface()
 	switch(m_cmdstate)
 	{
 		case eCmd_Prompt:
- 			UART_TxString("\r#> ");
-			memset(m_cmdbuf, 0, CMD_BUFSIZE+1);
-			m_cmdcount = 0;
+ 			UART_TxData("\r#> ", 4);
+			m_cmdlen = 0;
 			++m_cmdstate;
 			break;
 		case eCmd_Receive:
@@ -99,8 +86,8 @@ void Cmd_ProcessInterface()
 
 				if(0x08 == c)           // backspace -- remove last character
 				{
-					if(m_cmdcount > 0)
-						m_cmdbuf[--m_cmdcount] = '\0';
+					if(m_cmdlen > 0)
+						m_cmdbuf[--m_cmdlen] = '\0';
 				}
 				else if(0x1B == c)      // escape -- clear prompt
 				{
@@ -108,12 +95,15 @@ void Cmd_ProcessInterface()
 				}
 				else                    // add the character to the buffer
 				{
-					m_cmdbuf[m_cmdcount] = c;
-					++m_cmdcount;
+					m_cmdbuf[m_cmdlen] = c;
+					++m_cmdlen;
 
 					// either got a command or buffer is full
-					if(c == '\r'  ||  m_cmdcount >= CMD_BUFSIZE)
+					if(c == '\r'  ||  m_cmdlen >= CMD_BUFSIZE)
+					{
 						++m_cmdstate;
+						m_cmdbuf[m_cmdlen] = '\0';
+					}
 				}
 			}
 			break;
@@ -125,12 +115,12 @@ void Cmd_ProcessInterface()
 				// look for the right command and call its function
 				for(i = 0; i < m_numcmds; ++i)
 				{
-					size_t cmdlen = strlen(m_cmds[i].name);
+					size_t len = strlen(m_cmds[i].name);
 
-					if(0 == strncmp(m_cmds[i].name, m_cmdbuf, cmdlen)  &&
-					   (m_cmdbuf[cmdlen] == ' '  ||  m_cmdbuf[cmdlen] == '\r'))
+					if(0 == strncmp(m_cmds[i].name, m_cmdbuf, len)  &&
+					   (m_cmdbuf[len] == ' '  ||  m_cmdbuf[len] == '\r'))
 					{
-						m_cmds[i].cmdfunc(m_cmdbuf, m_cmdcount);
+						m_cmds[i].cmdfunc(m_cmdbuf, m_cmdlen);
 						break;
 					}
 				}
@@ -153,7 +143,10 @@ void Cmd_ProcessInterface()
  * machine above.
  */
 
-static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count)
+/* Compute the 16-bit crc of the loaded application.
+ * Syntax: crc
+ */
+static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
 {
 	char crcstr[5];
 
@@ -163,7 +156,11 @@ static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t count)
 	UART_TxChar('\r');
 }
 
-static void PrintHelp_CMD(const char *cmdbuf, uint8_t count)
+/* Print help info for all registered commands.  If the help string is NULL for that command, then
+ * only the command name is printed.
+ * Syntax: h
+ */
+static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
 {
 	int i;
 	
@@ -190,36 +187,27 @@ static void PrintHelp_CMD(const char *cmdbuf, uint8_t count)
 		;
 }
 
-#ifdef __PJC_BOOTLOADER__
-
-static void JumpToOther_CMD(const char *cmdbuf, uint8_t count)
-{
-	// This allows the user the ability to force the app to start, even if the bootloader says
-	// there's a problem.  This can be useful for testing.
-	asm volatile("jmp 0x0");
-	for(;;) ;
-}
-
-static void ResetDevice_CMD(const char *cmdbuf, uint8_t count)
-{
-	RestartBootloader();
-}
-
-#else
-
-static void JumpToOther_CMD(const char *cmdbuf, uint8_t count)
-{
-	RestartBootloader();
-}
-
-static void ResetDevice_CMD(const char *cmdbuf, uint8_t count)
-{
-	RestartApp();
-}
-
-#endif  // __PJC_BOOTLOADER__
-
-static void ShowVersion_CMD(const char *cmdbuf, uint8_t count)
+/* Show the version string for the app/bootloader.  This is defined in system.h, which is where
+ * application-specific macros are defined.
+ * Syntax: v
+ */
+static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)
 {
 	UART_TxString(VERSION_STRING);
 }
+
+#warning Move this to application code
+/*
+static const prog_char m_jumphelp[]  = "Jump to bootloader";
+static const prog_char m_resethelp[] = "Restart app";
+
+static void JumpToOther_CMD(const char *cmdbuf, uint8_t len)
+{
+	RestartBootloader();
+}
+
+static void ResetDevice_CMD(const char *cmdbuf, uint8_t len)
+{
+	RestartApp();
+}
+*/

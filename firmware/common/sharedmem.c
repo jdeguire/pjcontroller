@@ -61,33 +61,15 @@ void RestartBootloader()
 	for(;;)	;
 }
 
-/* Read the app info data from program memory.  The data is written to flash after the bootloader
- * has finished writing the new application.
- */
-void GetAppInfo(appinfo_t *appinfo)
-{
-	memcpy_P(appinfo, (appinfo_t *)APPINFO_ADDR, sizeof(appinfo_t));
-}
-
-/* Calculate 16-bit CRC for the application.  This does not include unused pages after the
- * application's end nor the area in which the appinfo_t structure is stored.
+/* Calculate 16-bit CRC for everything in app space.
  */
 uint16_t CalculateAppCRC()
 {
-	appinfo_t appinfo;
 	uint16_t crc = 0xFFFF;
 	uint16_t addr;
-	uint16_t end_addr = APP_SPACE_END + 1;
 
-	GetAppInfo(&appinfo);
+	for(addr = APP_SPACE_START; addr <= APP_SPACE_END; ++addr)
+		crc = _crc_ccitt_update(crc, pgm_read_byte(addr));
 
-	if(APPINFO_VALID == appinfo.valid)
-		end_addr = MIN(appinfo.num_pages * SPM_PAGESIZE, APP_SPACE_END + 1);
-
-	for(addr = APP_SPACE_START; addr < end_addr; ++addr)
-	{
-		if(addr < APPINFO_ADDR  ||  addr > (APPINFO_ADDR + sizeof(appinfo_t)))
-			crc = _crc_ccitt_update(crc, pgm_read_byte(addr));
-	}
 	return crc;
 }

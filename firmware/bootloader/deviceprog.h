@@ -12,7 +12,6 @@
 
 void Flash_ProgramPage(uint16_t page, uint16_t *buf);
 bool Flash_VerifyPage(uint16_t page, uint16_t *buf);
-bool Flash_WriteAppInfo(appinfo_t *appinfo);
 void Flash_EraseApp();
 void EEPROM_EraseData();
 

@@ -21,35 +21,16 @@
 // Their addresses are the important part.
 extern prog_uint8_t _app_space_start;
 extern prog_uint8_t _app_space_end;
-extern prog_uint8_t _ivt_start;
-extern prog_uint8_t _ivt_end;
-
 
 #define APP_SPACE_START ((uint16_t)&_app_space_start)
 #define APP_SPACE_END   ((uint16_t)&_app_space_end)
 
-#define MAX_APP_PAGES   ((APP_SPACE_END + (SPM_PAGESIZE - 1)) / SPM_PAGESIZE)
-
-// The bootloader will write the app's info (see below) to the address immediately following the
-// app's IVT.  This macro will allow the app and bootloader to figure out where exactly that is,
-// assuming that the app and bootloader have the same size IVT.
-#define APPINFO_ADDR  ((uint16_t)&_ivt_end - (uint16_t)&_ivt_start)
-
-
-typedef struct appinfo_tag
-{
-	uint16_t valid;           // set to 0xAA55 to indicate this data is valid
-	uint16_t num_pages;       // number of pages the app spans
-	uint16_t crc16;           // 16-bit crc validated by bootloader on startup
-} appinfo_t;
-
-#define APPINFO_VALID 0xAA55
+#define NUM_APP_PAGES   ((APP_SPACE_END + (SPM_PAGESIZE - 1)) / SPM_PAGESIZE)
 
 bool AppRestartRequested();
 void ClearAppRestartRequest();
 void RestartApp() __attribute__((noreturn));
 void RestartBootloader() __attribute__((noreturn));
-void GetAppInfo(appinfo_t *appinfo);
 uint16_t CalculateAppCRC();
 
 #endif // INCLUDE_SHAREDMEM_H_

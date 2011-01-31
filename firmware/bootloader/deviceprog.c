@@ -11,86 +11,59 @@
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-
-/* Program the given page from the data in 'buf'.  The buffer must have at least one full page of
- * data in it.
+/* NOTE:
+ * Flash operations use the Z register (R30:R31 pair) for the address.  Since the AVR's memory is
+ * paged, we can think of a 16-bit address as split into two parts like so:
+ * [Page Number][Offset Within Page]
+ * where the number of bits for each depends on the size of the flash and the size of each page.
+ * Filling in the AVR write latches seems to only require the offset, whereas doing a page write or
+ * erase cares about only the page number and the offset bits are ignored.
+ * Reading flash does care about both since page structure does not come into play.
  */
-void Flash_ProgramPage(uint16_t page, uint16_t *buf)
+
+
+/* Program the page containing 'addr' from the data in 'buf'.  The buffer must have at least one
+ * full page of data in it.
+ */
+void Flash_ProgramPage(uint16_t addr, uint16_t *buf)
 {
-	uint16_t page_addr = page * SPM_PAGESIZE;
 	uint16_t offset;
 
 	cli();
 
 	// write latches one by one
 	for(offset = 0; offset < SPM_PAGESIZE; offset += 2)
-		boot_page_fill(page_addr + offset, buf[offset >> 1]);
+		boot_page_fill(offset, buf[offset >> 1]);
 
-	boot_page_write(page_addr);
+	boot_page_write(addr);
 	boot_spm_busy_wait();
 	boot_rww_enable();        // so we can read back the flash to verify it
 
 	sei();
 }
 
-/* Return True if the contents of the page match the contents of the buffer.  Use this to confirm
- * that the page was written correctly.
+/* Return True if the contents of the page starting with 'addr' match what is in the given buffer.
+ * 'addr' must be the starting address of the page.
  */
-bool Flash_VerifyPage(uint16_t page, uint16_t *buf)
+bool Flash_VerifyPage(uint16_t addr, uint16_t *buf)
 {
-	uint16_t page_addr = page * SPM_PAGESIZE;
 	uint16_t offset;
 
 	for(offset = 0; offset < SPM_PAGESIZE; offset += 2)
 	{
-		if(pgm_read_word(page_addr + offset) != buf[offset >> 1])
+		if(pgm_read_word(addr + offset) != buf[offset >> 1])
 			return false;
 	}
 	return true;
 }
 
-bool Flash_WriteAppInfo(appinfo_t *appinfo)
-{
-	uint8_t buf[SPM_PAGESIZE];
-	uint16_t count = 0;
-	uint16_t n;
-	bool writeOK;
-
-	// Covers the case of appinfo crossing page boundaries
-	do
-	{
-		uint16_t pageaddr = ((APPINFO_ADDR + count) / SPM_PAGESIZE) * SPM_PAGESIZE;
-		uint16_t pageoffset = (APPINFO_ADDR + count) % SPM_PAGESIZE;
-
-		n = MIN(sizeof(appinfo_t) - count, SPM_PAGESIZE - pageoffset);
-
-		memcpy_P(buf, (PGM_VOID_P)pageaddr, SPM_PAGESIZE);            // read page into buf
-		memcpy(&buf[pageoffset], (PGM_VOID_P)appinfo + count, n);     // copy appinfo to buf
-
-		count += n;
-
-		Flash_ProgramPage(pageaddr / SPM_PAGESIZE, (uint16_t *)buf);
-		writeOK = Flash_VerifyPage(pageaddr / SPM_PAGESIZE, (uint16_t *)buf);
-	}
-	while(count < sizeof(appinfo_t)  &&  writeOK);
-
-	return writeOK;
-}
-
-/* Erase the application.
+/* Erase the application.  The erase operation erases all pages in app space.
  */
 void Flash_EraseApp()
 {
-	appinfo_t appinfo;
-	uint16_t addr;
-	uint16_t end_addr = APP_SPACE_END;
+	uint16_t addr = APP_SPACE_START;
 	
-	GetAppInfo(&appinfo);
-
-	if(APPINFO_VALID == appinfo.valid)
-		end_addr = MIN(appinfo.num_pages * SPM_PAGESIZE, APP_SPACE_END);
-
-	for(addr = APP_SPACE_START; addr < end_addr; addr += SPM_PAGESIZE)
+	for( ; addr < APP_SPACE_END; addr += SPM_PAGESIZE)
 		boot_page_erase(addr);
 }
 

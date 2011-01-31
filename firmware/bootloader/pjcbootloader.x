@@ -84,10 +84,8 @@ SECTIONS
   /* Internal text space or external memory.  */
   .text   :
   {
-	_ivt_start = .;
    	*(.vectors)
     KEEP(*(.vectors))
-	_ivt_end = .;
     /* For data that needs to reside in the lower 64k of progmem.  */
     *(.progmem.gcc*)
     *(.progmem*)

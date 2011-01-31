@@ -10,6 +10,7 @@
 #include "system.h"
 #include <avr/pgmspace.h>
 #include <stdint.h>
+#include <stdbool.h>
 
 // size must be 255 or less
 #ifndef CMD_BUFSIZE
@@ -20,7 +21,7 @@
 #  define MAX_CMDS 10
 #endif
 
-// takes a pointer to the command buffer and the number of chars in it
+// takes a pointer to the command buffer and length of the string
 typedef void (*cmdhandler_t)(const char *, uint8_t);
 
 typedef struct cmdinfo_tag
