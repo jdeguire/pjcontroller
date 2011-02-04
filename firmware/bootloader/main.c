@@ -10,53 +10,141 @@
 #include "deviceprog.h"
 #include "watchdog.h"
 #include <stdint.h>
+#include <stdbool.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+/* Stuff to do in main():
+ *
+ * Startup:
+ * app inhibit pin set?
+ * --yes, print message and stay in bootloader
+ * --no, continue
+ * app restart requested?
+ * --yes, continue
+ * --no, print message and stay in bootloader
+ * check for valid app crc
+ * --if there, continue
+ * --if not, print message, set LED, and start bootloader
+ * compute and validate app crc
+ * --match, start app
+ * --mismatch, print message, set LED, and start bootloader
+ *
+ * Start Bootloader:
+ * Enable watchdog
+ * Enable UART
+ * Enable command interface
+ * 
+ * Jump to app (only if bootloader was started):
+ * Reset UART, LEDs,
+ * Disable interrupts, watchdog
+ * Reset IVT to app space
+ */
 
-int main(void)
+typedef enum
 {
-	bool led_on;
+	eBootOK      = 0,
+	eBootPinSet,
+	eBootRestart,
+	eBootNoApp,
+	eBootCRC
+} bootstatus_t;
 
-	wdt_enable(WDTO_250MS);
+/* Get the state of the Bootloader Pin.  If True, stay in the bootloader without attempting to start
+ * the app.  Otherwise, try to start the application.
+ */
+static bool BootloaderPinSet()
+{
+	// we'll use an external pull-down for this
+	DDRBbits.ddb0 = 0;        // 0 for input
+	return PINBbits.pinb0;
+}
 
-	led_on = AppRestartRequested();
+/* Check if there is any reason why the bootloader should not start the app.  Returns 'eBootOK' if
+ * the app can run or a non-zero status if it cannot.
+ */
+static bootstatus_t GetAppStartupStatus()
+{
+	bootstatus_t status = eBootOK;
+
+	if(BootloaderPinSet())
+		status = eBootPinSet;
+	else if(!AppRestartRequested())
+		status = eBootRestart;
+	else
+	{
+		uint16_t crcinfo[2];
+
+		memcpy_P((void *)crcinfo, (PGM_VOID_P)(FLASHEND - 4), 4);
+
+		if(crcinfo[0] != APP_CHECKSUM_VALID)
+			status = eBootNoApp;
+		else if(crcinfo[1] != CalculateAppCRC())
+			status = eBootCRC;
+	}
+
 	ClearAppRestartRequest();
 
-	UART_Init();
-	Cmd_InitInterface();
+	return status;
+}
 
-	if(ResetByWatchdog())
-		UART_TxString("Watchdog Reset\r");
-
-	// LED on PC5
-	DDRC |= (1 << DD5);       // 1 sets pin to output
-
-	MCUCR = (1 << IVCE);
-	MCUCR = (1 << IVSEL);     // set IVT to boot space
-	sei();                    // enable interrupts
-	
-	wdt_reset();
-
-	if(led_on)
+/* Turn on or off LED used as a visual notice that the board is in the bootloader.
+ */
+static void LightBootloaderLED(bool enable)
+{
+	if(enable)
 	{
-		PORTCbits.pc5 = 1;
-		UART_TxString("Yup\r");
+		DDRDbits.ddd6 = 1;   // output
+		PORTDbits.pd6 = 1;   // turn on
 	}
 	else
 	{
-		PORTCbits.pc5 = 0;
-		UART_TxString("Nope\r");
+		// return to defaults
+		PORTDbits.pd6 = 0;
+		DDRDbits.ddd6 = 0;
 	}
+}
 
-	while(1)
+/* True enables the bootloader IVT and False returns to the app's IVT.  Set the False before jumping
+ * to the application.
+ */
+static void SetBootIVT(bool bootIVT)
+{
+	if(bootIVT)
 	{
+		MCUCR = (1 << IVCE);
+		MCUCR = (1 << IVSEL);
+	}
+	else
+	{
+		MCUCR = (1 << IVCE);
+		MCUCR = 0;
+	}
+}
+
+int main(void)
+{
+	bootstatus_t status = GetAppStartupStatus();
+
+	if(status == eBootOK)
+		asm volatile("jmp 0x0");
+	else
+	{
+		wdt_enable(WDTO_250MS);
+
+		UART_Init();
+		Cmd_InitInterface();
+
+		SetBootIVT(true);
+		sei();                    // enable interrupts
+	
+		LightBootloaderLED(true);
 		wdt_reset();
-		Cmd_ProcessInterface();
-//		_delay_ms(2000);
-//		if(led_on)
-//			RestartBootloader();
-//		else
-//			RestartApp();
+
+		while(true)
+		{
+			wdt_reset();
+			Cmd_ProcessInterface();
+		}
 	}
 }
