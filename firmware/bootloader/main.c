@@ -122,6 +122,26 @@ static void SetBootIVT(bool bootIVT)
 	}
 }
 
+/* Undo the modifications to registers that the bootloader did when starting up.  Do this before
+ * jumping to the app after the bootloader has started up.
+ */
+void RewindSettings()
+{
+	cli();                    // disable interrupts
+	wdt_reset();
+	SetBootIVT(false);
+	LightBootloaderLED(false);
+
+	// initial UART register values
+	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
+	UCSR0B = 0;
+	UCSR0A = 0;
+	UBRR0H = 0;
+	UBRR0L = 0;
+
+	wdt_disable();
+}
+
 int main(void)
 {
 	bootstatus_t status = GetAppStartupStatus();
@@ -137,7 +157,7 @@ int main(void)
 
 		SetBootIVT(true);
 		sei();                    // enable interrupts
-	
+
 		LightBootloaderLED(true);
 		wdt_reset();
 

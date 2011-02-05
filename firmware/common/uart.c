@@ -39,8 +39,8 @@ void UART_Init()
 	UBRR0L = BAUD2REG & 0xFF;
 
 	UCSR0A = 0;
-	UCSR0B = (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);                 // 8-N-1
+	UCSR0B = (1 << RXCIE0) | (1 << RXEN0) | (1 << TXEN0);
 
 	m_txstart = 0;
 	m_txcount = 0;

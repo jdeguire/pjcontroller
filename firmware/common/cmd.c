@@ -26,9 +26,9 @@ static enum cmdstate_t
 } m_cmdstate;
 
 // attributes cannot be used with constants, so we have to define these separately
-static const prog_char m_crchelp[]   = "Calculate application crc";
-static const prog_char m_helphelp[]  = "Print this help";
-static const prog_char m_verhelp[]   = "Show version info";
+static const prog_char m_crchelp[]   = "Calculate app crc";
+static const prog_char m_helphelp[]  = "Print help";
+static const prog_char m_verhelp[]   = "Show version";
 
 static cmdinfo_t m_cmds[MAX_CMDS] = {{"crc", CalcAppCRC_CMD, m_crchelp},
 									 {"h", PrintHelp_CMD, m_helphelp},
@@ -77,6 +77,7 @@ void Cmd_ProcessInterface()
 		case eCmd_Prompt:
  			UART_TxData("\r#> ", 4);
 			m_cmdlen = 0;
+			memset(m_cmdbuf, 0, sizeof(m_cmdbuf));
 			++m_cmdstate;
 			break;
 		case eCmd_Receive:
@@ -100,10 +101,7 @@ void Cmd_ProcessInterface()
 
 					// either got a command or buffer is full
 					if(c == '\r'  ||  m_cmdlen >= CMD_BUFSIZE)
-					{
 						++m_cmdstate;
-						m_cmdbuf[m_cmdlen] = '\0';
-					}
 				}
 			}
 			break;
