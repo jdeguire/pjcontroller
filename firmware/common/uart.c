@@ -48,6 +48,7 @@ void UART_Init()
 	m_rxcount = 0;
 }
 
+
 /* Put a character into the buffer if there is room.  Returns True if it was able to do so.
  */
 bool UART_TxChar(char c)
@@ -63,6 +64,34 @@ bool UART_TxChar(char c)
 	}
   	_UART_TXIE(1);
 
+	return result;
+}
+
+/* Transmit a single byte to be displayed as a hexadecimal number.  So 0x36 would be sent as "36"
+ * rather than as the ASCII character '6'.  Be aware of byte order when sending bytes from an
+ * integral value.  Returns True if the the hex digits could be sent and False otherwise.
+ */
+bool UART_TxHexByte(uint8_t by)
+{
+	bool result = false;
+
+	if(UART_TxAvailable() >= 2)
+	{
+		uint8_t lower = by & 0x0F;
+		uint8_t upper = (by & 0xF0) >> 4;
+
+		if(upper > 9)
+			UART_TxChar(upper + 'A' - 10);
+		else
+			UART_TxChar(upper + '0');
+
+		if(lower > 9)
+			UART_TxChar(lower + 'A' - 10);
+		else
+			UART_TxChar(lower + '0');
+
+		result = true;
+	}
 	return result;
 }
 
@@ -97,6 +126,7 @@ uint16_t UART_TxData_P(const prog_char *data, uint16_t len)
 	return i;	
 }
 
+
 /* Remove and return the next character from the receive buffer.  Returns 0 if no characters are
  * available.
  */
@@ -127,6 +157,7 @@ uint16_t UART_RxData(char *data, uint16_t len)
 	return i;
 }
 
+
 /* Number of spaces left in the TX buffer for new data.
  */
 uint16_t UART_TxAvailable()
@@ -140,6 +171,7 @@ uint16_t UART_RxAvailable()
 {
 	return m_rxcount;
 }
+
 
 /* Interrupt handler for UART Data Register Empty flag, which is used during transmission of data.
  * Do not call this directly.

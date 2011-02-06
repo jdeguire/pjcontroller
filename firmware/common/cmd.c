@@ -13,7 +13,10 @@
 
 static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len);
 static void PrintHelp_CMD(const char *cmdbuf, uint8_t len);
-static void ShowVersion_CMD(const char *cmdbuf, uint8_t len);
+static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)  __attribute__((noinline));
+
+static const prog_char m_versionstr[] = "\r\r" VERSION_STRING "\r";
+
 
 static char m_cmdbuf[CMD_BUFSIZE+1];    // one extra for null terminator
 static uint8_t m_cmdlen;
@@ -41,7 +44,7 @@ static uint8_t m_numcmds = 3;
 void Cmd_InitInterface()
 {
 	m_cmdstate = eCmd_Prompt;
-	UART_TxString("\r\r" VERSION_STRING "\r");
+	UART_TxString_P(m_versionstr);
 }
 
 /* Add a new interface command that can be called via the connected serial console.  Parameters are
@@ -125,7 +128,7 @@ void Cmd_ProcessInterface()
 
 				// didn't find the command
 				if(i == m_numcmds)
-					UART_TxString("Unknown command\r");
+					UART_TxData_P(PSTR("Unknown command\r"), 16);
 			}
 			m_cmdstate = eCmd_Prompt;
 			break;
@@ -146,11 +149,16 @@ void Cmd_ProcessInterface()
  */
 static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
 {
-	char crcstr[5];
+	union
+	{
+		uint16_t val;
+		uint8_t  by[2];
+	} crc;
 
-	utoa(CalculateAppCRC(), crcstr, 16);
-	UART_TxString("App CRC: 0x");
-	UART_TxString(crcstr);
+	crc.val = CalculateAppCRC();
+
+	UART_TxHexByte(crc.by[1]);
+	UART_TxHexByte(crc.by[0]);
 	UART_TxChar('\r');
 }
 
@@ -191,21 +199,5 @@ static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
  */
 static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)
 {
-	UART_TxString(VERSION_STRING);
+	UART_TxString_P(m_versionstr + 2);
 }
-
-#warning Move this to application code
-/*
-static const prog_char m_jumphelp[]  = "Jump to bootloader";
-static const prog_char m_resethelp[] = "Restart app";
-
-static void JumpToOther_CMD(const char *cmdbuf, uint8_t len)
-{
-	RestartBootloader();
-}
-
-static void ResetDevice_CMD(const char *cmdbuf, uint8_t len)
-{
-	RestartApp();
-}
-*/

@@ -8,38 +8,13 @@
 #include "cmd.h"
 #include "sharedmem.h"
 #include "deviceprog.h"
+#include "localcmd.h"
 #include "watchdog.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
-/* Stuff to do in main():
- *
- * Startup:
- * app inhibit pin set?
- * --yes, print message and stay in bootloader
- * --no, continue
- * app restart requested?
- * --yes, continue
- * --no, print message and stay in bootloader
- * check for valid app crc
- * --if there, continue
- * --if not, print message, set LED, and start bootloader
- * compute and validate app crc
- * --match, start app
- * --mismatch, print message, set LED, and start bootloader
- *
- * Start Bootloader:
- * Enable watchdog
- * Enable UART
- * Enable command interface
- * 
- * Jump to app (only if bootloader was started):
- * Reset UART, LEDs,
- * Disable interrupts, watchdog
- * Reset IVT to app space
- */
 
 typedef enum
 {
@@ -49,6 +24,9 @@ typedef enum
 	eBootNoApp,
 	eBootCRC
 } bootstatus_t;
+
+static bootstatus_t m_status;
+
 
 /* Get the state of the Bootloader Pin.  If True, stay in the bootloader without attempting to start
  * the app.  Otherwise, try to start the application.
@@ -60,17 +38,17 @@ static bool BootloaderPinSet()
 	return PINBbits.pinb0;
 }
 
-/* Check if there is any reason why the bootloader should not start the app.  Returns 'eBootOK' if
- * the app can run or a non-zero status if it cannot.
+/* Check if there is any reason why the bootloader should not start the app and sets 'm_status' to
+ * indicate the reason.
  */
-static bootstatus_t GetAppStartupStatus()
+static void GetAppStartupStatus()
 {
-	bootstatus_t status = eBootOK;
+	m_status = eBootOK;
 
 	if(BootloaderPinSet())
-		status = eBootPinSet;
+		m_status = eBootPinSet;
 	else if(!AppRestartRequested())
-		status = eBootRestart;
+		m_status = eBootRestart;
 	else
 	{
 		uint16_t crcinfo[2];
@@ -78,14 +56,12 @@ static bootstatus_t GetAppStartupStatus()
 		memcpy_P((void *)crcinfo, (PGM_VOID_P)(FLASHEND - 4), 4);
 
 		if(crcinfo[0] != APP_CHECKSUM_VALID)
-			status = eBootNoApp;
+			m_status = eBootNoApp;
 		else if(crcinfo[1] != CalculateAppCRC())
-			status = eBootCRC;
+			m_status = eBootCRC;
 	}
 
 	ClearAppRestartRequest();
-
-	return status;
 }
 
 /* Turn on or off LED used as a visual notice that the board is in the bootloader.
@@ -122,6 +98,34 @@ static void SetBootIVT(bool bootIVT)
 	}
 }
 
+/* Print a message stating why we're in the bootloader along with the value of m_status.  This is
+ * done so that software can grab the number and print its own message.
+ */
+void PrintBootStatus()
+{
+	UART_TxChar('(');
+	UART_TxHexByte((uint8_t)m_status);
+	UART_TxChar(')');
+
+	switch(m_status)
+	{
+		case eBootPinSet:
+			UART_TxData_P(PSTR(" Bootloader pin set\r"), 20);
+			break;
+		case eBootRestart:
+			UART_TxData_P(PSTR(" WDT reset\r"), 11);
+			break;
+		case eBootNoApp:
+			UART_TxData_P(PSTR(" No app loaded\r"), 15);
+			break;
+		case eBootCRC:
+			UART_TxData_P(PSTR(" Invalid CRC\r"), 13);
+			break;
+		default:
+			break;
+	}
+}
+
 /* Undo the modifications to registers that the bootloader did when starting up.  Do this before
  * jumping to the app after the bootloader has started up.
  */
@@ -142,11 +146,12 @@ void RewindSettings()
 	wdt_disable();
 }
 
+
 int main(void)
 {
-	bootstatus_t status = GetAppStartupStatus();
+	GetAppStartupStatus();
 
-	if(status == eBootOK)
+	if(m_status == eBootOK)
 		asm volatile("jmp 0x0");
 	else
 	{
@@ -154,11 +159,13 @@ int main(void)
 
 		UART_Init();
 		Cmd_InitInterface();
+		RegisterBootloaderCommands();
 
 		SetBootIVT(true);
 		sei();                    // enable interrupts
 
 		LightBootloaderLED(true);
+		PrintBootStatus();
 		wdt_reset();
 
 		while(true)

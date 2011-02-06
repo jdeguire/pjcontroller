@@ -35,11 +35,15 @@
 #define UART_TxString_P(str) UART_TxData_P(str, strlen_P(str))
 
 void UART_Init();
+
 bool UART_TxChar(char c);
+bool UART_TxHexByte(uint8_t by);
 uint16_t UART_TxData(const char *data, uint16_t len);
 uint16_t UART_TxData_P(const prog_char *data, uint16_t len);
+
 char UART_RxChar();
 uint16_t UART_RxData(char *data, uint16_t len);
+
 uint16_t UART_TxAvailable();
 uint16_t UART_RxAvailable();
 
