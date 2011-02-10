@@ -38,7 +38,7 @@ cinc    = []
 cdefs = []
 
 # linker options (you may need to use '-Wl,option' to pass to linker)
-lopts = ['-Wl,-Map,temp.map']
+lopts = ['-Wl,--relax']
 
 #---------------
 # End global project options

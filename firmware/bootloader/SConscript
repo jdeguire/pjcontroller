@@ -7,7 +7,7 @@ Import(['env', 'commonpath'])
 #---------------
 # Bootloader-specific project options
 #---------------
-outputname = 'pjc-bootloader'      # output file name (withut extensions)
+outputname = 'pjc-bootloader'      # output file name (without extensions)
 imagename  = 'pjc-flash-image'     # name of file to read flash into (no extension)
 
 icspdevice = 'usbtiny'             # name of programming device for avrdude 
@@ -27,6 +27,11 @@ allfiles = Glob('*.c') + [commonpath + s for s in commonfiles]
 # linker script (leave empty to use the default script chosen by avr-libc)
 ldscript = 'bootloader' + os.sep + 'pjcbootloader.x'
 
+# additional compiler options for just the bootloader
+copts   = ['-mcall-prologues', '-ffunction-sections']
+
+# linker options for just the bootloader
+lopts = ['--gc-sections']
 
 #---------------
 # End of bootloader options
@@ -52,7 +57,8 @@ avrdude_base = 'avrdude -p ' + env['MCU'] + ' -c ' + icspdevice
 
 # Create a clone of the base environment we can set up just for the bootloader
 bootenv = env.Clone()
-
+bootenv.Append(CCFLAGS = copts)
+bootenv.Append(LINKFLAGS = lopts)
 
 # target to build the bootloader
 # paths and files in these commands are relative to the directory of this script
