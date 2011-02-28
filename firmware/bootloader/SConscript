@@ -11,6 +11,7 @@ outputname = 'pjc-bootloader'      # output file name (without extensions)
 imagename  = 'pjc-flash-image'     # name of file to read flash into (no extension)
 
 icspdevice = 'usbtiny'             # name of programming device for avrdude 
+avr_prog   = 'avrdude'             # name of programming utility
 
 # fuses and lock bits
 # be sure your settings are correct before changing these (search online for "AVR fuse calculator")
@@ -22,7 +23,7 @@ lockbits = '0x3F'        # defaults
 
 # source files to build
 commonfiles = ['uart.c', 'sharedmem.c', 'watchdog.c', 'cmd.c']
-allfiles = Glob('*.c') + [commonpath + s for s in commonfiles]
+bootfiles   = Glob('*.c')          # everything in 'bootloader/'
 
 # linker script (leave empty to use the default script chosen by avr-libc)
 ldscript = 'bootloader' + os.sep + 'pjcbootloader.x'
@@ -52,7 +53,7 @@ hexfile = ourdir + os.sep + outputfile
 boothex_act = Action(env['OBJCOPY'] + ' -O ihex -R .eeprom \"' + elffile  + '\" \"' + hexfile + '\"')
 
 # a string forming a base avrdude command that we can just add on to in the targets
-avrdude_base = 'avrdude -p ' + env['MCU'] + ' -c ' + icspdevice
+prog_base = avr_prog + ' -p ' + env['MCU'] + ' -c ' + icspdevice
 
 
 # Create a clone of the base environment we can set up just for the bootloader
@@ -60,9 +61,17 @@ bootenv = env.Clone()
 bootenv.Append(CCFLAGS = copts)
 bootenv.Append(LINKFLAGS = lopts)
 
+# We have to explicitly use the Object builder on stuff in 'common/' or else the object files will
+# get dumped into 'common/' instead of our output directory
+common_objs = []
+for f in commonfiles:
+    base, ext = os.path.splitext(os.path.basename(f))
+    common_objs.append(bootenv.Object(target = base + bootenv['OBJSUFFIX'], source = commonpath + f))
+
+
 # target to build the bootloader
 # paths and files in these commands are relative to the directory of this script
-bb = bootenv.Program(outputname, allfiles)
+bb = bootenv.Program(outputname, bootfiles + common_objs)
 bootenv.Alias('build-bootloader', bb)
 bootenv.AddPostAction(bb, boothex_act)
 bootenv.Clean(bb, outputfile)
@@ -76,22 +85,22 @@ if ldscript != '':
 # We can also pass in an empty list "[]" if the command doesn't accept input files
 
 # target to write the bootloader to the AVR using avrdude
-wb = bootenv.Command('wb.dummy', outputfile, avrdude_base + ' -U flash:w:\"$SOURCE\":i')
+wb = bootenv.Command('wb.dummy', outputfile, prog_base + ' -U flash:w:\"$SOURCE\":i')
 wba = bootenv.Alias('write-bootloader', wb)
 bootenv.AlwaysBuild(wb)
 
 # target to read the AVR's flash memory into an output hex file
-rf = bootenv.Command(imagefile, [], avrdude_base + ' -U flash:r:\"$TARGET\":i')
+rf = bootenv.Command(imagefile, [], prog_base + ' -U flash:r:\"$TARGET\":i')
 rfa = bootenv.Alias('read-flash', rf)
 bootenv.AlwaysBuild(rf)
 
 # target to erase everything--flash, EEPROM, and lock bits (but not fuse bits)
-ed = bootenv.Command('ed.dummy', [], avrdude_base + ' -e')
+ed = bootenv.Command('ed.dummy', [], prog_base + ' -e')
 eda = bootenv.Alias('erase-device', ed)
 bootenv.AlwaysBuild(ed)
 
 # target to write the AVR fuses and lock bits
-wu = bootenv.Command('wu.dummy', [], avrdude_base + ' -U lfuse:w:' + lfuse + ':m -U hfuse:w:' + hfuse + 
+wu = bootenv.Command('wu.dummy', [], prog_base + ' -U lfuse:w:' + lfuse + ':m -U hfuse:w:' + hfuse + 
                     ':m -U efuse:w:' + efuse + ':m -U lock:w:' + lockbits + ':m')
 wua = bootenv.Alias('write-fuses', wu)
 bootenv.AlwaysBuild(wu)

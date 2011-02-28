@@ -17,7 +17,7 @@ cstd    = 'gnu99'         # C99 standard with GCC extensions
 cdebug  = '-g'            # debug options
 
 
-# Seprate individual options with commas and enclose them all in brackets.
+# Separate individual options with commas and enclose them all in brackets.
 
 # warning options
 cwarn   = ['-Wall']
@@ -71,6 +71,7 @@ env.Replace(LIBDIRSUFFIX = '')
 env.Replace(LIBLINKPREFIX = '-l')
 env.Replace(LIBLINKSUFFIX = '')
 env.Replace(PROGSUFFIX = '.elf')        # avr-gcc creates elf files by default
+env.Replace(OBJSUFFIX = '.o')
 
 # feed in our options from the top of this file
 env.Append(CCFLAGS = ['-O' + optlev, '-mmcu=' + mcu, '-std=' + cstd, cdebug])
@@ -89,14 +90,14 @@ env.Append(LINKFLAGS = lopts)
 env['OBJCOPY'] = avr_oc
 env['HEXSUFFIX'] = '.hex'
 env['MCU'] = mcu
-
+env['OUTDIR'] = 'output/'
 
 # Export variables for use by the SConscript files and process the files.  The SConscript files
 # contain the actual targets used for building.  Build output is set to go into the directory given
 # by variant_dir and sources are not duplicated in the output directory.
 env.Export(['env', 'commonpath'])
-SConscript('app/SConscript', variant_dir = 'app/output', duplicate = 0)
-SConscript('bootloader/SConscript', variant_dir = 'bootloader/output', duplicate = 0)
+SConscript('app/SConscript', variant_dir = 'app/' + env['OUTDIR'], duplicate = 0)
+SConscript('bootloader/SConscript', variant_dir = 'bootloader/' + env['OUTDIR'], duplicate = 0)
 
 # printed with 'scons -h'
 Help("""

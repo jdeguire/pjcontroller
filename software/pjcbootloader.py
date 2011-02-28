@@ -33,7 +33,7 @@ class PJCBootloader:
                 if record.verifyChecksum():
                     if record.type == IntelHexRecord.DataRec:
                         start = extAddr + record.address
-                        end = start + record.dataSize
+                        end = start + record.datasize
                         size = len(self.flashimage)
 
                         # fill in gaps with 0xFF; the value of erased flash
@@ -78,11 +78,11 @@ class IntelHexRecord:
         # convert text into bytes
         self.rawdata = [int(line[idx:idx+2], 16) for idx in range(0, len(line), 2)]
 
-        self.dataSize = self.rawdata[0]
+        self.datasize = self.rawdata[0]
         self.address = (self.rawdata[1] << 8) | self.rawdata[2]
         self.type = self.rawdata[3]
-        self.data = [self.rawdata[4 + i] for i in range(self.dataSize)]
-        self.checksum = self.rawdata[4 + self.dataSize]
+        self.data = [self.rawdata[4 + i] for i in range(self.datasize)]
+        self.checksum = self.rawdata[4 + self.datasize]
 
 
     def verifyChecksum(self):
