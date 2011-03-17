@@ -7,6 +7,10 @@ Contains classes used for interacting with the bootloader on the ATmega devices.
 will want to use the PJCBootloader class to do all of the talking to the device.
 """
 
+import serial
+import re
+
+
 class PJCBootloader:
     """An interface to the PJC bootloader for ATMega devices.
 
@@ -14,6 +18,14 @@ class PJCBootloader:
     external programmer.  This class exposes the various capabilities of the PJC bootloader beyond
     code updates, such as erasing flash and EEPROM and getting a firmware app's checksum.
     """
+
+    SerialBaud = 57600
+    SerialTimeout = 1.0
+    CommandPrompt = '\r#> '
+
+    def __init__(self, serialpath):
+        self.serial = serial.Serial(serialpath, PJCBootloader.SerialBaud, 
+                                    timeout = PJCBootloader.SerialTimeout)
 
     def parseFile(self, filepath):
         """Parse Intel Hex file into a binary image.
@@ -54,6 +66,42 @@ class PJCBootloader:
 
         return result
 
+    def getBootloaderVersion(self):
+        """Get the bootloader version loaded on the device or -1 if that could not be read.
+        """
+        result = -1
+
+        self.serial.write('v\r')
+        verstring = self._readSerialResponse()
+        vermatch = re.search(r'v\d+', verstring)
+
+        if vermatch:
+            result = int(vermatch.group(0)[1:])
+
+        return result
+
+    def _readSerialResponse(self):
+        """Read the response to a command.  
+
+        This reads the serial port until it receives the prompt (#>) or until it times out.  The
+        prompt is removed from the response.
+        """
+        resp = ''
+
+        temp = self.serial.read(min(self.serial.inWaiting(), 1))
+
+        while temp != ''  and  resp.rfind(PJCBootloader.CommandPrompt) < 0:
+            resp += temp
+            temp = self.serial.read(min(self.serial.inWaiting(), 1))
+
+        resp = resp.replace(PJCBootloader.CommandPrompt, '')
+        return resp
+
+    def _flushInput(self):
+        """Discard any data waiting in the serial port's input buffer.
+        """
+        self.serial.flushInput()
+
 
 class IntelHexRecord:
     """A class representing one record within an Intel Hex file.
@@ -83,7 +131,6 @@ class IntelHexRecord:
         self.type = self.rawdata[3]
         self.data = [self.rawdata[4 + i] for i in range(self.datasize)]
         self.checksum = self.rawdata[4 + self.datasize]
-
 
     def verifyChecksum(self):
         """Return True if the record checksum is correct."""
