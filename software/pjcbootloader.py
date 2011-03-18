@@ -22,6 +22,7 @@ class PJCBootloader:
     SerialBaud = 57600
     SerialTimeout = 1.0
     CommandPrompt = '\r#> '
+    StartupString = 'PJC Bootloader'
 
     def __init__(self, serialpath):
         self.serial = serial.Serial(serialpath, PJCBootloader.SerialBaud, 
@@ -71,13 +72,34 @@ class PJCBootloader:
         """
         result = -1
 
+        self._flushInput()
         self.serial.write('v\r')
+        
         verstring = self._readSerialResponse()
         vermatch = re.search(r'v\d+', verstring)
 
         if vermatch:
             result = int(vermatch.group(0)[1:])
 
+        return result
+
+    def jumpToApp(self):
+        """Jump from bootloader to application.
+
+        Jump from the bootloader by issuing a serial command and parse the response to see if the
+        jump was successful.  If the bootloader restarts, then there is probably no app (or a bad
+        app) on board and this function will return False.  Otherwise, this will return True.
+        """
+        result = True;
+
+        self._flushInput()
+        self.serial.write('j\r')
+    
+        bootupstring = self._readSerialResponse()
+
+        if bootupstring.find(PJCBootloader.StartupString) >= 0:
+            result = False
+            
         return result
 
     def _readSerialResponse(self):
@@ -88,7 +110,7 @@ class PJCBootloader:
         """
         resp = ''
 
-        temp = self.serial.read(min(self.serial.inWaiting(), 1))
+        temp = self.serial.read(max(self.serial.inWaiting(), 1))
 
         while temp != ''  and  resp.rfind(PJCBootloader.CommandPrompt) < 0:
             resp += temp
