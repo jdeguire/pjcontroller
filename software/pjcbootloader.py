@@ -25,8 +25,15 @@ class PJCBootloader:
     StartupString = 'PJC Bootloader'
 
     def __init__(self, serialpath):
+        """Create a new PJCBootloader object which will communicate over the given serial port.
+
+        Raises a SerialException if the serial port can not be opened.
+        """
         self.serial = serial.Serial(serialpath, PJCBootloader.SerialBaud, 
                                     timeout = PJCBootloader.SerialTimeout)
+        self.pagesize = -1
+        self.maxpages = -1
+        self.flashimage = []
 
     def parseFile(self, filepath):
         """Parse Intel Hex file into a binary image.
@@ -63,9 +70,59 @@ class PJCBootloader:
 
                     result = True
                 else:
+                    self.flashimage = []
+                    result = False
                     break
 
         return result
+
+    def calculateFileCRC(self):
+        """Calculate the 16-bit CRC of the binary data found with the parseFile() method.
+
+        This requires that the parseFile() method was successfully run and that the object variables
+        'pagesize' and 'maxpages' are set.  Use the methods getPageSize() and getMaxPages(),
+        respectively, to do this.  Otherwise, this method will return -1.
+
+        The algorithm used here was adapted from example C code provided by the AVR-libc manual.
+        See the _crc_ccitt_update() function description at
+        http://www.nongnu.org/avr-libc/user-manual/group__util__crc.html.
+        """
+        crc = 0xFFFF
+
+        if self.pagesize > 0  and  self.maxpages > 0  and  self.flashimage != []:
+            for i in range(self.pagesize * self.maxpages):
+                if i < len(self.flashimage):
+                    by = self.flashimage[i] & 0xFF
+                else:
+                    by = 0xFF
+                
+                    by = by ^ (crc & 0xFF)
+                    by = by ^ (by << 4)
+
+                    crc = ((((by << 8) & 0xFFFF) | ((crc >> 8) & 0xFF)) ^ ((by >> 4) & 0xFF) ^ 
+                           ((by << 3) & 0xFFFF))
+        else:
+            crc = -1
+
+        return crc
+
+    def getFileNumPages(self):
+        """Determine the number of pages used by the binary data found with the parseFile() method.
+
+        This requires that the parseFile() method was successfully run and that the object variable
+        'pagesize' is set.  Use the getPageSize() method to do this.  Otherwise, this returns -1.
+        """
+        result = -1
+
+        if self.flashimage != [] and self.pagesize > 0:
+            result = 0
+
+            for i in range(len(self.flashimage) - 1, 0, -1):
+                if self.flashimage[i] != 0xFF:
+                    result = (i + self.pagesize) / self.pagesize
+                    break
+
+        return result    
 
     def getBootloaderVersion(self):
         """Get the bootloader version loaded on the device or -1 if that could not be read.
@@ -75,11 +132,27 @@ class PJCBootloader:
         self._flushInput()
         self.serial.write('v\r')
         
-        verstring = self._readSerialResponse()
-        vermatch = re.search(r'v\d+', verstring)
+        resp = self._readSerialResponse()
+        match = re.search(r'Bootloader v\d+', resp)
 
-        if vermatch:
-            result = int(vermatch.group(0)[1:])
+        if match:
+            result = int(match.group(0)[1:])
+
+        return result
+
+    def getAppCRC(self):
+        """Get the 16-bit CRC of the application currently on the device or -1 if that cannot be
+        read.
+        """
+        result = -1
+
+        self._flushInput()
+        self.serial.write('crc\r')
+
+        resp = self._readSerialResponse()
+
+        if resp != '':
+            result = int(resp, 16) & 0xFFFF
 
         return result
 
@@ -90,18 +163,173 @@ class PJCBootloader:
         jump was successful.  If the bootloader restarts, then there is probably no app (or a bad
         app) on board and this function will return False.  Otherwise, this will return True.
         """
-        result = True;
+        result = True
 
         self._flushInput()
         self.serial.write('j\r')
     
-        bootupstring = self._readSerialResponse()
+        resp = self._readSerialResponse()
 
-        if bootupstring.find(PJCBootloader.StartupString) >= 0:
+        if resp.find(PJCBootloader.StartupString) >= 0:
             result = False
             
         return result
 
+    def restartBootloader(self):
+        """Reset device and restart in the bootloader.
+
+        Restart the bootloader by issuing a serial command and parse the the response to see if the
+        reset was successful.  If the bootloader restarts, then return True.  Else return False.
+        """
+        result = False
+
+        self._flushInput()
+        self.serial.write('r\r')
+    
+        resp = self._readSerialResponse()
+
+        if resp.find(PJCBootloader.StartupString) >= 0:
+            result = True
+            
+        return result
+
+    def eraseApp(self):
+        """Erase the application on board.
+
+        Return True if the application was erased or False otherwise.
+        """
+        result = False
+        
+        self._flushInput()
+        self.serial.write('ea yes\r')   # 'yes' required to confirm erase
+
+        resp = self._readSerialResponse()
+
+        if resp.find('80') >= 0:        # returns '!80' on success
+            result = True
+
+        return result
+
+    def eraseEEPROM(self):
+        """Erase the device's EEPROM.
+
+        Return True if the EEPROM was erased or False otherwise.
+        """
+        result = False
+        
+        self._flushInput()
+        self.serial.write('ee yes\r')   # 'yes' required to confirm erase
+
+        resp = self._readSerialResponse()
+
+        if resp.find('80') >= 0:        # returns '!80' on success
+            result = True
+
+        return result
+
+    def programPage(self, pagenum):
+        """Program one page of 'size' bytes onto the device's flash.
+
+        The calling object's 'pagesize' field must be set properly before calling this method.  Use
+        the getPageSize() method to do this. 'pagenum' should be less than the result of
+        getMaxPages().  The parseFile() method must have been called successfully before this
+        method.
+
+        This method returns 0 on success, 1 if the command arguments are malformed, 2 if the page
+        number is out of bounds, 3 if the checksum sent to the board as part of the command is
+        wrong, 4 if the flash could not be written to correctly, -1 if the bootloader is not
+        responding, or -2 if the bootloader restarted unexpectedly.
+        """
+        result = -1
+
+        start = pagenum * self.pagesize
+        checksum = sum(self.flashimage[start:start + self.pagesize]) & 0xFFFF
+        data = ''.join([chr(i) for i in self.flashimage[start:start + self.pagesize]])
+
+        # ensure that data is always one page long by padding it with 0xFFs
+        if(len(data) < self.pagesize):
+            fmt = '{0:\xFF<' + str(self.pagesize) + '}'
+            data = fmt.format(data)
+
+        self._flushInput()
+        self.serial.write('pp ' + hex(pagenum)[2:] + ' ' + hex(checksum)[2:] + '\r')
+
+        resp = self.serial.read(1)
+
+        if resp.find(':') >= 0:         # ':' signals that it's OK to send data
+            self.serial.write(data)
+            resp = ''
+
+        resp = resp + self._readSerialResponse()
+
+        if resp.find(PJCBootloader.StartupString) >= 0:
+            result = -2
+        else:
+            match = re.search(r'!8[01234]', resp)      # valid responses are '!80' - '!84'
+
+            if match:
+                result = int(match.group(0)[1:], 16) & 0x7F
+
+        return result
+
+    def writeCRC(self):
+        """Write the application CRC to flash.
+
+        This should be called after the entire application has been programmed to flash using
+        repeated calls to programPage().  This CRC is used to verify that a valid application is on
+        the board at startup.  Returns True if the CRC was written successfully or False otherwise.
+        """
+        result = False
+        
+        self._flushInput()
+        self.serial.write('wc\r')
+
+        resp = self._readSerialResponse()
+
+        if resp.find('80') >= 0:        # returns '!80' on success
+            result = True
+
+        return result
+
+    def getPageSize(self):
+        """Get the size in bytes of a single page or -1 if that could not be read.
+
+        The result is stored in the calling object for use with the programPage() and
+        calculateFileCRC() methods.
+        """
+        result = -1
+
+        self._flushInput()
+        self.serial.write('ps\r')
+        
+        resp = self._readSerialResponse()
+
+        if resp != '':
+            result = int(resp, 16) & 0xFFFF
+
+        self.pagesize = result
+        return result
+
+    def getMaxPages(self):
+        """Get the maximum number of pages an application can occupy or -1 if that could not be
+        read.
+
+        The result is stored in the calling object for use with the programPage() and
+        calculateFileCRC() methods.
+        """
+        result = -1
+
+        self._flushInput()
+        self.serial.write('pn\r')
+        
+        resp = self._readSerialResponse()
+
+        if resp != '':
+            result = int(resp, 16) & 0xFFFF
+
+        self.maxpages = result
+        return result
+        
     def _readSerialResponse(self):
         """Read the response to a command.  
 
@@ -111,10 +339,11 @@ class PJCBootloader:
         resp = ''
 
         temp = self.serial.read(max(self.serial.inWaiting(), 1))
-
-        while temp != ''  and  resp.rfind(PJCBootloader.CommandPrompt) < 0:
+        resp += temp
+ 
+        while temp != ''  and  not resp.endswith(PJCBootloader.CommandPrompt):
+            temp = self.serial.read(max(self.serial.inWaiting(), 1))
             resp += temp
-            temp = self.serial.read(min(self.serial.inWaiting(), 1))
 
         resp = resp.replace(PJCBootloader.CommandPrompt, '')
         return resp
