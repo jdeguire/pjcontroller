@@ -17,7 +17,6 @@ static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)  __attribute__((noi
 
 static const prog_char m_versionstr[] = "\r\r" VERSION_STRING "\r";
 
-
 static char m_cmdbuf[CMD_BUFSIZE+1];    // one extra for null terminator
 static uint8_t m_cmdlen;
 
@@ -26,30 +25,32 @@ static enum cmdstate_t
 	eCmd_Prompt = 0,
 	eCmd_Receive,
 	eCmd_Run,
+	eCmd_Help
 } m_cmdstate;
 
-// attributes cannot be used with constants, so we have to define these separately
-static const prog_char m_crchelp[]   = "Calculate app crc";
-static const prog_char m_helphelp[]  = "Print help";
-static const prog_char m_verhelp[]   = "Show version";
+static uint8_t m_helpindex;             // which command we're printing help for
 
-static cmdinfo_t m_cmds[MAX_CMDS] = {{"crc", CalcAppCRC_CMD, m_crchelp},
-									 {"h", PrintHelp_CMD, m_helphelp},
-									 {"v", ShowVersion_CMD, m_verhelp}};
-static uint8_t m_numcmds = 3;
+static cmdinfo_t m_cmds[CMD_MAXCMDS];
+static uint8_t m_numcmds = 0;
 
 
-/* Initialize the interface by printing out version info and setting up the interface state machine.
+/* Initialize the interface by printing out version info, setting up the interface state machine,
+ * and registering common commands.
  */
 void Cmd_InitInterface()
 {
 	m_cmdstate = eCmd_Prompt;
+	m_helpindex = 0;
 	UART_TxString_P(m_versionstr);
+
+	Cmd_RegisterCommand("crc", CalcAppCRC_CMD,  PSTR("Calculate app CRC"));
+	Cmd_RegisterCommand("h",   PrintHelp_CMD,   PSTR("Print help"));
+	Cmd_RegisterCommand("v",   ShowVersion_CMD, PSTR("Show version"));
 }
 
 /* Add a new interface command that can be called via the connected serial console.  Parameters are
  * the seial command, the function that the command will call, and a short help string for the
- * command.  The maximum number of commands is deteremined by the MAX_CMDS macro.  This does not
+ * command.  The maximum number of commands is deteremined by the CMD_MAXCMDS macro.  This does not
  * check for duplicate command names.
  *
  * Return True if a new command was added and False if it couldn't be added.
@@ -58,7 +59,7 @@ bool Cmd_RegisterCommand(const char *cmdname, cmdhandler_t cmdfunc, const prog_c
 {
 	bool result = false;
 
-	if(m_numcmds < MAX_CMDS)
+	if(m_numcmds < CMD_MAXCMDS)
 	{
 		m_cmds[m_numcmds].name = cmdname;
 		m_cmds[m_numcmds].cmdfunc = cmdfunc;
@@ -78,10 +79,13 @@ void Cmd_ProcessInterface()
 	switch(m_cmdstate)
 	{
 		case eCmd_Prompt:
- 			UART_TxData("\r#> ", 4);
-			m_cmdlen = 0;
-			memset(m_cmdbuf, 0, sizeof(m_cmdbuf));
-			++m_cmdstate;
+			if(UART_TxAvailable() >= 4)
+			{
+				UART_TxData("\r#> ", 4);
+				m_cmdlen = 0;
+				memset(m_cmdbuf, 0, sizeof(m_cmdbuf));
+				++m_cmdstate;
+			}
 			break;
 		case eCmd_Receive:
 			if(UART_RxAvailable() > 0)
@@ -130,9 +134,41 @@ void Cmd_ProcessInterface()
 				if(i == m_numcmds)
 					UART_TxData_P(PSTR("Unknown command\r"), 16);
 			}
-			m_cmdstate = eCmd_Prompt;
+			if(eCmd_Run == m_cmdstate)
+				m_cmdstate = eCmd_Prompt;
 			break;
+		case eCmd_Help:
+		{
+			size_t txlen = strlen(m_cmds[m_helpindex].name) + 1;
+
+			if(m_helpindex < m_numcmds)
+			{
+				if(m_cmds[m_helpindex].help != NULL)
+					txlen += strlen_P(m_cmds[m_helpindex].help) + 4;
+
+				if(UART_TxAvailable() >= txlen)
+				{
+					UART_TxString(m_cmds[m_helpindex].name);
+
+					if(m_cmds[m_helpindex].help != NULL)
+					{
+						UART_TxData("\t - ", 4);
+						UART_TxString_P(m_cmds[m_helpindex].help);
+					}
+
+					UART_TxChar('\r');
+					m_helpindex++;
+				}
+			}
+			else
+			{
+				m_cmdstate = eCmd_Prompt;
+				m_helpindex = 0;
+			}
+		}
+		break;
 		default:
+			m_cmdstate = eCmd_Prompt;
 			break;
 	}
 }
@@ -168,29 +204,7 @@ static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
  */
 static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
 {
-	int i;
-	
-	for(i = 0; i < m_numcmds; ++i)
-	{
-		while(UART_TxAvailable() < strlen(m_cmds[i].name) + 1)
-			;
-
-		UART_TxString(m_cmds[i].name);
-
-		if(m_cmds[i].help != NULL)
-		{
-			while(UART_TxAvailable() < (strlen_P(m_cmds[i].help) + 4))
-				;
-
-			UART_TxData(" - ", 3);
-			UART_TxString_P(m_cmds[i].help);
-		}
-		
-		UART_TxChar('\r');
-	}
-
-	while(UART_TxAvailable() < 5)
-		;
+	m_cmdstate = eCmd_Help;
 }
 
 /* Show the version string for the app/bootloader.  This is defined in system.h, which is where

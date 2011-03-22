@@ -10,10 +10,10 @@
 #include <string.h>
 
 // these assume normal speed asynchronous mode
-#define BAUD2REG (((F_CPU / (8 * BAUDRATE)) - 1) / 2)       // rounds to nearest baud reg value
-#define REG2BAUD (F_CPU / (16 * (BAUD2REG + 1)))            // baud reg value to actual rate
+#define BAUD2REG (((F_CPU / (8 * UART_BAUDRATE)) - 1) / 2)       // rounds to nearest baud reg value
+#define REG2BAUD (F_CPU / (16 * (BAUD2REG + 1)))                 // baud reg value to actual rate
 
-#define BAUDERROR ((1000L*REG2BAUD / BAUDRATE) - 1000L)     // gives per mil rather than percent
+#define BAUDERROR ((1000L*REG2BAUD / UART_BAUDRATE) - 1000L)     // gives per mil rather than percent
 
 #if (BAUDERROR > 20  ||  BAUDERROR < -20)
 #  error Baud rate error greater than 2%.  See Section 19 of the Reference Manual.

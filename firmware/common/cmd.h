@@ -17,8 +17,8 @@
 #  define CMD_BUFSIZE  32
 #endif
 
-#ifndef MAX_CMDS
-#  define MAX_CMDS 10
+#ifndef CMD_MAXCMDS
+#  define CMD_MAXCMDS 10
 #endif
 
 // takes a pointer to the command buffer and length of the string

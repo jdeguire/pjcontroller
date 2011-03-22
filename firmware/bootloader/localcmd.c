@@ -32,16 +32,6 @@ typedef enum
 	eCmdErrVerify              // page verify failed
 } cmdstatus_t;
 
-static const prog_char m_jumpapphelp[]   = "Jump to app";
-static const prog_char m_restartblhelp[] = "Restart bootloader";
-static const prog_char m_eraseapphelp[]  = "Erase app";
-static const prog_char m_eraseeephelp[]  = "Erase EEPROM";
-static const prog_char m_progpagehelp[]  = "Program page";
-static const prog_char m_writecrchelp[]  = "Write app CRC";
-static const prog_char m_pagesizehelp[]  = "Get page size";
-static const prog_char m_numpageshelp[]  = "Get number of app pages";
-static const prog_char m_statushelp[]    = "Get bootup status";
-
 
 static uint16_t htou(const char *str, const char **endptr)
 {
@@ -246,15 +236,16 @@ static void PrintBootStatus_CMD(const char* cmdbuf, uint8_t len)
 	PrintBootStatus();
 }
 
+
 void RegisterBootloaderCommands()
 {
-	Cmd_RegisterCommand("j",  JumpToApp_CMD,         m_jumpapphelp);
-	Cmd_RegisterCommand("r",  RestartBootloader_CMD, m_restartblhelp);
-	Cmd_RegisterCommand("ea", EraseApp_CMD,          m_eraseapphelp);
-	Cmd_RegisterCommand("ee", EraseEEPROM_CMD,       m_eraseeephelp);
-	Cmd_RegisterCommand("pp", ProgramPage_CMD,       m_progpagehelp);
-	Cmd_RegisterCommand("wc", WriteCRC_CMD,          m_writecrchelp);
-	Cmd_RegisterCommand("ps", PageSize_CMD,          m_pagesizehelp);
-	Cmd_RegisterCommand("pn", NumAppPages_CMD,       m_numpageshelp);
-	Cmd_RegisterCommand("s",  PrintBootStatus_CMD,   m_statushelp);
+	Cmd_RegisterCommand("j",  JumpToApp_CMD,         PSTR("Jump to app"));
+	Cmd_RegisterCommand("r",  RestartBootloader_CMD, PSTR("Restart bootloader"));
+	Cmd_RegisterCommand("ea", EraseApp_CMD,          PSTR("Erase app"));
+	Cmd_RegisterCommand("ee", EraseEEPROM_CMD,       PSTR("Erase EEPROM"));
+	Cmd_RegisterCommand("pp", ProgramPage_CMD,       PSTR("Program page"));
+	Cmd_RegisterCommand("wc", WriteCRC_CMD,          PSTR("Write app CRC"));
+	Cmd_RegisterCommand("ps", PageSize_CMD,          PSTR("Get page size"));
+	Cmd_RegisterCommand("pn", NumAppPages_CMD,       PSTR("Get number of app pages"));
+	Cmd_RegisterCommand("s",  PrintBootStatus_CMD,   PSTR("Get bootup status"));
 }

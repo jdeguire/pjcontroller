@@ -1,12 +1,6 @@
 /* sharedmem.c
  *
- * The bootloader and application need to be able to share parts of program memory and RAM.  For
- * example, the bootloader and app need to be able to access a portion of flash where the app's
- * checksum will be stored.  Also, a location in RAM is reserved so that the app can tell the
- * bootloader to reload the app on startup.
- *
- * Functions for dealing with app space and these shared spaces are here, such as a function to jump
- * to the bootloader, restart the app, and get the application's checksum.
+ * Used for routines and memory shared between the PJC Bootloader and the application.
  */
 
 #include "sharedmem.h"

@@ -1,7 +1,7 @@
 /* regmap.h
  *
  * A register map for the ATmega328P (and the related 168/88/48/etc.) allowing access to the
- * device's special function registers as though they were structures.  The addresses are known at
+ * device's special function registers as though they were structures.	The addresses are known at
  * compile time, meaning that the compiler can use the faster SBI/CBI/IN/OUT instructions as
  * appropriate.
  */
@@ -65,7 +65,7 @@ struct PINCbits_t
 	uint8_t pinc4:1; 
 	uint8_t pinc5:1;
 	uint8_t pinc6:1; 
-	uint8_t      :1;
+	uint8_t		 :1;
 };
 
 #define PINCbits (*(volatile struct PINCbits_t *)_SFR_MEM_ADDR(PINC))
@@ -80,7 +80,7 @@ struct DDRCbits_t
 	uint8_t ddc4:1;
 	uint8_t ddc5:1;
 	uint8_t ddc6:1;
-	uint8_t     :1;
+	uint8_t		:1;
 };
 
 #define DDRBbits (*(volatile struct DDRBbits_t *)_SFR_MEM_ADDR(DDRB))
@@ -95,7 +95,7 @@ struct PORTCbits_t
 	uint8_t pc4:1; 
 	uint8_t pc5:1;
 	uint8_t pc6:1; 
-	uint8_t    :1;
+	uint8_t	   :1;
 };
 
 #define PORTCbits (*(volatile struct PORTCbits_t *)_SFR_MEM_ADDR(PORTC))
@@ -148,10 +148,10 @@ struct PORTDbits_t
 
 struct TIFR0bits_t
 {
-	uint8_t  tov0:1;
+	uint8_t	 tov0:1;
 	uint8_t ocf0a:1;
 	uint8_t ocf0b:1;
-    uint8_t      :5;
+	uint8_t		 :5;
 };
 
 #define TIFR0bits (*(volatile struct TIFR0bits_t *)_SFR_MEM_ADDR(TIFR0))
@@ -159,12 +159,12 @@ struct TIFR0bits_t
 
 struct TIFR1bits_t
 {
-	uint8_t  tov1:1;
+	uint8_t	 tov1:1;
 	uint8_t ocf1a:1;
 	uint8_t ocf1b:1;
-    uint8_t      :2;
-	uint8_t  icf1:1;
-    uint8_t      :2;
+	uint8_t		 :2;
+	uint8_t	 icf1:1;
+	uint8_t		 :2;
 };
 
 #define TIFR1bits (*(volatile struct TIFR1bits_t *)_SFR_MEM_ADDR(TIFR1))
@@ -172,10 +172,10 @@ struct TIFR1bits_t
 
 struct TIFR2bits_t
 {
-	uint8_t  tov2:1;
+	uint8_t	 tov2:1;
 	uint8_t ocf2a:1;
 	uint8_t ocf2b:1;
-    uint8_t      :5;
+	uint8_t		 :5;
 };
 
 #define TIFR2bits (*(volatile struct TIFR2bits_t *)_SFR_MEM_ADDR(TIFR2))
@@ -186,7 +186,7 @@ struct PCIFRbits_t
 	uint8_t pcif0:1;
 	uint8_t pcif1:1;
 	uint8_t pcif2:1;
-    uint8_t      :5;
+	uint8_t		 :5;
 };
 
 #define PCIFRbits (*(volatile struct PCIFRbits_t *)_SFR_MEM_ADDR(PCIFR))
@@ -196,7 +196,7 @@ struct EIFRbits_t
 {
 	uint8_t intf0:1;
 	uint8_t intf1:1;
-	uint8_t      :6;
+	uint8_t		 :6;
 };
 
 #define EIFRbits (*(volatile struct EIFRbits_t *)_SFR_MEM_ADDR(EIFR))
@@ -206,7 +206,7 @@ struct EIMSKbits_t
 {
 	uint8_t int0:1;
 	uint8_t int1:1;
-    uint8_t     :6;
+	uint8_t		:6;
 };
 
 #define EIMSKbits (*(volatile struct EIMSKbits_t *)_SFR_MEM_ADDR(EIMSK))
@@ -233,19 +233,19 @@ union EECRbits_t
 {
 	struct
 	{
-		uint8_t  eere:1;
-		uint8_t  eepe:1;
+		uint8_t	 eere:1;
+		uint8_t	 eepe:1;
 		uint8_t eempe:1;
 		uint8_t eerie:1;
 		uint8_t eepm0:1;
 		uint8_t eepm1:1;
-        uint8_t      :2;
+		uint8_t		 :2;
 	};
 	struct
 	{
-	    uint8_t     :4;
+		uint8_t		:4;
 		uint8_t eepm:2;
-	    uint8_t     :2;
+		uint8_t		:2;
 	};
 };
 
@@ -260,9 +260,9 @@ union EECRbits_t
 struct GTCCRbits_t
 {
 	uint8_t psrsync:1;
-	uint8_t  psrasy:1;
-    uint8_t        :5;
-	uint8_t     tsm:1;
+	uint8_t	 psrasy:1;
+	uint8_t		   :5;
+	uint8_t		tsm:1;
 };
 
 #define GTCCRbits (*(volatile struct GTCCRbits_t *)_SFR_MEM_ADDR(GTCCR))
@@ -272,9 +272,9 @@ union TCCR0Abits_t
 {
 	struct
 	{
-		uint8_t  wgm00:1;
-		uint8_t  wgm01:1;
-	    uint8_t       :2;
+		uint8_t	 wgm00:1;
+		uint8_t	 wgm01:1;
+		uint8_t		  :2;
 		uint8_t com0b0:1;
 		uint8_t com0b1:1;
 		uint8_t com0a0:1;
@@ -282,8 +282,8 @@ union TCCR0Abits_t
 	};
 	struct
 	{
-		uint8_t  wgm0:2;
-	    uint8_t      :2;
+		uint8_t	 wgm0:2;
+		uint8_t		 :2;
 		uint8_t com0b:2;
 		uint8_t com0a:2;
 	};
@@ -296,18 +296,18 @@ union TCCR0Bbits_t
 {
 	struct
 	{
-		uint8_t  cs00:1;
-		uint8_t  cs01:1;
-		uint8_t  cs02:1;
+		uint8_t	 cs00:1;
+		uint8_t	 cs01:1;
+		uint8_t	 cs02:1;
 		uint8_t wgm02:1;
-	    uint8_t      :2;
+		uint8_t		 :2;
 		uint8_t foc0b:1;
 		uint8_t foc0a:1;
 	};
 	struct
 	{
 		uint8_t cs0:3;
-	    uint8_t    :5;
+		uint8_t	   :5;
 	};
 };
 
@@ -329,13 +329,13 @@ union SPCRbits_t
 		uint8_t cpol:1;
 		uint8_t mstr:1;
 		uint8_t dord:1;
-		uint8_t  spe:1;
+		uint8_t	 spe:1;
 		uint8_t spie:1;
 	};
 	struct
 	{
 		uint8_t spr:2;
-	    uint8_t    :6;
+		uint8_t	   :6;
 	};
 };
 
@@ -345,9 +345,9 @@ union SPCRbits_t
 struct SPSRbits_t
 {
 	uint8_t spi2x:1;
-    uint8_t      :5;
-	uint8_t  wcol:1;
-	uint8_t  spif:1;
+	uint8_t		 :5;
+	uint8_t	 wcol:1;
+	uint8_t	 spif:1;
 };
 
 #define SPSRbits (*(volatile struct SPSRbits_t *)_SFR_MEM_ADDR(SPSR))
@@ -362,17 +362,17 @@ union ACSRbits_t
 	{
 		uint8_t acis0:1;
 		uint8_t acis1:1;
-		uint8_t  acic:1;
-		uint8_t  acie:1;
-		uint8_t   aci:1;
-		uint8_t   aco:1;
-		uint8_t  acbg:1;
-		uint8_t   acd:1;
+		uint8_t	 acic:1;
+		uint8_t	 acie:1;
+		uint8_t	  aci:1;
+		uint8_t	  aco:1;
+		uint8_t	 acbg:1;
+		uint8_t	  acd:1;
 	};
 	struct
 	{
 		uint8_t acis:2;
-	    uint8_t     :6;
+		uint8_t		:6;
 	};
 };
 
@@ -383,17 +383,17 @@ union SMCRbits_t
 {
 	struct
 	{
-		uint8_t  se:1;
+		uint8_t	 se:1;
 		uint8_t sm0:1;
 		uint8_t sm1:1;
 		uint8_t sm2:1;
-        uint8_t    :4;
+		uint8_t	   :4;
 	};
 	struct
 	{
-	    uint8_t   :1;
+		uint8_t	  :1;
 		uint8_t sm:3;
-	    uint8_t   :4;
+		uint8_t	  :4;
 	};
 };
 
@@ -402,11 +402,11 @@ union SMCRbits_t
 
 struct MCUSRbits_t
 {
-	uint8_t  porf:1;
+	uint8_t	 porf:1;
 	uint8_t extrf:1;
-	uint8_t  borf:1;
-	uint8_t  wdrf:1;
-    uint8_t      :4;
+	uint8_t	 borf:1;
+	uint8_t	 wdrf:1;
+	uint8_t		 :4;
 };
 
 #define MCUSRbits (*(volatile struct MCUSRbits_t *)_SFR_MEM_ADDR(MCUSR))
@@ -414,13 +414,13 @@ struct MCUSRbits_t
 
 struct MCUCRbits_t
 {
-	uint8_t  ivce:1;
+	uint8_t	 ivce:1;
 	uint8_t ivsel:1;
-    uint8_t      :2;
-	uint8_t   pud:1;
+	uint8_t		 :2;
+	uint8_t	  pud:1;
 	uint8_t bodse:1;
-	uint8_t  bods:1;
-    uint8_t      :1;
+	uint8_t	 bods:1;
+	uint8_t		 :1;
 };
 
 #define MCUCRbits (*(volatile struct MCUCRbits_t *)_SFR_MEM_ADDR(MCUCR))
@@ -429,13 +429,13 @@ struct MCUCRbits_t
 struct SPMCSRbits_t
 {
 	uint8_t selfprgen:1;
-	uint8_t     pgers:1;
-	uint8_t     pgwrt:1;
-	uint8_t    blbset:1;
-	uint8_t    rwwsre:1;
-    uint8_t          :1;
-	uint8_t     rwwsb:1;
-	uint8_t     spmie:1;
+	uint8_t		pgers:1;
+	uint8_t		pgwrt:1;
+	uint8_t	   blbset:1;
+	uint8_t	   rwwsre:1;
+	uint8_t			 :1;
+	uint8_t		rwwsb:1;
+	uint8_t		spmie:1;
 };
 
 #define SPMCSRbits (*(volatile struct SPMCSRbits_t *)_SFR_MEM_ADDR(SPMCSR))
@@ -457,10 +457,10 @@ struct SPLbits_t
 
 struct SPHbits_t
 {
-	uint8_t  sp8:1;
-	uint8_t  sp9:1;
+	uint8_t	 sp8:1;
+	uint8_t	 sp9:1;
 	uint8_t sp10:1;
-    uint8_t     :5;
+	uint8_t		:5;
 };
 
 #define SPHbits (*(volatile struct SPHbits_t *)_SFR_MEM_ADDR(SPH))
@@ -488,7 +488,7 @@ union WDTCSRbits_t
 		uint8_t wdp0:1;
 		uint8_t wdp1:1;
 		uint8_t wdp2:1;
-		uint8_t  wde:1;
+		uint8_t	 wde:1;
 		uint8_t wdce:1;
 		uint8_t wdp3:1;
 		uint8_t wdie:1;
@@ -497,7 +497,7 @@ union WDTCSRbits_t
 	struct
 	{
 		uint8_t wdp:3;
-	    uint8_t    :5;
+		uint8_t	   :5;
 	};
 };
 
@@ -512,13 +512,13 @@ union CLKPRbits_t
 		uint8_t clkps1:1;
 		uint8_t clkps2:1;
 		uint8_t clkps3:1;
-	    uint8_t       :3;
+		uint8_t		  :3;
 		uint8_t clkpce:1;
 	};
 	struct
 	{
 		uint8_t clkps:4;
-	    uint8_t      :4;
+		uint8_t		 :4;
 	};
 };
 
@@ -527,14 +527,14 @@ union CLKPRbits_t
 
 struct PRRbits_t
 {
-	uint8_t    pradc:1;
+	uint8_t	   pradc:1;
 	uint8_t prusart0:1;
-	uint8_t    prspi:1;
-	uint8_t   prtim1:1;
-    uint8_t         :1;
-	uint8_t   prtim0:1;
-	uint8_t   prtim2:1;
-	uint8_t    prtwi:1;
+	uint8_t	   prspi:1;
+	uint8_t	  prtim1:1;
+	uint8_t			:1;
+	uint8_t	  prtim0:1;
+	uint8_t	  prtim2:1;
+	uint8_t	   prtwi:1;
 };
 
 #define PRRbits (*(volatile struct PRRbits_t *)_SFR_MEM_ADDR(PRR))
@@ -548,7 +548,7 @@ struct PCICRbits_t
 	uint8_t pcie0:1;
 	uint8_t pcie1:1;
 	uint8_t pcie2:1;
-    uint8_t      :5;
+	uint8_t		 :5;
 };
 
 #define PCICRbits (*(volatile struct PCICRbits_t *)_SFR_MEM_ADDR(PCICR))
@@ -562,13 +562,13 @@ union EICRAbits_t
 		uint8_t isc01:1;
 		uint8_t isc10:1;
 		uint8_t isc11:1;
-	    uint8_t      :4;
+		uint8_t		 :4;
 	};
 	struct
 	{
 		uint8_t isc0:2;
 		uint8_t isc1:2;
-	    uint8_t     :4;
+		uint8_t		:4;
 	};
 };
 
@@ -592,8 +592,8 @@ struct PCMSK0bits_t
 
 struct PCMSK1bits_t
 {
-	uint8_t  pcint8:1;
-	uint8_t  pcint9:1;
+	uint8_t	 pcint8:1;
+	uint8_t	 pcint9:1;
 	uint8_t pcint10:1;
 	uint8_t pcint11:1;
 	uint8_t pcint12:1;
@@ -622,10 +622,10 @@ struct PCMSK2bits_t
 
 struct TIMSK0bits_t
 {
-	uint8_t  toie0:1;
+	uint8_t	 toie0:1;
 	uint8_t ocie0a:1;
 	uint8_t ocie0b:1;
-    uint8_t       :5;
+	uint8_t		  :5;
 };
 
 #define TIMSK0bits (*(volatile struct TIMSK0bits_t *)_SFR_MEM_ADDR(TIMSK0))
@@ -633,12 +633,12 @@ struct TIMSK0bits_t
 
 struct TIMSK1bits_t
 {
-	uint8_t  toie1:1;
+	uint8_t	 toie1:1;
 	uint8_t ocie1a:1;
 	uint8_t ocie1b:1;
-    uint8_t       :2;
-	uint8_t  icie1:1;
-    uint8_t       :2;
+	uint8_t		  :2;
+	uint8_t	 icie1:1;
+	uint8_t		  :2;
 };
 
 #define TIMSK1bits (*(volatile struct TIMSK1bits_t *)_SFR_MEM_ADDR(TIMSK1))
@@ -646,10 +646,10 @@ struct TIMSK1bits_t
 
 struct TIMSK2bits_t
 {
-	uint8_t  toie2:1;
+	uint8_t	 toie2:1;
 	uint8_t ocie2a:1;
 	uint8_t ocie2b:1;
-    uint8_t       :5;
+	uint8_t		  :5;
 };
 
 #define TIMSK2bits (*(volatile struct TIMSK2bits_t *)_SFR_MEM_ADDR(TIMSK2))
@@ -666,16 +666,16 @@ union ADCSRAbits_t
 		uint8_t adps0:1;
 		uint8_t adps1:1;
 		uint8_t adps2:1;
-		uint8_t  adie:1;
-		uint8_t  adif:1;
+		uint8_t	 adie:1;
+		uint8_t	 adif:1;
 		uint8_t adate:1;
-		uint8_t  adsc:1;
-		uint8_t  aden:1;
+		uint8_t	 adsc:1;
+		uint8_t	 aden:1;
 	};
 	struct
 	{
 		uint8_t adps:3;
-	    uint8_t     :5;
+		uint8_t		:5;
 	};
 };
 
@@ -689,14 +689,14 @@ union ADCSRBbits_t
 		uint8_t adts0:1;
 		uint8_t adts1:1;
 		uint8_t adts2:1;
-	    uint8_t      :3;
-		uint8_t  acme:1;
-	    uint8_t      :1;
+		uint8_t		 :3;
+		uint8_t	 acme:1;
+		uint8_t		 :1;
 	};
 	struct
 	{
 		uint8_t adts:3;
-	    uint8_t     :5;
+		uint8_t		:5;
 	};
 };
 
@@ -707,19 +707,19 @@ union ADMUXbits_t
 {
 	struct
 	{
-		uint8_t  mux0:1;
-		uint8_t  mux1:1;
-		uint8_t  mux2:1;
-		uint8_t  mux3:1;
-	    uint8_t      :1;
+		uint8_t	 mux0:1;
+		uint8_t	 mux1:1;
+		uint8_t	 mux2:1;
+		uint8_t	 mux3:1;
+		uint8_t		 :1;
 		uint8_t adlar:1;
 		uint8_t refs0:1;
 		uint8_t refs1:1;
 	};
 	struct
 	{
-		uint8_t  mux:4;
-	    uint8_t     :2;
+		uint8_t	 mux:4;
+		uint8_t		:2;
 		uint8_t refs:2;
 	};
 };
@@ -735,7 +735,7 @@ struct DIDR0bits_t
 	uint8_t adc3d:1;
 	uint8_t adc4d:1;
 	uint8_t adc5d:1;
-    uint8_t      :2;
+	uint8_t		 :2;
 };
 
 #define DIDR0bits (*(volatile struct DIDR0bits_t *)_SFR_MEM_ADDR(DIDR0))
@@ -745,7 +745,7 @@ struct DIDR1bits_t
 {
 	uint8_t ain0d:1;
 	uint8_t ain1d:1;
-    uint8_t      :6;
+	uint8_t		 :6;
 };
 
 #define DIDR1bits (*(volatile struct DIDR1bits_t *)_SFR_MEM_ADDR(DIDR1))
@@ -755,9 +755,9 @@ union TCCR1Abits_t
 {
 	struct
 	{
-		uint8_t  wgm10:1;
-		uint8_t  wgm11:1;
-	    uint8_t       :2;
+		uint8_t	 wgm10:1;
+		uint8_t	 wgm11:1;
+		uint8_t		  :2;
 		uint8_t com1b0:1;
 		uint8_t com1b1:1;
 		uint8_t com1a0:1;
@@ -765,8 +765,8 @@ union TCCR1Abits_t
 	};
 	struct
 	{
-		uint8_t  wgm1:2;
-	    uint8_t      :2;
+		uint8_t	 wgm1:2;
+		uint8_t		 :2;
 		uint8_t com1b:2;
 		uint8_t com1a:2;
 	};
@@ -779,20 +779,20 @@ union TCCR1Bbits_t
 {
 	struct
 	{
-		uint8_t  cs10:1;
-		uint8_t  cs11:1;
-		uint8_t  cs12:1;
+		uint8_t	 cs10:1;
+		uint8_t	 cs11:1;
+		uint8_t	 cs12:1;
 		uint8_t wgm12:1;
 		uint8_t wgm13:1;
-	    uint8_t      :1;
+		uint8_t		 :1;
 		uint8_t ices1:1;
 		uint8_t icnc1:1;
 	};
 	struct
 	{
 		uint8_t cs1:3;
-	    uint8_t wgm:2;
-	    uint8_t    :3;
+		uint8_t wgm:2;
+		uint8_t	   :3;
 	};
 };
 
@@ -801,7 +801,7 @@ union TCCR1Bbits_t
 
 struct TCCR1Cbits_t
 {
-    uint8_t      :6;
+	uint8_t		 :6;
 	uint8_t foc1b:1;
 	uint8_t foc1a:1;
 };
@@ -821,9 +821,9 @@ union TCCR2Abits_t
 {
 	struct
 	{
-		uint8_t  wgm20:1;
-		uint8_t  wgm21:1;
-	    uint8_t       :2;
+		uint8_t	 wgm20:1;
+		uint8_t	 wgm21:1;
+		uint8_t		  :2;
 		uint8_t com2b0:1;
 		uint8_t com2b1:1;
 		uint8_t com2a0:1;
@@ -831,8 +831,8 @@ union TCCR2Abits_t
 	};
 	struct
 	{
-		uint8_t  wgm0:2;
-	    uint8_t      :2;
+		uint8_t	 wgm0:2;
+		uint8_t		 :2;
 		uint8_t com2b:2;
 		uint8_t com2a:2;
 	};
@@ -845,18 +845,18 @@ union TCCR2Bbits_t
 {
 	struct
 	{
-		uint8_t  cs20:1;
-		uint8_t  cs21:1;
-		uint8_t  cs22:1;
+		uint8_t	 cs20:1;
+		uint8_t	 cs21:1;
+		uint8_t	 cs22:1;
 		uint8_t wmg22:1;
-	    uint8_t      :2;
+		uint8_t		 :2;
 		uint8_t foc2b:1;
 		uint8_t foc2a:1;
 	};
 	struct
 	{
 		uint8_t cs2:3;
-	    uint8_t    :5;
+		uint8_t	   :5;
 	};
 };
 
@@ -874,10 +874,10 @@ struct ASSRbits_t
 	uint8_t tcr2aub:1;
 	uint8_t ocr2bub:1;
 	uint8_t ocr2aub:1;
-	uint8_t  tcn2ub:1;
-	uint8_t     as2:1;
-	uint8_t   exclk:1;
-    uint8_t        :1;
+	uint8_t	 tcn2ub:1;
+	uint8_t		as2:1;
+	uint8_t	  exclk:1;
+	uint8_t		   :1;
 };
 
 #define ASSRbits (*(volatile struct ASSRbits_t *)_SFR_MEM_ADDR(ASSR))
@@ -892,18 +892,18 @@ union TWSRbits_t
 	{
 		uint8_t twps0:1;
 		uint8_t twps1:1;
-	    uint8_t      :1;
-		uint8_t  tws3:1;
-		uint8_t  tws4:1;
-		uint8_t  tws5:1;
-		uint8_t  tws6:1;
-		uint8_t  tws7:1;
+		uint8_t		 :1;
+		uint8_t	 tws3:1;
+		uint8_t	 tws4:1;
+		uint8_t	 tws5:1;
+		uint8_t	 tws6:1;
+		uint8_t	 tws7:1;
 	};
 	struct
 	{
 		uint8_t twps:2;
-	    uint8_t     :1;
-		uint8_t  tws:5;
+		uint8_t		:1;
+		uint8_t	 tws:5;
 	};
 };
 
@@ -915,17 +915,17 @@ union TWARbits_t
 	struct
 	{
 		uint8_t twgce:1;
-		uint8_t  twa0:1;
-		uint8_t  twa1:1;
-		uint8_t  twa2:1;
-		uint8_t  twa3:1;
-		uint8_t  twa4:1;
-		uint8_t  twa5:1;
-		uint8_t  twa6:1;
+		uint8_t	 twa0:1;
+		uint8_t	 twa1:1;
+		uint8_t	 twa2:1;
+		uint8_t	 twa3:1;
+		uint8_t	 twa4:1;
+		uint8_t	 twa5:1;
+		uint8_t	 twa6:1;
 	};
 	struct
 	{
-	    uint8_t    :1;
+		uint8_t	   :1;
 		uint8_t twa:7;
 	};
 };
@@ -938,13 +938,13 @@ union TWARbits_t
 
 struct TWCRbits_t
 {
-	uint8_t  twie:1;
-    uint8_t      :1;
-	uint8_t  twen:1;
-	uint8_t  twwc:1;
+	uint8_t	 twie:1;
+	uint8_t		 :1;
+	uint8_t	 twen:1;
+	uint8_t	 twwc:1;
 	uint8_t twsto:1;
 	uint8_t twsta:1;
-	uint8_t  twea:1;
+	uint8_t	 twea:1;
 	uint8_t twint:1;
 };
 
@@ -955,7 +955,7 @@ union TWAMRbits_t
 {
 	struct
 	{
-	    uint8_t      :1;
+		uint8_t		 :1;
 		uint8_t twam0:1;
 		uint8_t twam1:1;
 		uint8_t twam2:1;
@@ -966,7 +966,7 @@ union TWAMRbits_t
 	};
 	struct
 	{
-	    uint8_t     :1;
+		uint8_t		:1;
 		uint8_t twam:1;
 	};
 };
@@ -977,13 +977,13 @@ union TWAMRbits_t
 struct UCSR0Abits_t
 {
 	uint8_t mpcm0:1;
-	uint8_t  u2x0:1;
-	uint8_t  upe0:1;
-	uint8_t  dor0:1;
-	uint8_t   fe0:1;
+	uint8_t	 u2x0:1;
+	uint8_t	 upe0:1;
+	uint8_t	 dor0:1;
+	uint8_t	  fe0:1;
 	uint8_t udre0:1;
-	uint8_t  txc0:1;
-	uint8_t  rxc0:1;
+	uint8_t	 txc0:1;
+	uint8_t	 rxc0:1;
 };
 
 #define UCSR0Abits (*(volatile struct UCSR0Abits_t *)_SFR_MEM_ADDR(UCSR0A))
@@ -991,11 +991,11 @@ struct UCSR0Abits_t
 
 struct UCSR0Bbits_t
 {
-	uint8_t  txb80:1;
-	uint8_t  rxb80:1;
+	uint8_t	 txb80:1;
+	uint8_t	 rxb80:1;
 	uint8_t ucsz02:1;
-	uint8_t  txen0:1;
-	uint8_t  rxen0:1;
+	uint8_t	 txen0:1;
+	uint8_t	 rxen0:1;
 	uint8_t udrie0:1;
 	uint8_t txcie0:1;
 	uint8_t rxcie0:1;
@@ -1008,28 +1008,28 @@ union UCSR0Cbits_t
 {
 	struct
 	{
-		uint8_t  ucpol0:1;
-		uint8_t  ucsz00:1;
-		uint8_t  ucsz01:1;
-		uint8_t   usbs0:1;
-		uint8_t   upm00:1;
-		uint8_t   upm01:1;
+		uint8_t	 ucpol0:1;
+		uint8_t	 ucsz00:1;
+		uint8_t	 ucsz01:1;
+		uint8_t	  usbs0:1;
+		uint8_t	  upm00:1;
+		uint8_t	  upm01:1;
 		uint8_t umsel00:1;
 		uint8_t umsel01:1;
 	};
 	struct
 	{
-	    uint8_t       :1;
+		uint8_t		  :1;
 		uint8_t ucpha0:1;
 		uint8_t udord0:1;
-	    uint8_t       :5;
+		uint8_t		  :5;
 	};
 	struct
 	{
-	    uint8_t       :1;
-		uint8_t   ucsz:2;
-	    uint8_t       :1;
-		uint8_t   upm0:2;
+		uint8_t		  :1;
+		uint8_t	  ucsz:2;
+		uint8_t		  :1;
+		uint8_t	  upm0:2;
 		uint8_t umsel0:2;
 	};
 };

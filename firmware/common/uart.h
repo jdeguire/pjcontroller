@@ -19,8 +19,8 @@
 #define _UART_RXIE(n)  (UCSR0Bbits.rxcie0 = n)
 #define _UART_TXIE(n)  (UCSR0Bbits.udrie0 = n)
 
-#ifndef BUADRATE
-#  define BAUDRATE 57600
+#ifndef UART_BAUDRATE
+#  define UART_BAUDRATE 115200
 #endif
 
 #ifndef UART_TX_BUFSIZE

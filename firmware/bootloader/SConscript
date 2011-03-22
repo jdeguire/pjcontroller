@@ -53,7 +53,7 @@ hexfile = ourdir + os.sep + outputfile
 boothex_act = Action(env['OBJCOPY'] + ' -O ihex -R .eeprom \"' + elffile  + '\" \"' + hexfile + '\"')
 
 # a string forming a base avrdude command that we can just add on to in the targets
-prog_base = avr_prog + ' -p ' + env['MCU'] + ' -c ' + icspdevice
+prog_base = avr_prog + ' -p ' + env['MCU'] + ' -B1 -c ' + icspdevice
 
 
 # Create a clone of the base environment we can set up just for the bootloader
