@@ -94,7 +94,7 @@ static void EraseApp_CMD(const char* cmdbuf, uint8_t len)
 	uint16_t buf[SPM_PAGESIZE / 2];
 	cmdstatus_t status = eCmdErrArgs;
 
-	if(0 == strcmp(cmdbuf + 3, "yes"))
+	if(0 == strncmp(cmdbuf + 3, "yes", 3))
 	{
 		// invalidate app checksum by zeroing out location in which it is stored
 		memset(buf, 0xFF, sizeof(buf) - 4);
@@ -114,7 +114,7 @@ static void EraseEEPROM_CMD(const char* cmdbuf, uint8_t len)
 {
 	cmdstatus_t status = eCmdErrArgs;
 
-	if(0 == strcmp(cmdbuf + 3, "yes"))
+	if(0 == strncmp(cmdbuf + 3, "yes", 3))
 	{
 		EEPROM_EraseData();
 		status = eCmdOK;
