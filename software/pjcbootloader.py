@@ -19,7 +19,7 @@ class PJCBootloader:
     code updates, such as erasing flash and EEPROM and getting a firmware app's checksum.
     """
 
-    SerialBaud = 57600
+    SerialBaud = 115200
     SerialTimeout = 1.0
     CommandPrompt = '\r#> '
     StartupString = 'PJC Bootloader'
@@ -216,6 +216,9 @@ class PJCBootloader:
         Return True if the EEPROM was erased or False otherwise.
         """
         result = False
+        temp = self.serial.timeout
+
+        self.serial.timeout = 6.0       # erasing EEPROM can take a really long time
         
         self._flushInput()
         self.serial.write('ee yes\r')   # 'yes' required to confirm erase
@@ -224,6 +227,8 @@ class PJCBootloader:
 
         if resp.find('80') >= 0:        # returns '!80' on success
             result = True
+
+        self.serial.timeout = temp
 
         return result
 
@@ -260,12 +265,12 @@ class PJCBootloader:
             self.serial.write(data)
             resp = ''
 
-        resp = resp + self._readSerialResponse()
+        resp += self._readSerialResponse()
 
         if resp.find(PJCBootloader.StartupString) >= 0:
             result = -2
         else:
-            match = re.search(r'!8[01234]', resp)      # valid responses are '!80' - '!84'
+            match = re.search(r'!8[0-4]', resp)      # valid responses are '!80' - '!84'
 
             if match:
                 result = int(match.group(0)[1:], 16) & 0x7F
@@ -329,7 +334,28 @@ class PJCBootloader:
 
         self.maxpages = result
         return result
+
+    def getBootStatus(self):
+        """Get a value representing the reason why the device is running the bootloader instead of
+        the application or -1 if that could not be read.
+
+        Return 1 if the bootloader pin is set, 2 on a watchdog/application reset, 3 if no app is on
+        the board, or 4 if the app checksum is bad.  This will never return 0 since that would mean
+        that the bootloader will have started the application.
+        """
+        result = -1
+
+        self._flushInput()
+        self.serial.write('s\r')
         
+        resp = self._readSerialResponse()
+        match = re.search(r'(0[0-4])', resp)
+
+        if match:
+            result = int(match.group(0)[1:])
+
+        return result        
+
     def _readSerialResponse(self):
         """Read the response to a command.  
 
