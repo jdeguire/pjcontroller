@@ -36,7 +36,6 @@ void Flash_ProgramPage(uint16_t addr, uint16_t *buf)
 	for(offset = 0; offset < SPM_PAGESIZE; offset += 2)
 		boot_page_fill(offset, buf[offset >> 1]);
 
-	wdt_reset();
 	boot_page_write(addr);
 	boot_spm_busy_wait();
 	boot_rww_enable();        // so we can read back the flash to verify it
@@ -66,10 +65,7 @@ void Flash_EraseApp()
 	uint16_t addr = APP_SPACE_START;
 	
 	for( ; addr < APP_SPACE_END; addr += SPM_PAGESIZE)
-	{
 		boot_page_erase(addr);
-		wdt_reset();
-	}
 }
 
 /* Erase everything in EEPROM space.  Use this only if some setting in EEPROM is causing your
@@ -81,7 +77,7 @@ void EEPROM_EraseData()
 
 	for(i = 0; i < E2END; ++i)     // E2END from avr/io.h
 	{
-		eeprom_write_byte((uint8_t *)i, 0xFF);
+		eeprom_update_byte((uint8_t *)i, 0xFF);
 		wdt_reset();
 	}
 }
