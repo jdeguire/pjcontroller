@@ -1,1 +1,69 @@
-#!/usr/bin/env python
+import os
+
+Import(['env', 'commonpath'])
+
+#---------------
+# Application-specific project options
+#---------------
+outputname = 'pjc-app'             # output file name (without extensions)
+
+# source files to build
+commonfiles = Glob(commonpath + os.sep + '*.c')
+appfiles   = Glob('*.c')          # everything in 'app/'
+
+# linker script (leave empty to use the default script chosen by avr-libc)
+ldscript = 'app' + os.sep + 'pjcapp.x'
+
+# additional compiler options for just the bootloader
+copts   = []
+
+# linker options for just the bootloader
+lopts = []
+
+#---------------
+# End of application options
+#---------------
+
+
+# full file names ("something.hex")
+outputfile = outputname + env['HEXSUFFIX']
+
+# Generate file paths needed for below
+ourdir  = env.Dir('.').path        # where we are now relative to top SConstruct file
+elffile = ourdir + os.sep + outputname + env['PROGSUFFIX']
+hexfile = ourdir + os.sep + outputfile
+
+# an action to create the hex file using objcopy
+apphex_act = Action(env['OBJCOPY'] + ' -O ihex -R .eeprom \"' + elffile  + '\" \"' + hexfile + '\"')
+
+# Create a clone of the base environment we can set up just for the application
+appenv = env.Clone()
+appenv.Append(CCFLAGS = copts)
+appenv.Append(LINKFLAGS = lopts)
+
+# We have to explicitly use the Object builder on stuff in 'common/' or else the object files will
+# get dumped into 'common/' instead of our output directory
+common_objs = []
+for f in commonfiles:
+    base, ext = os.path.splitext(os.path.basename(f))
+    common_objs.append(appenv.Object(target = base + appenv['OBJSUFFIX'], source = commonpath + f))
+
+
+# target to build the application
+# paths and files in these commands are relative to the directory of this script
+ba = bootenv.Program(outputname, appfiles + common_objs)
+appenv.Alias('build-app', ba)
+appenv.AddPostAction(ba, apphex_act)
+appenv.Clean(ba, outputfile)
+
+if ldscript != '':
+    appenv.Append(LINKFLAGS = ['-T' + ldscript])
+    appenv.Depends(ba, '#'+ldscript)
+
+# Note to self:  env.Command(target, [sources], cmd_string)
+# We can pass in a dummy file for 'target' if the command doesn't generate an output
+# We can also pass in an empty list "[]" if the command doesn't accept input files
+
+#
+# TODO:  Add builder to write app to flash using bootloader
+#

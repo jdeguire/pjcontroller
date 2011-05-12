@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 
 #---------------
@@ -49,7 +47,6 @@ lopts = ['-Wl,--relax']
 
 # create a new scons build environment, importing the system's PATH
 env = Environment(ENV = {'PATH' : os.environ['PATH']})
-env.Program(target = 'test', source = Glob('*.c'))
 
 
 # location of common directory 

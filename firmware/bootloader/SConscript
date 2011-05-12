@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 import os
 
 Import(['env', 'commonpath'])
@@ -86,21 +84,21 @@ if ldscript != '':
 
 # target to write the bootloader to the AVR using avrdude
 wb = bootenv.Command('wb.dummy', outputfile, prog_base + ' -U flash:w:\"$SOURCE\":i')
-wba = bootenv.Alias('write-bootloader', wb)
+bootenv.Alias('write-bootloader', wb)
 bootenv.AlwaysBuild(wb)
 
 # target to read the AVR's flash memory into an output hex file
 rf = bootenv.Command(imagefile, [], prog_base + ' -U flash:r:\"$TARGET\":i')
-rfa = bootenv.Alias('read-flash', rf)
+bootenv.Alias('read-flash', rf)
 bootenv.AlwaysBuild(rf)
 
 # target to erase everything--flash, EEPROM, and lock bits (but not fuse bits)
 ed = bootenv.Command('ed.dummy', [], prog_base + ' -e')
-eda = bootenv.Alias('erase-device', ed)
+bootenv.Alias('erase-device', ed)
 bootenv.AlwaysBuild(ed)
 
 # target to write the AVR fuses and lock bits
 wu = bootenv.Command('wu.dummy', [], prog_base + ' -U lfuse:w:' + lfuse + ':m -U hfuse:w:' + hfuse + 
                     ':m -U efuse:w:' + efuse + ':m -U lock:w:' + lockbits + ':m')
-wua = bootenv.Alias('write-fuses', wu)
+bootenv.Alias('write-fuses', wu)
 bootenv.AlwaysBuild(wu)
