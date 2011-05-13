@@ -1,3 +1,5 @@
+# Hey Emacs, this is a -*- python -*- file
+
 import os
 
 Import(['env', 'commonpath'])

@@ -1,3 +1,5 @@
+# Hey Emacs, this is a -*- python -*- file
+
 import os
 
 Import(['env', 'commonpath'])
@@ -8,7 +10,7 @@ Import(['env', 'commonpath'])
 outputname = 'pjc-app'             # output file name (without extensions)
 
 # source files to build
-commonfiles = Glob(commonpath + os.sep + '*.c')
+commonfiles = ['uart.c', 'sharedmem.c', 'watchdog.c', 'cmd.c']
 appfiles   = Glob('*.c')          # everything in 'app/'
 
 # linker script (leave empty to use the default script chosen by avr-libc)
@@ -25,7 +27,7 @@ lopts = []
 #---------------
 
 
-# full file names ("something.hex")
+# full file name ("something.hex")
 outputfile = outputname + env['HEXSUFFIX']
 
 # Generate file paths needed for below
@@ -51,7 +53,7 @@ for f in commonfiles:
 
 # target to build the application
 # paths and files in these commands are relative to the directory of this script
-ba = bootenv.Program(outputname, appfiles + common_objs)
+ba = appenv.Program(outputname, appfiles + common_objs)
 appenv.Alias('build-app', ba)
 appenv.AddPostAction(ba, apphex_act)
 appenv.Clean(ba, outputfile)
