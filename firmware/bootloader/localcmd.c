@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <avr/io.h>
+#include <avr/boot.h>
 
 // defined in main.c
 void RewindSettings();
@@ -91,19 +92,11 @@ static void RestartBootloader_CMD(const char *cmdbuf, uint8_t len)
 
 static void EraseApp_CMD(const char* cmdbuf, uint8_t len)
 {
-	uint16_t buf[SPM_PAGESIZE / 2];
 	cmdstatus_t status = eCmdErrArgs;
 
 	if(0 == strncmp(cmdbuf + 3, "yes", 3))
 	{
-		// invalidate app checksum by zeroing out location in which it is stored
-		memset(buf, 0xFF, sizeof(buf) - 4);
-		buf[SPM_PAGESIZE / 2 - 2] = 0;
-		buf[SPM_PAGESIZE / 2 - 1] = 0;
-		Flash_ProgramPage((FLASHEND - SPM_PAGESIZE + 1), (uint16_t *)buf);
-
 		Flash_EraseApp();
-		
 		status = eCmdOK;
 	}
 
@@ -182,20 +175,17 @@ static void ProgramPage_CMD(const char* cmdbuf, uint8_t len)
 static void WriteCRC_CMD(const char* cmdbuf, uint8_t len)
 {
 	uint16_t buf[SPM_PAGESIZE / 2];
-	uint16_t page_addr = (FLASHEND - SPM_PAGESIZE + 1);
 	cmdstatus_t status = eCmdOK;
 
-	// read
-	memcpy_P((void *)buf, (PGM_VOID_P)page_addr, SPM_PAGESIZE);
+	memset(buf, 0xFF, sizeof(buf) - 4);
 
-	// modify
+	// The CRC and validation key go into the last words of flash
 	buf[SPM_PAGESIZE / 2 - 2] = APP_CHECKSUM_VALID;
 	buf[SPM_PAGESIZE / 2 - 1] = CalculateAppCRC();
 
-	// write and verify
-	Flash_ProgramPage(page_addr, (uint16_t *)buf);
+	Flash_ProgramPage(FLASHEND - SPM_PAGESIZE + 1, (uint16_t *)buf);
 
-	if(!Flash_VerifyPage(page_addr, (uint16_t *)buf))
+	if(!Flash_VerifyPage(FLASHEND - SPM_PAGESIZE + 1, (uint16_t *)buf))
 		status = eCmdErrVerify;
 
 	PrintCmdStatus(status);
@@ -203,31 +193,15 @@ static void WriteCRC_CMD(const char* cmdbuf, uint8_t len)
 
 static void PageSize_CMD(const char* cmdbuf, uint8_t len)
 {
-	union
-	{
-		uint16_t val;
-		uint8_t  by[2];
-	} pgsize;
-
-	pgsize.val = SPM_PAGESIZE;
-
-	UART_TxHexByte(pgsize.by[1]);
-	UART_TxHexByte(pgsize.by[0]);
+	UART_TxHexByte((SPM_PAGESIZE >> 8) & 0xFF);
+	UART_TxHexByte(SPM_PAGESIZE & 0xFF);
 	UART_TxChar('\r');
 }
 
 static void NumAppPages_CMD(const char* cmdbuf, uint8_t len)
 {
-	union
-	{
-		uint16_t val;
-		uint8_t  by[2];
-	} numpages;
-
-	numpages.val = NUM_APP_PAGES;
-
-	UART_TxHexByte(numpages.by[1]);
-	UART_TxHexByte(numpages.by[0]);
+	UART_TxHexByte((NUM_APP_PAGES >> 8) & 0xFF);
+	UART_TxHexByte(NUM_APP_PAGES & 0xFF);
 	UART_TxChar('\r');
 }
 

@@ -63,6 +63,9 @@ bool Flash_VerifyPage(uint16_t addr, uint16_t *buf)
 void Flash_EraseApp()
 {
 	uint16_t addr = APP_SPACE_START;
+
+	// erase the app checksum first so that the bootloader won't start a partially-erased app
+	boot_page_erase(FLASHEND - SPM_PAGESIZE + 1);
 	
 	for( ; addr < APP_SPACE_END; addr += SPM_PAGESIZE)
 		boot_page_erase(addr);

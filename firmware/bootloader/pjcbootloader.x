@@ -10,7 +10,8 @@ OUTPUT_FORMAT("elf32-avr","elf32-avr","elf32-avr")
 OUTPUT_ARCH(avr:5)
 MEMORY
 {
-  text   (rx)   : ORIGIN = 0x7000  , LENGTH = 4K
+  /* Reserve last page of flash (128 bytes) for app checksum */
+  text   (rx)   : ORIGIN = 0x7000  , LENGTH = 4K - 128
   data   (rw!x) : ORIGIN = 0x800100, LENGTH = 2K
   eeprom (rw!x) : ORIGIN = 0x810000, LENGTH = 1K
   fuse      (rw!x) : ORIGIN = 0x820000, LENGTH = 1K

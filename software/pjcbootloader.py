@@ -9,6 +9,7 @@ will want to use the PJCBootloader class to do all of the talking to the device.
 
 import serial
 import re
+import sys
 
 
 class PJCBootloader:
@@ -96,11 +97,10 @@ class PJCBootloader:
                 else:
                     by = 0xFF
                 
-                    by = by ^ (crc & 0xFF)
-                    by = by ^ (by << 4)
+                by ^= (crc & 0xFF)
+                by ^= (by << 4) & 0xFF
 
-                    crc = ((((by << 8) & 0xFFFF) | ((crc >> 8) & 0xFF)) ^ ((by >> 4) & 0xFF) ^ 
-                           ((by << 3) & 0xFFFF))
+                crc = ((by << 8) | ((crc >> 8) & 0xFF)) ^ ((by >> 4) & 0xFF) ^ (by << 3)
         else:
             crc = -1
 
@@ -136,7 +136,7 @@ class PJCBootloader:
         match = re.search(r'Bootloader v\d+', resp)
 
         if match:
-            result = int(match.group(0)[1:])
+            result = int(match.group(0)[12:])
 
         return result
 
@@ -248,13 +248,16 @@ class PJCBootloader:
         result = -1
 
         start = pagenum * self.pagesize
-        checksum = sum(self.flashimage[start:start + self.pagesize]) & 0xFFFF
+        checksum = sum(self.flashimage[start:start + self.pagesize])
         data = ''.join([chr(i) for i in self.flashimage[start:start + self.pagesize]])
 
         # ensure that data is always one page long by padding it with 0xFFs
         if(len(data) < self.pagesize):
+            checksum += 0xFF*(self.pagesize - len(data))
             fmt = '{0:\xFF<' + str(self.pagesize) + '}'
             data = fmt.format(data)
+
+        checksum = checksum & 0xFFFF
 
         self._flushInput()
         self.serial.write('pp ' + hex(pagenum)[2:] + ' ' + hex(checksum)[2:] + '\r')
@@ -412,3 +415,46 @@ class IntelHexRecord:
     def verifyChecksum(self):
         """Return True if the record checksum is correct."""
         return (sum(self.rawdata) & 0xFF) == 0
+
+
+if __name__ == '__main__':
+    if len(sys.argv) > 2:
+        pjc = PJCBootloader(sys.argv[1])
+
+        bver = pjc.getBootloaderVersion()
+        if bver >= 0:
+            if pjc.parseFile(sys.argv[2]):
+                pjc.getMaxPages()
+                pjc.getPageSize()
+                
+                numpages = pjc.getFileNumPages()
+
+                print 'File CRC: ' + hex(pjc.calculateFileCRC())
+                print 'File pages: ' + str(numpages) + '\n'
+                
+                print 'Erasing old app...'
+                pjc.eraseApp()
+
+                print 'Loading new app:',
+
+                for i in range(numpages):
+                    pageresult = pjc.programPage(i)
+
+                    if 0 == pageresult:
+                        print '.',
+                    else:
+                        print '\nFailed to program page ' + str(i)
+                        break;
+
+                if 0 == pageresult:
+                    pjc.writeCRC()
+                    print 'Update complete!'
+                else:
+                    print 'Update returned error code ' + str(pageresult)
+            else:
+                print 'File parse failed'
+        else:
+            print 'Could not communicate with bootloader'
+    else:
+        print 'Usage:  ' + sys.argv[0] + ' <path to serial port> <hex file path>'
+        print '\tUpdate firmware on controller connected at the given serial path'

@@ -51,13 +51,15 @@ static void GetAppStartupStatus()
 		m_status = eBootRestart;
 	else
 	{
-		uint16_t crcinfo[2];
+		uint16_t appkey;
+		uint16_t appcrc;
 
-		memcpy_P((void *)crcinfo, (PGM_VOID_P)(FLASHEND - 4), 4);
+		appkey = pgm_read_word(FLASHEND - 3);
+		appcrc = pgm_read_word(FLASHEND - 1);
 
-		if(crcinfo[0] != APP_CHECKSUM_VALID)
+		if(appkey != APP_CHECKSUM_VALID)
 			m_status = eBootNoApp;
-		else if(crcinfo[1] != CalculateAppCRC())
+		else if(appcrc != CalculateAppCRC())
 			m_status = eBootCRC;
 	}
 
