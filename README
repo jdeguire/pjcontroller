@@ -9,6 +9,6 @@ If you plan on building the firmware, you'll need a few things.
 
 The SConscript/SConstruct files assume that you are using the avr-gcc toolchain and avrdude as your ICSP programmer.  You can modify the files if this is not the case.
 
-Schematics are created with EAGLE.
+Schematics are created with KiCAD.
 
 Stuff in hardware/spice was made using LTSpiceIV.  This runs fine under WINE.
