@@ -8,116 +8,99 @@ Now, it's just a way for me to experiment with PySide.
 """
 
 import sys
-import serial
-import os
-import glob
-import pjcbootloader
+import pages
+import dispatch
 from PySide.QtCore import *
 from PySide.QtGui import *
 
+import time
+import threading
+import Queue
 
-class UpdatePage:
-    
-    def __init__(self, parent = None):
-        # create our main dialog box and set its title
-        self.dialog = QDialog(parent)
-        self.dialog.setWindowTitle('Update Box')
+class CommThread(threading.Thread):
+    """Class for the serial communications thread.
 
-        # widgets in the dialog box
-        self.serialCombo = QComboBox()
-        self.fileline = QLineEdit('Select hex file...')
-        self.browsebutton = QPushButton('Browse...')
-        self.progress = QProgressBar()
-        self.startbutton = QPushButton('Start')
+    This class communicates with the board over a serial connection in its own thread.  Serial I/O
+    is blocking, so a separate thread is needed so that the UI doesn't freeze.  The UI thread will
+    put commands into a command queue.  This thread will receive those commands, do them, and reply by
+    putting a response in a reply queue.  The UI thread will then need to periodically check the
+    reply queue for a response.
 
-        self.progress.setMinimum(0)
-        self.serialCombo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtTop)
-        self.populateSerialComboBox()
+    Credit for the architecture goes here:
+    http://eli.thegreenplace.net/2011/05/18/code-sample-socket-client-thread-in-python/
+    """
 
-        # so our file dialog remembers where we last were (default to home directory)
-        self.lasthexdir = os.path.expanduser('~')
+    def __init__(self, dispatcher):
+        threading.Thread.__init__(self)
 
-        # put the widgets into a vertical layout
-        layout = QVBoxLayout()
-        layout.addWidget(self.serialCombo)
-        layout.addWidget(self.fileline)
-        layout.addWidget(self.browsebutton)
-        layout.addWidget(self.progress)
-        layout.addWidget(self.startbutton)
-        self.dialog.setLayout(layout)   # can also pass 'dialog' to the layout's constructor
+        self.alive = threading.Event()
+        self.alive.set()
 
-        # connect signals from buttons to slots
-        self.browsebutton.clicked.connect(self.browseForHexFile)
-        self.startbutton.clicked.connect(self.doFirmwareUpdate)
+        self.dispatcher = dispatcher
+        self.dispatcher.registerHandler(0, self.printIncoming)
 
-    def populateSerialComboBox(self):
-        # Still need to make something to work in Windows...
-        for f in glob.glob('/dev/tty*'):
-            try:
-                s = serial.Serial(f)
-                self.serialCombo.addItem(s.name)
-                s.close()
-            except serial.SerialException:
-                pass
+    def run(self):
+       while self.alive.isSet():
+           try:
+               if not self.dispatcher.dispatch():
+                   time.sleep(0.050)
+           except KeyError as e:
+               print "Unhandled command " + str(e.message)
+               continue
 
-    def browseForHexFile(self):
-        hexfile = QFileDialog.getOpenFileName(self.dialog, 'Select hex file', self.lasthexdir,
-                                              'Intel hex files (*.hex);;All Files (*)')
+    def join(self, timeout = None):
+        self.alive.clear()
+        threading.Thread.join(self, timeout)
 
-        if hexfile[0] != '':
-            self.fileline.setText(hexfile[0])
-            self.lasthexdir = os.path.dirname(hexfile[0])
+    def printIncoming(self, stuff):
+        print "I got something: " + str(stuff)
 
-    def doFirmwareUpdate(self):
-        # later we'll need to create a selection box for the serial device
-        pjc = pjcbootloader.PJCBootloader(self.serialCombo.currentText())
-        self.progress.reset()
+
+class MainWindow:
+    def __init__(self, dispatcher):
+        self.dispatcher = dispatcher
+        self.tabwidget = QTabWidget()
+        self.updatepage = pages.UpdatePage(dispatcher)
         
-        # not final, doesn't handle exceptions and stuff
-        if pjc.getBootloaderVersion() >= 0:
-            if pjc.parseFile(self.fileline.text()):
-                pjc.getMaxPages()
-                pjc.getPageSize()
-                
-                numpages = pjc.getFileNumPages()
-                self.progress.setMaximum(numpages)
+        self.replytimer = QTimer()
+        self.counter = 0
+        self.replytimer.timeout.connect(self.doTimedThing)
+        self.replytimer.start(1000)
 
-                print 'File CRC: ' + hex(pjc.calculateFileCRC())
-                print 'File pages: ' + str(numpages) + '\n'
-                
-                print 'Erasing old app...'
-                pjc.eraseApp()
-
-                print 'Loading new app:',
-
-                for i in range(numpages):
-                    pageresult = pjc.programPage(i)
-
-                    if 0 == pageresult:
-                        self.progress.setValue(i + 1)
-                    else:
-                        print '\nFailed to program page ' + str(i)
-                        break;
-
-                if 0 == pageresult:
-                    pjc.writeCRC()
-                    print 'Update complete!'
-                else:
-                    print 'Update returned error code ' + str(pageresult)
-            else:
-                print 'File parse failed'
-        else:
-            print 'Could not communicate with bootloader'
-
-
+        self.tabwidget.setWindowTitle("Test App")
+        self.tabwidget.addTab(self.updatepage.widget(), "Update")
+        
     def show(self):
-        self.dialog.show()
+        self.tabwidget.show()
+
+    def doTimedThing(self):
+        self.dispatcher.send(0, (self.counter, ))
+        self.counter += 1
+
+
+def main(argv = None):
+    if argv is None:
+        argv = sys.argv
+
+    ui2serialQ = Queue.Queue()
+    serial2uiQ = Queue.Queue()
+    
+    uidispatcher = dispatch.Dispatcher(ui2serialQ, serial2uiQ)
+    serialdispatcher = dispatch.Dispatcher(serial2uiQ, ui2serialQ)
+
+    commthread = CommThread(serialdispatcher)
+    commthread.start()
+
+    app = QApplication(argv)
+
+    mainwindow = MainWindow(uidispatcher)
+    mainwindow.show()
+    
+    result = app.exec_()
+    commthread.join()
+
+    return result
 
 
 if __name__ == '__main__':
-    app = QApplication(sys.argv)
-    page = UpdatePage()
-    page.show()
-    
-    sys.exit(app.exec_())
-        
+    sys.exit(main())
