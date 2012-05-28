@@ -1,4 +1,4 @@
-/* cmd.h
+/* cmd.c
  *
  * Command interface for talking over the serial port to the application or bootloader.  Common
  * commands are defined in here along with a function allowing you to add your own.
@@ -25,7 +25,8 @@ static enum cmdstate_t
 	eCmd_Prompt = 0,
 	eCmd_Receive,
 	eCmd_Run,
-	eCmd_Help
+	eCmd_Help1,
+	eCmd_Help2
 } m_cmdstate;
 
 static uint8_t m_helpindex;             // which command we're printing help for
@@ -49,7 +50,7 @@ void Cmd_InitInterface()
 }
 
 /* Add a new interface command that can be called via the connected serial console.  Parameters are
- * the seial command, the function that the command will call, and a short help string for the
+ * the serial command, the function that the command will call, and a short help string for the
  * command.  The maximum number of commands is deteremined by the CMD_MAXCMDS macro.  This does not
  * check for duplicate command names.
  *
@@ -83,7 +84,6 @@ void Cmd_ProcessInterface()
 			{
 				UART_TxData("\r#> ", 4);
 				m_cmdlen = 0;
-				memset(m_cmdbuf, 0, sizeof(m_cmdbuf));
 				++m_cmdstate;
 			}
 			break;
@@ -108,7 +108,10 @@ void Cmd_ProcessInterface()
 
 					// either got a command or buffer is full
 					if(c == '\r'  ||  m_cmdlen >= CMD_BUFSIZE)
+					{
+						m_cmdbuf[m_cmdlen] = 0;   // terminate command
 						++m_cmdstate;
+					}
 				}
 			}
 			break;
@@ -137,33 +140,41 @@ void Cmd_ProcessInterface()
 			if(eCmd_Run == m_cmdstate)
 				m_cmdstate = eCmd_Prompt;
 			break;
-		case eCmd_Help:
-		{
-			size_t txlen = strlen(m_cmds[m_helpindex].name) + 1;
-
+		case eCmd_Help1:
 			if(m_helpindex < m_numcmds)
 			{
-				if(m_cmds[m_helpindex].help != NULL)
-					txlen += strlen_P(m_cmds[m_helpindex].help) + 4;
+				size_t txlen = strlen(m_cmds[m_helpindex].name) + 1;
 
 				if(UART_TxAvailable() >= txlen)
 				{
 					UART_TxString(m_cmds[m_helpindex].name);
 
-					if(m_cmds[m_helpindex].help != NULL)
+					if(m_cmds[m_helpindex].help == NULL)
 					{
-						UART_TxData("\t - ", 4);
-						UART_TxString_P(m_cmds[m_helpindex].help);
+						UART_TxChar('\r');
+						++m_helpindex;
 					}
-
-					UART_TxChar('\r');
-					m_helpindex++;
+					else
+						m_cmdstate = eCmd_Help2;
 				}
 			}
 			else
 			{
 				m_cmdstate = eCmd_Prompt;
 				m_helpindex = 0;
+			}
+			break;
+		case eCmd_Help2:
+		{
+			size_t txlen = strlen_P(m_cmds[m_helpindex].help) + 5;
+
+			if(UART_TxAvailable() >= txlen)
+			{
+				UART_TxData("\t - ", 4);
+				UART_TxString_P(m_cmds[m_helpindex].help);
+				UART_TxChar('\r');
+				++m_helpindex;
+				m_cmdstate = eCmd_Help1;
 			}
 		}
 		break;
@@ -204,7 +215,7 @@ static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
  */
 static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
 {
-	m_cmdstate = eCmd_Help;
+	m_cmdstate = eCmd_Help1;
 }
 
 /* Show the version string for the app/bootloader.  This is defined in system.h, which is where

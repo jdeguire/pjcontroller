@@ -123,7 +123,7 @@ uint16_t UART_TxData_P(const prog_char *data, uint16_t len)
 			break;
 	}
 
-	return i;	
+	return i;
 }
 
 

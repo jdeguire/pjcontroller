@@ -26,11 +26,11 @@ static void RestartBootloader_CMD(const char *cmdbuf, uint8_t len) __attribute__
 
 typedef enum
 {
-	eCmdOK          = 0x80,    // no error; used to indicate success
-	eCmdErrArgs,               // invalid or missing arguments
-	eCmdErrPageOOB,            // page out of bounds
-	eCmdErrChecksum,           // expected checksum does not match calculated
-	eCmdErrVerify              // page verify failed
+	eCmdOK = 0,          // no error; used to indicate success
+	eCmdErrArgs,         // invalid or missing arguments
+	eCmdErrPageOOB,      // page out of bounds
+	eCmdErrChecksum,     // expected checksum does not match calculated
+	eCmdErrVerify        // page verify failed
 } cmdstatus_t;
 
 
