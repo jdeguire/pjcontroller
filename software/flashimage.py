@@ -17,30 +17,36 @@ class FlashImage:
     """
 
     def __init__(self, app_pages, page_size):
-        """Create a new blank flash image.  Blank flash contains all 1 bits."""
+        """Create a new blank flash image.  Blank flash contains all 1 bits.
+        """
         self.app_pages = app_pages
         self.page_size = page_size
-        clearImage()
+        self.clearImage()
 
     def clearImage(self):
-        """Clear the image so that it is blank.  Blank flash memory contains all 1 bits."""
+        """Clear the image so that it is blank.  Blank flash memory contains all 1 bits.
+        """
         self.used_pages = 0
-        self.image = [0xFF] * (app_pages * page_size)
+        self.image = [0xFF] * (self.app_pages * self.page_size)
 
     def getTotalAppPages(self):
-        """Return the total number of flash pages available for application use."""
+        """Return the total number of flash pages available for application use.
+        """
         return self.app_pages
 
     def getPageSize(self):
-        """Return the size of a single flash page."""
+        """Return the size of a single flash page.
+        """
         return self.page_size
 
     def getUsedAppPages(self):
-        """Return the number of pages containing application data."""
+        """Return the number of pages containing application data.
+        """
         return self.used_pages
 
     def getSinglePage(self, pagenum):
-        """Return a single page of data or an empty list if the given page number is invalid."""
+        """Return a single page of data or an empty list if the given page number is invalid.
+        """
         if pagenum < self.app_pages:
             start = self.page_size * pagenum
             end = start + self.page_size
@@ -58,7 +64,7 @@ class FlashImage:
         """
         result = False
         extAddr = 0
-        clearImage()
+        self.clearImage()
 
         with open(filepath, 'r') as hexfile:
             for line in hexfile:
@@ -71,7 +77,7 @@ class FlashImage:
 
                         # we're outside of flash space, bail out
                         if end > len(self.image):
-                            clearImage()
+                            self.clearImage()
                             result = False
                             break
 
@@ -89,7 +95,7 @@ class FlashImage:
 
                     result = True
                 else:
-                    clearImage()
+                    self.clearImage()
                     result = False
                     break
 
@@ -133,22 +139,24 @@ class IntelHexRecord:
     ExtStartAddrRec = 5       # used for x86; not applicable here
 
     def __init__(self, line):
-        """Build record from a single line of the Intel Hex file."""
+        """Build record from a single line of the Intel Hex file.
+        """
         line = line[1:].rstrip()    # remove starting ':' and line ending
 
         # convert text into bytes
         rawdata = [int(line[idx:idx+2], 16) for idx in range(0, len(line), 2)]
 
         self.datasize = rawdata[0]
-        self.address = (rawdata[1] << 8) | self.rawdata[2]
+        self.address = (rawdata[1] << 8) | rawdata[2]
         self.type = rawdata[3]
         self.data = [rawdata[4 + i] for i in range(self.datasize)]
         self.checksum = rawdata[4 + self.datasize]
 
     def verifyChecksum(self):
-        """Return True if the record checksum is correct."""
+        """Return True if the record checksum is correct.
+        """
         return (0 == (sum(self.data) + 
                        self.datasize + 
-                       self.address + 
+                       (self.address & 0xFF) + ((self.address >> 8) & 0xFF) +
                        self.type + 
                        self.checksum) & 0xFF)

@@ -11,13 +11,40 @@ import serial
 import re
 import sys
 
+class BootStatus:
+    """Contains constants used by the bootloader to indicate the reason why it is running instead of
+    starting up the application.
+    """
+
+    BootOK = 0           # bootup OK; we'll never see this if we're in the bootloader
+    BootPinSet = 1       # the onboard jumper is set, telling the bootloader to stay there
+    RestartByApp = 2     # the application jumped to the bootloader
+    NoAppLoaded = 3      # there is no application on board
+    BadCRC = 4           # the application's CRC is not what it should be
+
+
+class CmdResult:
+    """Contains constants returned by the PJCBootloader class methods to indicate success or a
+    failure.  Positve values are returned by the bootloader and negative values are returned by
+    these functions to indicate a communication problem.
+    """
+
+    UnexpectedRestart = -2     # bootloader restarted when it shouldn't have
+    NotResponding = -1         # bootloader is not talking; communication lost
+    CmdOK = 0                  # no error; used to indicate success
+    InvalidArgs = 1            # invalid or missing arguments
+    PageOutOfBounds = 2        # page out of bounds
+    BadChecksum = 3            # expected checksum does not match calculated
+    VerifyFailure = 4          # page verify failed
+
 
 class PJCBootloader:
     """An interface to the PJC bootloader for ATMega devices.
 
     A bootloader allows an application to update firmware on the device without requiring an
     external programmer.  This class exposes the various capabilities of the PJC bootloader beyond
-    code updates, such as erasing flash and EEPROM and getting a firmware app's checksum.
+    code updates, such as erasing flash and EEPROM and getting a firmware app's checksum.  Many of
+    these functions will return codes from the CmdResult class in this module.
     """
 
     SerialBaud = 115200
@@ -25,112 +52,18 @@ class PJCBootloader:
     CommandPrompt = '\r#> '
     StartupString = 'PJC Bootloader'
 
-    def __init__(self, serialpath):
+    def __init__(self, serialdevice):
         """Create a new PJCBootloader object which will communicate over the given serial port.
-
-        Raises a SerialException if the serial port can not be opened.
         """
-        self.serial = serial.Serial(serialpath, PJCBootloader.SerialBaud, 
-                                    timeout = PJCBootloader.SerialTimeout)
-        self.pagesize = -1
-        self.maxpages = -1
-        self.flashimage = []
-
-    def parseFile(self, filepath):
-        """Parse Intel Hex file into a binary image.
-        
-        Returns True if the file was parsed successfully and False if it wasn't (record checksum is
-        incorrect).  Raises an IOError if the file could not be opened.
-        """
-        self.flashimage = []
-        
-        result = False
-        extAddr = 0
-
-        with open(filepath, 'r') as hexfile:
-            for line in hexfile:
-                record = IntelHexRecord(line)
-                
-                if record.verifyChecksum():
-                    if record.type == IntelHexRecord.DataRec:
-                        start = extAddr + record.address
-                        end = start + record.datasize
-                        size = len(self.flashimage)
-
-                        # fill in gaps with 0xFF; the value of erased flash
-                        if size < end:
-                            self.flashimage.extend([0xFF] * (end + 1 - size))
-
-                        self.flashimage[start:end] = record.data
-                    elif record.type == IntelHexRecord.EOFRec:
-                        break
-                    elif record.type == IntelHexRecord.SegAddrRec:
-                        extAddr = (record.data[0] << 12) | (record.data[1] << 4)
-                    elif record.type == IntelHexRecord.ExtAddrRec:
-                        extAddr = (record.data[0] << 24) | (record.data[1] << 16)
-
-                    result = True
-                else:
-                    self.flashimage = []
-                    result = False
-                    break
-
-        return result
-
-    def calculateFileCRC(self):
-        """Calculate the 16-bit CRC of the binary data found with the parseFile() method.
-
-        This requires that the parseFile() method was successfully run and that the object variables
-        'pagesize' and 'maxpages' are set.  Use the methods getPageSize() and getMaxPages(),
-        respectively, to do this.  Otherwise, this method will return -1.
-
-        The algorithm used here was adapted from example C code provided by the AVR-libc manual.
-        See the _crc_ccitt_update() function description at
-        http://www.nongnu.org/avr-libc/user-manual/group__util__crc.html.
-        """
-        crc = 0xFFFF
-
-        if self.pagesize > 0  and  self.maxpages > 0  and  self.flashimage != []:
-            for i in range(self.pagesize * self.maxpages):
-                if i < len(self.flashimage):
-                    by = self.flashimage[i] & 0xFF
-                else:
-                    by = 0xFF
-                
-                by ^= (crc & 0xFF)
-                by ^= (by << 4) & 0xFF
-
-                crc = ((by << 8) | ((crc >> 8) & 0xFF)) ^ ((by >> 4) & 0xFF) ^ (by << 3)
-        else:
-            crc = -1
-
-        return crc
-
-    def getFileNumPages(self):
-        """Determine the number of pages used by the binary data found with the parseFile() method.
-
-        This requires that the parseFile() method was successfully run and that the object variable
-        'pagesize' is set.  Use the getPageSize() method to do this.  Otherwise, this returns -1.
-        """
-        result = -1
-
-        if self.flashimage != [] and self.pagesize > 0:
-            result = 0
-
-            for i in range(len(self.flashimage) - 1, 0, -1):
-                if self.flashimage[i] != 0xFF:
-                    result = (i + self.pagesize) / self.pagesize
-                    break
-
-        return result    
+        self.serial = serialdevice
 
     def getBootloaderVersion(self):
-        """Get the bootloader version loaded on the device or -1 if that could not be read.
+        """Get the bootloader version loaded on the device or a Not Responding error if that cannot
+        be read.
         """
-        result = -1
+        result = CmdResult.NotResponding
 
-        self._flushInput()
-        self.serial.write('v\r')
+        self._sendCommand('v')
         
         resp = self._readSerialResponse()
         match = re.search(r'Bootloader v\d+', resp)
@@ -146,8 +79,7 @@ class PJCBootloader:
         """
         result = -1
 
-        self._flushInput()
-        self.serial.write('crc\r')
+        self._sendCommand('crc')
 
         resp = self._readSerialResponse()
 
@@ -165,8 +97,7 @@ class PJCBootloader:
         """
         result = True
 
-        self._flushInput()
-        self.serial.write('j\r')
+        self._sendCommand('j')
     
         resp = self._readSerialResponse()
 
@@ -183,8 +114,7 @@ class PJCBootloader:
         """
         result = False
 
-        self._flushInput()
-        self.serial.write('r\r')
+        self._sendCommand('r')
     
         resp = self._readSerialResponse()
 
@@ -200,12 +130,11 @@ class PJCBootloader:
         """
         result = False
         
-        self._flushInput()
-        self.serial.write('ea yes\r')   # 'yes' required to confirm erase
+        self._sendCommand('ea yes')   # 'yes' required to confirm erase
 
         resp = self._readSerialResponse()
 
-        if resp.find('80') >= 0:        # returns '!80' on success
+        if resp.find('00') >= 0:        # returns '!00' on success
             result = True
 
         return result
@@ -220,25 +149,21 @@ class PJCBootloader:
 
         self.serial.timeout = 6.0       # erasing EEPROM can take a really long time
         
-        self._flushInput()
-        self.serial.write('ee yes\r')   # 'yes' required to confirm erase
+        self._sendCommand('ee yes')   # 'yes' required to confirm erase
 
         resp = self._readSerialResponse()
 
-        if resp.find('80') >= 0:        # returns '!80' on success
+        if resp.find('00') >= 0:        # returns '!00' on success
             result = True
 
         self.serial.timeout = temp
 
         return result
 
-    def programPage(self, pagenum):
-        """Program one page of 'size' bytes onto the device's flash.
+    def programPage(self, pagenum, pagedata):
+        """Program one page of data onto the device's flash.
 
-        The calling object's 'pagesize' field must be set properly before calling this method.  Use
-        the getPageSize() method to do this. 'pagenum' should be less than the result of
-        getMaxPages().  The parseFile() method must have been called successfully before this
-        method.
+        Parameters are the page number to program and a single page of data.
 
         This method returns 0 on success, 1 if the command arguments are malformed, 2 if the page
         number is out of bounds, 3 if the checksum sent to the board as part of the command is
@@ -247,20 +172,10 @@ class PJCBootloader:
         """
         result = -1
 
-        start = pagenum * self.pagesize
-        checksum = sum(self.flashimage[start:start + self.pagesize])
-        data = ''.join([chr(i) for i in self.flashimage[start:start + self.pagesize]])
+        checksum = sum(pagedata) & 0xFFFF
+        data = ''.join([chr(i) for i in pagedata])
 
-        # ensure that data is always one page long by padding it with 0xFFs
-        if(len(data) < self.pagesize):
-            checksum += 0xFF*(self.pagesize - len(data))
-            fmt = '{0:\xFF<' + str(self.pagesize) + '}'
-            data = fmt.format(data)
-
-        checksum = checksum & 0xFFFF
-
-        self._flushInput()
-        self.serial.write('pp ' + hex(pagenum)[2:] + ' ' + hex(checksum)[2:] + '\r')
+        self._sendCommand('pp ' + hex(pagenum)[2:] + ' ' + hex(checksum)[2:])
 
         resp = self.serial.read(1)
 
@@ -273,10 +188,10 @@ class PJCBootloader:
         if resp.find(PJCBootloader.StartupString) >= 0:
             result = -2
         else:
-            match = re.search(r'!8[0-4]', resp)      # valid responses are '!80' - '!84'
+            match = re.search(r'!0[0-4]', resp)      # valid responses are '!00' - '!04'
 
             if match:
-                result = int(match.group(0)[1:], 16) & 0x7F
+                result = int(match.group(0)[1:], 16)
 
         return result
 
@@ -289,12 +204,11 @@ class PJCBootloader:
         """
         result = False
         
-        self._flushInput()
-        self.serial.write('wc\r')
+        self._sendCommand('wc')
 
         resp = self._readSerialResponse()
 
-        if resp.find('80') >= 0:        # returns '!80' on success
+        if resp.find('00') >= 0:        # returns '!00' on success
             result = True
 
         return result
@@ -307,8 +221,7 @@ class PJCBootloader:
         """
         result = -1
 
-        self._flushInput()
-        self.serial.write('ps\r')
+        self._sendCommand('ps')
         
         resp = self._readSerialResponse()
 
@@ -327,8 +240,7 @@ class PJCBootloader:
         """
         result = -1
 
-        self._flushInput()
-        self.serial.write('pn\r')
+        self._sendCommand('pn')
         
         resp = self._readSerialResponse()
 
@@ -348,8 +260,7 @@ class PJCBootloader:
         """
         result = -1
 
-        self._flushInput()
-        self.serial.write('s\r')
+        self._sendCommand('s')
         
         resp = self._readSerialResponse()
         match = re.search(r'(0[0-4])', resp)
@@ -377,84 +288,9 @@ class PJCBootloader:
         resp = resp.replace(PJCBootloader.CommandPrompt, '')
         return resp
 
-    def _flushInput(self):
-        """Discard any data waiting in the serial port's input buffer.
+    def _sendCommand(self, cmd):
+        """Flush out any previous command data and send a new command, adding the proper line
+        ending.
         """
         self.serial.flushInput()
-
-
-class IntelHexRecord:
-    """A class representing one record within an Intel Hex file.
-
-    Intel Hex files are text-based, with each line being a type of record.  Each record starts with
-    a ':' and ends with a checksum byte.  There are several different types of records which can
-    contain program data or address info.  This class converts the text record into a data structure
-    usable in code.  For more info, see Wikipedia here:  http://en.wikipedia.org/wiki/Intel_hex.
-    """
-
-    DataRec = 0               # contains program data
-    EOFRec = 1                # last record in file to signify end
-    SegAddrRec = 2            # upper four bits of 20-bit address
-    StartAddrRec = 3          # used for x86; not applicable here
-    ExtAddrRec = 4            # upper word of 32-bit address
-    ExtStartAddrRec = 5       # used for x86; not applicable here
-
-    def __init__(self, line):
-        """Build record from a single line of the Intel Hex file."""
-        line = line[1:].rstrip()    # remove starting ':' and line ending
-
-        # convert text into bytes
-        self.rawdata = [int(line[idx:idx+2], 16) for idx in range(0, len(line), 2)]
-
-        self.datasize = self.rawdata[0]
-        self.address = (self.rawdata[1] << 8) | self.rawdata[2]
-        self.type = self.rawdata[3]
-        self.data = [self.rawdata[4 + i] for i in range(self.datasize)]
-        self.checksum = self.rawdata[4 + self.datasize]
-
-    def verifyChecksum(self):
-        """Return True if the record checksum is correct."""
-        return (sum(self.rawdata) & 0xFF) == 0
-
-
-if __name__ == '__main__':
-    if len(sys.argv) > 2:
-        pjc = PJCBootloader(sys.argv[1])
-
-        bver = pjc.getBootloaderVersion()
-        if bver >= 0:
-            if pjc.parseFile(sys.argv[2]):
-                pjc.getMaxPages()
-                pjc.getPageSize()
-                
-                numpages = pjc.getFileNumPages()
-
-                print 'File CRC: ' + hex(pjc.calculateFileCRC())
-                print 'File pages: ' + str(numpages) + '\n'
-                
-                print 'Erasing old app...'
-                pjc.eraseApp()
-
-                print 'Loading new app:',
-
-                for i in range(numpages):
-                    pageresult = pjc.programPage(i)
-
-                    if 0 == pageresult:
-                        print '.',
-                    else:
-                        print '\nFailed to program page ' + str(i)
-                        break;
-
-                if 0 == pageresult:
-                    pjc.writeCRC()
-                    print 'Update complete!'
-                else:
-                    print 'Update returned error code ' + str(pageresult)
-            else:
-                print 'File parse failed'
-        else:
-            print 'Could not communicate with bootloader'
-    else:
-        print 'Usage:  ' + sys.argv[0] + ' <path to serial port> <hex file path>'
-        print '\tUpdate firmware on controller connected at the given serial path'
+        self.serial.write(cmd + '\r')

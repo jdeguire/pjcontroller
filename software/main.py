@@ -65,7 +65,7 @@ class MainWindow:
         self.replytimer = QTimer()
         self.counter = 0
         self.replytimer.timeout.connect(self.doTimedThing)
-        self.replytimer.start(1000)
+#        self.replytimer.start(1000)
 
         self.tabwidget.setWindowTitle("Test App")
         self.tabwidget.addTab(self.updatepage.widget(), "Update")

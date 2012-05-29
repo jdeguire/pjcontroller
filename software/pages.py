@@ -11,6 +11,7 @@ import serial
 import os
 import glob
 import pjcbootloader
+import flashimage
 from PySide.QtCore import *
 from PySide.QtGui import *
 
@@ -79,28 +80,27 @@ class UpdatePage(PageBase):
             self.lasthexdir = os.path.dirname(hexfile[0])
 
     def doFirmwareUpdate(self):
-        pjc = pjcbootloader.PJCBootloader(self.serialCombo.currentText())
+        serialdev = serial.Serial(self.serialCombo.currentText(), 115200, timeout=1.0)
+        pjc = pjcbootloader.PJCBootloader(serialdev)
         self.progress.reset()
         
         # not final, doesn't handle exceptions and stuff
         if pjc.getBootloaderVersion() >= 0:
-            if pjc.parseFile(self.fileline.text()):
-                pjc.getMaxPages()
-                pjc.getPageSize()
-                
-                numpages = pjc.getFileNumPages()
-                self.progress.setMaximum(numpages)
+            flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
 
-                print 'File CRC: ' + hex(pjc.calculateFileCRC())
-                print 'File pages: ' + str(numpages) + '\n'
+            if flashmem.buildImageFromFile(self.fileline.text()):
+                self.progress.setMaximum(flashmem.getUsedAppPages())
+
+                print 'File CRC: ' + hex(flashmem.calculateCRC())
+                print 'File pages: ' + str(flashmem.getUsedAppPages()) + '\n'
                 
                 print 'Erasing old app...'
                 pjc.eraseApp()
 
                 print 'Loading new app:',
 
-                for i in range(numpages):
-                    pageresult = pjc.programPage(i)
+                for i in range(flashmem.getUsedAppPages()):
+                    pageresult = pjc.programPage(i, flashmem.getSinglePage(i))
 
                     if 0 == pageresult:
                         self.progress.setValue(i + 1)
