@@ -7,113 +7,95 @@ Defines classes for each page of the application.  The main app will have a tab 
 will contain one of these pages.
 """
 
-import serial
 import os
-import glob
-import pjcbootloader
-import flashimage
+from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
 
-class PageBase:
+class PageBase(QDialog):
     """Base class for the pages that can appear in the main tab window.
     """
     
-    def __init__(self, dispatcher):
-        self.container = QDialog()
-        self.dispatcher = dispatcher
-
-    def widget(self):
-        return self.container;
+    def __init__(self):
+        QDialog.__init__(self)
 
 
 class UpdatePage(PageBase):
     """The page used for performing firmware updates to the device.
     """
 
-    def __init__(self, dispatcher):
-        PageBase.__init__(self, dispatcher)
+    # new signals have to be declared out here, something the docs aren't very explicit about
+    updatestartclicked = QtCore.Signal(str)
+    serialopenclicked = QtCore.Signal(str)
+
+    def __init__(self):
+        PageBase.__init__(self)
 
         # widgets in the dialog box
-        self.serialCombo = QComboBox()
+        self.serialcombo = QComboBox()
+        self.serialopenbutton = QPushButton('Open')
+        self.serialrefreshbutton = QPushButton('Refresh')
         self.fileline = QLineEdit('Select hex file...')
         self.browsebutton = QPushButton('Browse...')
         self.progress = QProgressBar()
         self.startbutton = QPushButton('Start')
 
-        self.progress.setMinimum(0)
-        self.serialCombo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtTop)
-        self.serialCombo.setEditable(True)
-        self.populateSerialComboBox()
+        self.progress.setRange(0, 100)
+        self.serialcombo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtTop)
+        self.serialcombo.setEditable(True)
+
+        # alias existing signals so they're easier to access externally
+        self.serialrefreshclicked = self.serialrefreshbutton.clicked
 
         # so our file dialog remembers where we last were (default to home directory)
         self.lasthexdir = os.path.expanduser('~')
 
         # put the widgets into a vertical layout
-        self.layout = QVBoxLayout(self.container)
-        self.layout.addWidget(self.serialCombo)
+        self.layout = QVBoxLayout(self)
+        self.layout.addWidget(self.serialcombo)
+        self.serlayout = QHBoxLayout()
+        self.layout.addLayout(self.serlayout)
+        self.serlayout.addWidget(self.serialopenbutton)
+        self.serlayout.addWidget(self.serialrefreshbutton)
         self.layout.addWidget(self.fileline)
         self.layout.addWidget(self.browsebutton)
         self.layout.addWidget(self.progress)
         self.layout.addWidget(self.startbutton)
 
-        # connect signals from buttons to slots
+        # connect signals to internal slots
         self.browsebutton.clicked.connect(self.browseForHexFile)
-        self.startbutton.clicked.connect(self.doFirmwareUpdate)
+        self.startbutton.clicked.connect(self.startNewUpdate)
+        self.serialopenbutton.clicked.connect(self.openSerial)
 
-    def populateSerialComboBox(self):
-        for i in range(256):
-           try:
-                s = serial.Serial(i)
-                self.serialCombo.addItem(s.name)
-                s.close()
-           except serial.SerialException:
-                pass
-
+    @QtCore.Slot()
     def browseForHexFile(self):
-        hexfile = QFileDialog.getOpenFileName(self.container, 'Select hex file', self.lasthexdir,
+        hexfile = QFileDialog.getOpenFileName(self, 'Select hex file', self.lasthexdir,
                                               'Intel hex files (*.hex);;All Files (*)')
 
         if hexfile[0] != '':
             self.fileline.setText(hexfile[0])
             self.lasthexdir = os.path.dirname(hexfile[0])
 
-    def doFirmwareUpdate(self):
-        serialdev = serial.Serial(self.serialCombo.currentText(), 115200, timeout=1.0)
-        pjc = pjcbootloader.PJCBootloader(serialdev)
+    @QtCore.Slot()
+    def startNewUpdate(self):
         self.progress.reset()
-        
-        # not final, doesn't handle exceptions and stuff
-        if pjc.getBootloaderVersion() >= 0:
-            flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
+        self.updatestartclicked.emit(self.fileline.text())
 
-            if flashmem.buildImageFromFile(self.fileline.text()):
-                self.progress.setMaximum(flashmem.getUsedAppPages())
+    @QtCore.Slot()
+    def openSerial(self):
+        self.serialopenclicked.emit(self.serialcombo.currentText())
 
-                print 'File CRC: ' + hex(flashmem.calculateCRC())
-                print 'File pages: ' + str(flashmem.getUsedAppPages()) + '\n'
-                
-                print 'Erasing old app...'
-                pjc.eraseApp()
+    @QtCore.Slot(list)
+    def setSerialPortChoices(self, portlist):
+        self.serialcombo.clear()
+        self.serialcombo.addItems(portlist)
 
-                print 'Loading new app:',
+    @QtCore.Slot(int)
+    def setUpdateProgress(self, prog):
+        self.progress.setValue(prog)
 
-                for i in range(flashmem.getUsedAppPages()):
-                    pageresult = pjc.programPage(i, flashmem.getSinglePage(i))
-
-                    if 0 == pageresult:
-                        self.progress.setValue(i + 1)
-                    else:
-                        print '\nFailed to program page ' + str(i)
-                        break;
-
-                if 0 == pageresult:
-                    pjc.writeCRC()
-                    print 'Update complete!'
-                else:
-                    print 'Update returned error code ' + str(pageresult)
-            else:
-                print 'File parse failed'
-        else:
-            print 'Could not communicate with bootloader'
+    @QtCore.Slot(int)
+    def endUpdate(self, status):
+        self.progress.reset()
+        # may want to handle the status code at some point...

@@ -47,8 +47,6 @@ class PJCBootloader:
     these functions will return codes from the CmdResult class in this module.
     """
 
-    SerialBaud = 115200
-    SerialTimeout = 1.0
     CommandPrompt = '\r#> '
     StartupString = 'PJC Bootloader'
 
