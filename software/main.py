@@ -20,17 +20,29 @@ class MainWindow(QDialog):
         QDialog.__init__(self)
         self.setWindowTitle("Test App")
 
-        self.tabwidget = QTabWidget()
-        self.updatepage = pages.UpdatePage()
-
         self.serialcombo = QComboBox()
-        self.serialopenbutton = QPushButton('Open')
-        self.serialrefreshbutton = QPushButton('Refresh')
-
         self.serialcombo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtTop)
         self.serialcombo.setEditable(True)
+        self.serialcombo.setMinimumWidth(180)
 
+        self.serialopenbutton = QPushButton('Open')
+        self.serialopenbutton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+
+        self.serialrefreshbutton = QPushButton('Refresh')
+        self.serialrefreshbutton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+
+        self.tabwidget = QTabWidget()
+        self.updatepage = pages.UpdatePage()
         self.tabwidget.addTab(self.updatepage, "Update")
+
+        self.loglabel = QLabel("Log")
+
+        self.logbox = QTextEdit()
+        self.logbox.LineWrapMode = QTextEdit.WidgetWidth
+        self.logbox.setReadOnly(True)
+        self.logbox.setTabChangesFocus(True)
+        self.logbox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
+        self.logbox.document().setMaximumBlockCount(1000)
 
         # alias existing signals so they're easier to access externally
         self.serialrefreshclicked = self.serialrefreshbutton.clicked
@@ -42,13 +54,17 @@ class MainWindow(QDialog):
         self.serialhbox.addWidget(self.serialcombo)
         self.serialhbox.addWidget(self.serialopenbutton)
         self.serialhbox.addWidget(self.serialrefreshbutton)
+        self.vbox.addSpacing(10)
         self.vbox.addWidget(self.tabwidget)
+        self.vbox.addSpacing(10)
+        self.vbox.addWidget(self.loglabel)
+        self.vbox.addWidget(self.logbox)
 
         # connect signals to internal slots
         self.serialopenbutton.clicked.connect(self.openSerial)
 
     @QtCore.Slot(str)
-    def printText(self, text):
+    def showText(self, text):
         print text
 
     @QtCore.Slot()
@@ -76,7 +92,7 @@ def main(argv = None):
     comm.updateprogressed.connect(mainwindow.updatepage.setUpdateProgress)
     comm.updatecompleted.connect(mainwindow.updatepage.endUpdate)
     comm.serialenumerated.connect(mainwindow.setSerialPortChoices)
-    comm.newtextmessage.connect(mainwindow.printText)
+    comm.newtextmessage.connect(mainwindow.showText)
 
     comm.start()
     comm.enumerateSerialPorts()

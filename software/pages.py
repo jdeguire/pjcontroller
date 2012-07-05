@@ -41,10 +41,12 @@ class UpdatePage(PageBase):
 
         # put the widgets into a vertical layout
         self.vbox = QVBoxLayout(self)
+        self.vbox.addStretch()
         self.vbox.addWidget(self.fileline)
         self.vbox.addWidget(self.browsebutton)
         self.vbox.addWidget(self.progress)
         self.vbox.addWidget(self.startbutton)
+        self.vbox.addStretch()
 
         # connect signals to internal slots
         self.browsebutton.clicked.connect(self.browseForHexFile)
