@@ -4,42 +4,35 @@
  */
 
 #include "deviceprog.h"
-#include "misc.h"
+#include "regmap.h"
 #include "watchdog.h"
 #include <avr/boot.h>
 #include <avr/io.h>
-#include <string.h>
+#include <avr/eeprom.h>
 #include <avr/pgmspace.h>
 #include <avr/interrupt.h>
 
-/* NOTE:
- * Flash operations use the Z register (R30:R31 pair) for the address.  Since the AVR's memory is
- * paged, we can think of a 16-bit address as split into two parts like so:
- * [Page Number][Offset Within Page]
- * where the number of bits for each depends on the size of the flash and the size of each page.
- * Filling in the AVR write latches seems to only require the offset, whereas doing a page write or
- * erase cares about only the page number and the offset bits are ignored.
- * Reading flash does care about both since page structure does not come into play.
- */
 
-
-/* Program the page containing 'addr' from the data in 'buf'.  The buffer must have at least one
- * full page of data in it.
+/* Write the given instruction word to the write latch given by 'offset'.  'offset' is a byte
+ * address and so should be an even number.  A latch can only be written to once before being
+ * cleared by a write operation or by writing to the RWWSRE bit in the SPMCSR register.
  */
-void Flash_ProgramPage(uint16_t addr, uint16_t *buf)
+void Flash_WriteLatch(uint16_t offset, uint16_t insword)
 {
-	uint16_t offset;
-
 	cli();
+	boot_page_fill(offset, insword);
+	sei();
+}
 
-	// write latches one by one
-	for(offset = 0; offset < SPM_PAGESIZE; offset += 2)
-		boot_page_fill(offset, buf[offset >> 1]);
-
+/* Program the page containing 'addr' from the data contained in the device's internal write
+ * latches.  Use Flash_WriteLatch() to fill these latches before writing.
+ */
+void Flash_ProgramPage(uint16_t addr)
+{
+	cli();
 	boot_page_write(addr);
 	boot_spm_busy_wait();
 	boot_rww_enable();        // so we can read back the flash to verify it
-
 	sei();
 }
 
@@ -77,10 +70,27 @@ void Flash_EraseApp()
 void EEPROM_EraseData()
 {
 	uint16_t i;
+	uint8_t eecr_shadow = EECR;
+	EECRbits.eepm = 1;             // erase-only mode
 
-	for(i = 0; i < E2END; ++i)     // E2END from avr/io.h
+	for(i = 0; i <= E2END; ++i)
 	{
-		eeprom_update_byte((uint8_t *)i, 0xFF);
+		EEAR = i;
+		EECRbits.eere = 1;
+
+		if(0xFF != EEDR)
+		{
+			cli();
+			EECRbits.eempe = 1;
+			EECRbits.eepe = 1;
+			sei();
+
+			while(EECRbits.eepe)
+			{}
+		}
+
 		wdt_reset();
 	}
+
+	EECR = eecr_shadow;
 }

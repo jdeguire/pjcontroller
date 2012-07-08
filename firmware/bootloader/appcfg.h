@@ -1,4 +1,4 @@
-/* system.h
+/* appcfg.h
  *
  * Project-specific defines and settings used in multiple places.  This file is included in several
  * common code modules as well, allowing you to change their settings.  For example, you could
@@ -10,10 +10,13 @@
 
 #include "misc.h"
 
-#define CMD_MAXCMDS 20
+#define __PJC_BOOTLOADER__
+
+#define CMD_BUFSIZE 64
+#define CMD_MAXCMDS 13
 
 #define FIRMWARE_VERSION 0
-#define VERSION_STRING "Projector Controller v"STRINGIFY(FIRMWARE_VERSION)
+#define VERSION_STRING "PJC Bootloader v"STRINGIFY(FIRMWARE_VERSION)
 
 
 #endif // INCLUDE_SYSTEM_H_

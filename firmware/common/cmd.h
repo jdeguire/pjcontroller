@@ -7,7 +7,7 @@
 #ifndef INCLUDE_CMD_H
 #define INCLUDE_CMD_H
 
-#include "system.h"
+#include "appcfg.h"
 #include <avr/pgmspace.h>
 #include <stdint.h>
 #include <stdbool.h>
@@ -28,7 +28,7 @@ typedef struct cmdinfo_tag
 {
 	const char *name;
 	cmdhandler_t cmdfunc;
-	const prog_char *help;          // leave NULL to not display help
+	const prog_char *help;    // must be non-NULL (use "" to not display help)
 } cmdinfo_t;
 
 void Cmd_InitInterface();

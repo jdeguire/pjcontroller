@@ -25,8 +25,7 @@ static enum cmdstate_t
 	eCmd_Prompt = 0,
 	eCmd_Receive,
 	eCmd_Run,
-	eCmd_Help1,
-	eCmd_Help2
+	eCmd_Help
 } m_cmdstate;
 
 static uint8_t m_helpindex;             // which command we're printing help for
@@ -87,19 +86,23 @@ void Cmd_ProcessInterface()
 				++m_cmdstate;
 			}
 			break;
-		case eCmd_Receive:
-			if(UART_RxAvailable() > 0)
+		case eCmd_Receive:			
+		{
+			uint16_t avail = UART_RxAvailable();
+
+			while(avail--)
 			{
 				char c = UART_RxChar();
 
 				if(0x08 == c)           // backspace -- remove last character
 				{
 					if(m_cmdlen > 0)
-						m_cmdbuf[--m_cmdlen] = '\0';
+						--m_cmdlen;
 				}
 				else if(0x1B == c)      // escape -- clear prompt
 				{
 					m_cmdstate = eCmd_Prompt;
+					break;
 				}
 				else                    // add the character to the buffer
 				{
@@ -111,11 +114,15 @@ void Cmd_ProcessInterface()
 					{
 						m_cmdbuf[m_cmdlen] = 0;   // terminate command
 						++m_cmdstate;
+						break;
 					}
 				}
 			}
-			break;
+		}
+		break;
 		case eCmd_Run:
+			m_cmdstate = eCmd_Prompt;
+
 			if(m_numcmds > 0)
 			{
 				uint8_t i;
@@ -137,25 +144,24 @@ void Cmd_ProcessInterface()
 				if(i == m_numcmds)
 					UART_TxData_P(PSTR("Unknown command\r"), 16);
 			}
-			if(eCmd_Run == m_cmdstate)
-				m_cmdstate = eCmd_Prompt;
 			break;
-		case eCmd_Help1:
+		case eCmd_Help:
 			if(m_helpindex < m_numcmds)
 			{
-				size_t txlen = strlen(m_cmds[m_helpindex].name) + 1;
+				size_t txlen = (strlen(m_cmds[m_helpindex].name) + 
+								strlen_P(m_cmds[m_helpindex].help) + 5);
+
+				if(txlen > UART_TX_BUFSIZE)
+					txlen = UART_TX_BUFSIZE;
 
 				if(UART_TxAvailable() >= txlen)
 				{
 					UART_TxString(m_cmds[m_helpindex].name);
+					UART_TxData("\t - ", 4);
+					UART_TxString_P(m_cmds[m_helpindex].help);
+					UART_TxChar('\r');
 
-					if(m_cmds[m_helpindex].help == NULL)
-					{
-						UART_TxChar('\r');
-						++m_helpindex;
-					}
-					else
-						m_cmdstate = eCmd_Help2;
+					++m_helpindex;
 				}
 			}
 			else
@@ -164,20 +170,6 @@ void Cmd_ProcessInterface()
 				m_helpindex = 0;
 			}
 			break;
-		case eCmd_Help2:
-		{
-			size_t txlen = strlen_P(m_cmds[m_helpindex].help) + 5;
-
-			if(UART_TxAvailable() >= txlen)
-			{
-				UART_TxData("\t - ", 4);
-				UART_TxString_P(m_cmds[m_helpindex].help);
-				UART_TxChar('\r');
-				++m_helpindex;
-				m_cmdstate = eCmd_Help1;
-			}
-		}
-		break;
 		default:
 			m_cmdstate = eCmd_Prompt;
 			break;
@@ -193,6 +185,7 @@ void Cmd_ProcessInterface()
 
 /* Compute the 16-bit crc of the loaded application.
  * Syntax: crc
+ * Response: uint16_t
  */
 static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
 {
@@ -212,15 +205,17 @@ static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
 /* Print help info for all registered commands.  If the help string is NULL for that command, then
  * only the command name is printed.
  * Syntax: h
+ * Response: multiline string (printed in state machine)
  */
 static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
 {
-	m_cmdstate = eCmd_Help1;
+	m_cmdstate = eCmd_Help;
 }
 
 /* Show the version string for the app/bootloader.  This is defined in system.h, which is where
  * application-specific macros are defined.
  * Syntax: v
+ * Response: string
  */
 static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)
 {

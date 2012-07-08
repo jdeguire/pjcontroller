@@ -7,6 +7,8 @@
 #ifndef INCLUDE_LOCALCMD_H_
 #define INCLUDE_LOCALCMD_H_
 
+#define APP_CHECKSUM_VALID 0xAA55
+
 void RegisterBootloaderCommands();
 
 #endif // INCLUDE_LOCALCMD_H_

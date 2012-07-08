@@ -9,7 +9,7 @@
 #define INCLUDE_UART_H_
 
 #include "regmap.h"
-#include "system.h"
+#include "appcfg.h"
 #include <avr/pgmspace.h>
 #include <stdio.h>
 #include <string.h>
