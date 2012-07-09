@@ -61,7 +61,10 @@ void Flash_EraseApp()
 	boot_page_erase(FLASHEND - SPM_PAGESIZE + 1);
 	
 	for( ; addr < APP_SPACE_END; addr += SPM_PAGESIZE)
+	{
+		wdt_reset();
 		boot_page_erase(addr);
+	}
 }
 
 /* Erase everything in EEPROM space.  Use this only if some setting in EEPROM is causing your
