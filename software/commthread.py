@@ -23,7 +23,7 @@ class CommThread(QThread):
     # new signals have to be declared out here, something the docs aren't very explicit about
     serialenumerated = QtCore.Signal(list)
     updateprogressed = QtCore.Signal(int)
-    updatecompleted = QtCore.Signal(int)
+    updatecompleted = QtCore.Signal(bool)
     newtextmessage = QtCore.Signal(str)      # used to print messages to the UI
 
     def __init__(self):
@@ -63,38 +63,44 @@ class CommThread(QThread):
 
     @QtCore.Slot(str)
     def doFirmwareUpdate(self, hexfile):
-        resultcode = -1
+        result = True
 
         # not final, doesn't handle exceptions and doesn't jump from app to bootloader
-        if self.pjcboot.getBootloaderVersion() >= 0:
-            flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
+        if self.pjcboot.isApplication():
+            if self.pjcboot.doJump():
+                self._print('Failed to jump to bootloader')
+            else:
+                self._print('Jumped to bootloader')
 
-            if flashmem.buildImageFromFile(hexfile):
-                self._print('File CRC: ' + hex(flashmem.calculateCRC()) + '\n')
-                self._print('File pages: ' + str(flashmem.getUsedAppPages()) + '\n')
+        flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
 
-                self._print('Erasing old app...\n')
-                self.pjcboot.eraseApp()
+        if flashmem.buildImageFromFile(hexfile):
+            self._print('File CRC: ' + hex(flashmem.calculateCRC()))
+            self._print('File pages: ' + str(flashmem.getUsedAppPages()))
 
-                self._print('Loading new app...\n')
+            self._print('Erasing old app...')
+            self.pjcboot.eraseApp()
 
-                for i in range(flashmem.getUsedAppPages()):
-                    resultcode = self.pjcboot.programPage(i, flashmem.getSinglePage(i))
+            self._print('Loading new app...')
 
-                    if 0 == resultcode:
+            for i in range(flashmem.getUsedAppPages()):
+                if self.pjcboot.loadPageData(flashmem.getSinglePage(i)):
+                    if self.pjcboot.programPage(i):
                         self.updateprogressed.emit(i * 100 // flashmem.getUsedAppPages())
                     else:
-                        self._print('\nFailed to program page ' + str(i) + '\n')
+                        self._print('Failed to program page ' + str(i))
+                        result = False
                         break;
-
-                if 0 == resultcode:
-                    self.pjcboot.writeCRC()
-                    self._print('Update complete!\n')
                 else:
-                    self._print('Update returned error code ' + str(resultcode) + '\n')
-            else:
-                self._print('File parse failed\n')
-        else:
-            self._print('Could not communicate with bootloader\n')
+                    result = False
+                    self._print('Failed to load page data ' + str(i))
+                    break;
 
-        self.updatecompleted.emit(resultcode)
+            if result:
+                self.pjcboot.writeCRC()
+                self._print('Update complete!')
+                self.pjcboot.doJump()
+        else:
+            self._print('File parse failed')
+
+        self.updatecompleted.emit(result)

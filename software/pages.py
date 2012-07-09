@@ -8,6 +8,7 @@ will contain one of these pages.
 """
 
 import os
+import hashlib
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -30,22 +31,49 @@ class UpdatePage(PageBase):
         PageBase.__init__(self)
 
         # widgets in the dialog box
-        self.fileline = QLineEdit('Select hex file...')
-        self.browsebutton = QPushButton('Browse...')
+        self.fileline = QLineEdit()
+        self.fileline.setPlaceholderText('Select hex file...')
+
+        self.browsebutton = QPushButton('...')
+        
+        # Set the appropriate size manually since the "standard" size is too big.
+        # It seems that buttons get a 10 pixel pad on each side.
+        browsefw = self.browsebutton.fontMetrics().width(self.browsebutton.text())
+        if browsefw > 15:
+            self.browsebutton.setFixedWidth(browsefw + 20)
+        else:
+            self.browsebutton.setFixedWidth(35)
+
+        self.hashlabel = QLabel("MD5 Sum")
+        self.hashline = QLineEdit()
+        self.hashline.setPlaceholderText('No file selected')
+        self.hashline.setReadOnly(True)
+
         self.startbutton = QPushButton('Start')
+        self.startbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
         self.progress = QProgressBar()
         self.progress.setRange(0, 100)
+        self.progress.setFixedWidth(100)
 
         # so our file dialog remembers where we last were (default to home directory)
         self.lasthexdir = os.path.expanduser('~')
 
-        # put the widgets into a vertical layout
+        # set up our control layout
         self.vbox = QVBoxLayout(self)
+        self.filehbox = QHBoxLayout()
+        self.starthbox = QHBoxLayout()
         self.vbox.addStretch()
-        self.vbox.addWidget(self.fileline)
-        self.vbox.addWidget(self.browsebutton)
-        self.vbox.addWidget(self.progress)
-        self.vbox.addWidget(self.startbutton)
+        self.vbox.addLayout(self.filehbox)
+        self.filehbox.addWidget(self.fileline)
+        self.filehbox.addWidget(self.browsebutton)
+        self.vbox.addLayout(self.starthbox)
+        self.starthbox.addWidget(self.startbutton)
+        self.starthbox.addWidget(self.progress)
+        self.starthbox.addStretch()
+        self.vbox.addSpacing(10)
+        self.vbox.addWidget(self.hashlabel)
+        self.vbox.addWidget(self.hashline)
         self.vbox.addStretch()
 
         # connect signals to internal slots
@@ -54,12 +82,20 @@ class UpdatePage(PageBase):
 
     @QtCore.Slot()
     def browseForHexFile(self):
-        hexfile = QFileDialog.getOpenFileName(self, 'Select hex file', self.lasthexdir,
+        hexpath = QFileDialog.getOpenFileName(self, 'Select hex file', self.lasthexdir,
                                               'Intel hex files (*.hex);;All Files (*)')
 
-        if hexfile[0] != '':
-            self.fileline.setText(hexfile[0])
-            self.lasthexdir = os.path.dirname(hexfile[0])
+        if hexpath[0] != '':
+            self.fileline.setText(hexpath[0])
+            self.lasthexdir = os.path.dirname(hexpath[0])
+            
+            h = hashlib.md5()
+
+            with open(hexpath[0], 'r') as hexfile:
+                for line in hexfile:
+                    h.update(line)
+
+            self.hashline.setText(h.hexdigest())
 
     @QtCore.Slot()
     def startNewUpdate(self):
@@ -70,7 +106,7 @@ class UpdatePage(PageBase):
     def setUpdateProgress(self, prog):
         self.progress.setValue(prog)
 
-    @QtCore.Slot(int)
-    def endUpdate(self, status):
+    @QtCore.Slot(bool)
+    def endUpdate(self, result):
         self.progress.reset()
-        # may want to handle the status code at some point...
+        # may want to handle the result at some point...

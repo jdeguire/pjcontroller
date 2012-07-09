@@ -26,23 +26,22 @@ class MainWindow(QDialog):
         self.serialcombo.setMinimumWidth(180)
 
         self.serialopenbutton = QPushButton('Open')
-        self.serialopenbutton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.serialopenbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.serialrefreshbutton = QPushButton('Refresh')
-        self.serialrefreshbutton.setSizePolicy(QSizePolicy.Maximum, QSizePolicy.Fixed)
+        self.serialrefreshbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.tabwidget = QTabWidget()
         self.updatepage = pages.UpdatePage()
         self.tabwidget.addTab(self.updatepage, "Update")
 
         self.loglabel = QLabel("Log")
-
         self.logbox = QTextEdit()
         self.logbox.LineWrapMode = QTextEdit.WidgetWidth
         self.logbox.setReadOnly(True)
         self.logbox.setTabChangesFocus(True)
         self.logbox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
-        self.logbox.document().setMaximumBlockCount(1000)
+        self.logbox.document().setMaximumBlockCount(1024)
 
         # alias existing signals so they're easier to access externally
         self.serialrefreshclicked = self.serialrefreshbutton.clicked
@@ -65,7 +64,7 @@ class MainWindow(QDialog):
 
     @QtCore.Slot(str)
     def showText(self, text):
-        print text
+        self.logbox.append(text)
 
     @QtCore.Slot()
     def openSerial(self):

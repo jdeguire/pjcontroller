@@ -7,9 +7,7 @@ Contains classes used for interacting with the bootloader on the ATmega devices.
 will want to use the PJCBootloader class to do all of the talking to the device.
 """
 
-import serial
-import re
-import sys
+import pjcinterface
 
 class BootStatus:
     """Contains constants used by the bootloader to indicate the reason why it is running instead of
@@ -23,22 +21,7 @@ class BootStatus:
     BadCRC = 4           # the application's CRC is not what it should be
 
 
-class CmdResult:
-    """Contains constants returned by the PJCBootloader class methods to indicate success or a
-    failure.  Positve values are returned by the bootloader and negative values are returned by
-    these functions to indicate a communication problem.
-    """
-
-    UnexpectedRestart = -2     # bootloader restarted when it shouldn't have
-    NotResponding = -1         # bootloader is not talking; communication lost
-    CmdOK = 0                  # no error; used to indicate success
-    InvalidArgs = 1            # invalid or missing arguments
-    PageOutOfBounds = 2        # page out of bounds
-    BadChecksum = 3            # expected checksum does not match calculated
-    VerifyFailure = 4          # page verify failed
-
-
-class PJCBootloader:
+class PJCBootloader(pjcinterface.PJCInterface):
     """An interface to the PJC bootloader for ATMega devices.
 
     A bootloader allows an application to update firmware on the device without requiring an
@@ -47,248 +30,77 @@ class PJCBootloader:
     these functions will return codes from the CmdResult class in this module.
     """
 
-    CommandPrompt = '\r#> '
-    StartupString = 'PJC Bootloader'
-
-    def __init__(self, serialdevice):
-        """Create a new PJCBootloader object which will communicate over the given serial port.
-        """
-        self.serial = serialdevice
-
-    def getBootloaderVersion(self):
-        """Get the bootloader version loaded on the device or a Not Responding error if that cannot
-        be read.
-        """
-        result = CmdResult.NotResponding
-
-        self._sendCommand('v')
-        
-        resp = self._readSerialResponse()
-        match = re.search(r'Bootloader v\d+', resp)
-
-        if match:
-            result = int(match.group(0)[12:])
-
-        return result
-
-    def getAppCRC(self):
-        """Get the 16-bit CRC of the application currently on the device or -1 if that cannot be
-        read.
-        """
-        result = -1
-
-        self._sendCommand('crc')
-
-        resp = self._readSerialResponse()
-
-        if resp != '':
-            result = int(resp, 16) & 0xFFFF
-
-        return result
-
-    def jumpToApp(self):
-        """Jump from bootloader to application.
-
-        Jump from the bootloader by issuing a serial command and parse the response to see if the
-        jump was successful.  If the bootloader restarts, then there is probably no app (or a bad
-        app) on board and this function will return False.  Otherwise, this will return True.
-        """
-        result = True
-
-        self._sendCommand('j')
-    
-        resp = self._readSerialResponse()
-
-        if resp.find(PJCBootloader.StartupString) >= 0:
-            result = False
-            
-        return result
-
-    def restartBootloader(self):
-        """Reset device and restart in the bootloader.
-
-        Restart the bootloader by issuing a serial command and parse the the response to see if the
-        reset was successful.  If the bootloader restarts, then return True.  Else return False.
-        """
-        result = False
-
-        self._sendCommand('r')
-    
-        resp = self._readSerialResponse()
-
-        if resp.find(PJCBootloader.StartupString) >= 0:
-            result = True
-            
-        return result
-
     def eraseApp(self):
-        """Erase the application on board.
-
-        Return True if the application was erased or False otherwise.
+        """Erase the application on board and return True if successful or False otherwise.
         """
-        result = False
-        
-        self._sendCommand('ea yes')   # 'yes' required to confirm erase
-
-        resp = self._readSerialResponse()
-
-        if resp.find('00') >= 0:        # returns '!00' on success
-            result = True
-
-        return result
+        return self.execCommand('ea yes', pjcinterface.PJCInterface.RespStatus, 5.0) == 0
 
     def eraseEEPROM(self):
-        """Erase the device's EEPROM.
-
-        Return True if the EEPROM was erased or False otherwise.
+        """Erase the device's EEPROM and return True if successful or False otherwise.
         """
-        result = False
-        temp = self.serial.timeout
+        return self.execCommand('ee yes', pjcinterface.PJCInterface.RespStatus, 5.0) == 0
 
-        self.serial.timeout = 6.0       # erasing EEPROM can take a really long time
-        
-        self._sendCommand('ee yes')   # 'yes' required to confirm erase
-
-        resp = self._readSerialResponse()
-
-        if resp.find('00') >= 0:        # returns '!00' on success
-            result = True
-
-        self.serial.timeout = temp
-
-        return result
-
-    def programPage(self, pagenum, pagedata):
-        """Program one page of data onto the device's flash.
-
-        Parameters are the page number to program and a single page of data.
-
-        This method returns 0 on success, 1 if the command arguments are malformed, 2 if the page
-        number is out of bounds, 3 if the checksum sent to the board as part of the command is
-        wrong, 4 if the flash could not be written to correctly, -1 if the bootloader is not
-        responding, or -2 if the bootloader restarted unexpectedly.
+    def loadPageData(self, pagedata):
+        """Load a page of data into the device for writing.  Return True on success or False
+        otherwise.
         """
-        result = -1
+        result = 0
+        offset = 0
+        d = pagedata[0:16]
 
-        checksum = sum(pagedata) & 0xFFFF
-        data = ''.join([chr(i) for i in pagedata])
+        while d:
+            checksum = sum(d) & 0xFFFF
+            dstr = ''.join(['{:02x}'.format(i) for i in d])
+            cmd = 'pd {:x} {:x}'.format(offset, checksum) + ' ' + dstr
 
-        self._sendCommand('pp ' + hex(pagenum)[2:] + ' ' + hex(checksum)[2:])
+            result = self.execCommand(cmd, pjcinterface.PJCInterface.RespStatus)
 
-        resp = self.serial.read(1)
+            if result != 0:
+                break
+            else:
+                offset += 16
+                d = pagedata[offset:offset+16]
 
-        if resp.find(':') >= 0:         # ':' signals that it's OK to send data
-            self.serial.write(data)
-            resp = ''
+        return result == 0
 
-        resp += self._readSerialResponse()
+    def programPage(self, pagenum):
+        """Program the data loaded with loadPageData() onto the device's flash.
 
-        if resp.find(PJCBootloader.StartupString) >= 0:
-            result = -2
-        else:
-            match = re.search(r'!0[0-4]', resp)      # valid responses are '!00' - '!04'
-
-            if match:
-                result = int(match.group(0)[1:], 16)
-
-        return result
+        The parameter is the page number to program.  Returns True on success or False otherwise.
+        """
+        cmd = 'pp {:x}'.format(pagenum)
+        return self.execCommand(cmd, pjcinterface.PJCInterface.RespStatus) == 0
 
     def writeCRC(self):
-        """Write the application CRC to flash.
+        """Write the application CRC to flash and return True on success or False otherwise.
 
         This should be called after the entire application has been programmed to flash using
         repeated calls to programPage().  This CRC is used to verify that a valid application is on
         the board at startup.  Returns True if the CRC was written successfully or False otherwise.
         """
-        result = False
-        
-        self._sendCommand('wc')
-
-        resp = self._readSerialResponse()
-
-        if resp.find('00') >= 0:        # returns '!00' on success
-            result = True
-
-        return result
+        return self.execCommand('wc', pjcinterface.PJCInterface.RespStatus) == 0
 
     def getPageSize(self):
-        """Get the size in bytes of a single page or -1 if that could not be read.
-
-        The result is stored in the calling object for use with the programPage() and
-        calculateFileCRC() methods.
+        """Get the size in bytes of a single page.
         """
-        result = -1
-
-        self._sendCommand('ps')
-        
-        resp = self._readSerialResponse()
-
-        if resp != '':
-            result = int(resp, 16) & 0xFFFF
-
-        self.pagesize = result
-        return result
+        return self.execCommand('ps', pjcinterface.PJCInterface.RespHex)
 
     def getMaxPages(self):
-        """Get the maximum number of pages an application can occupy or -1 if that could not be
-        read.
-
-        The result is stored in the calling object for use with the programPage() and
-        calculateFileCRC() methods.
+        """Get the maximum number of pages an application can occupy.
         """
-        result = -1
-
-        self._sendCommand('pn')
-        
-        resp = self._readSerialResponse()
-
-        if resp != '':
-            result = int(resp, 16) & 0xFFFF
-
-        self.maxpages = result
-        return result
+        return self.execCommand('pn', pjcinterface.PJCInterface.RespHex)
 
     def getBootStatus(self):
         """Get a value representing the reason why the device is running the bootloader instead of
-        the application or -1 if that could not be read.
+        the application or -1 if the bootloader did not provide that info.
 
-        Return 1 if the bootloader pin is set, 2 on a watchdog/application reset, 3 if no app is on
-        the board, or 4 if the app checksum is bad.  This will never return 0 since that would mean
-        that the bootloader will have started the application.
+        Returns one of the BootStatus values indicating the reason the device is in the bootloader.
         """
         result = -1
 
-        self._sendCommand('s')
-        
-        resp = self._readSerialResponse()
-        match = re.search(r'(0[0-4])', resp)
+        match = re.search(r'(0[0-4])', self.execCommand('s'))
 
         if match:
             result = int(match.group(0)[1:])
 
-        return result        
-
-    def _readSerialResponse(self):
-        """Read the response to a command.  
-
-        This reads the serial port until it receives the prompt (#>) or until it times out.  The
-        prompt is removed from the response.
-        """
-        resp = ''
-
-        temp = self.serial.read(max(self.serial.inWaiting(), 1))
-        resp += temp
- 
-        while temp != ''  and  not resp.endswith(PJCBootloader.CommandPrompt):
-            temp = self.serial.read(max(self.serial.inWaiting(), 1))
-            resp += temp
-
-        resp = resp.replace(PJCBootloader.CommandPrompt, '')
-        return resp
-
-    def _sendCommand(self, cmd):
-        """Flush out any previous command data and send a new command, adding the proper line
-        ending.
-        """
-        self.serial.flushInput()
-        self.serial.write(cmd + '\r')
+        return result
