@@ -7,9 +7,9 @@
 #include "uart.h"
 #include "sharedmem.h"
 #include "cmd.h"
+#include "watchdog.h"
 #include <string.h>
 #include <stdlib.h>
-
 
 static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len);
 static void PrintHelp_CMD(const char *cmdbuf, uint8_t len);
@@ -93,6 +93,7 @@ void Cmd_ProcessInterface()
 			while(avail--)
 			{
 				char c = UART_RxChar();
+				wdt_reset();
 
 				if(0x08 == c)           // backspace -- remove last character
 				{
@@ -118,6 +119,8 @@ void Cmd_ProcessInterface()
 					}
 				}
 			}
+
+			wdt_reset();
 		}
 		break;
 		case eCmd_Run:
