@@ -3,21 +3,21 @@
 """
 commthread.py
 
-Contains a class for the serial communication thread and for the commands it will accept.
+Contains a class for talking to the devices over a serial port and for the commands it will accept.
 """
 
-import time
 import serial
 import pjcbootloader
 import flashimage
+import connmanager
 from PySide import QtCore
-from PySide.QtCore import *
+from PySide.QtCore import QObject
 
-class CommThread(QThread):
-    """Class for the serial communications thread.
+class SerialComm(QObject):
+    """Class for serial communications.
 
-    This class communicates with the board over a serial connection in its own thread.  Commands are
-    retrieved via QT slots and the results are transmitted using QT signals.
+    This class communicates with the board over a serial connection.  Commands are retrieved via QT
+    slots and the results are transmitted using QT signals.
     """
 
     # new signals have to be declared out here, something the docs aren't very explicit about
@@ -26,15 +26,24 @@ class CommThread(QThread):
     updatecompleted = QtCore.Signal(bool)
     newtextmessage = QtCore.Signal(str)      # used to print messages to the UI
 
-    def __init__(self):
-        QThread.__init__(self)
+    def __init__(self, connmgr):
+        QObject.__init__(self)
 
         self.serialdev = serial.Serial(None, 115200, timeout=1.0)
         self.pjcboot = pjcbootloader.PJCBootloader(self.serialdev)
 
-    def quit(self):
-        self.serialdev.close()
-        QThread.quit(self)
+        # set up connections
+        connmgr.addSignal(self.serialenumerated, 'SerialEnumerated')
+        connmgr.addSignal(self.updateprogressed, 'UpdateProgressed')
+        connmgr.addSignal(self.updatecompleted, 'UpdateCompleted')
+        connmgr.addSignal(self.newtextmessage, 'WriteToLog')
+        connmgr.addSlot(self.enumerateSerialPorts, 'EnumerateSerial')
+        connmgr.addSlot(self.openSerialPort, 'OpenSerial')
+        connmgr.addSlot(self.doFirmwareUpdate, 'StartUpdate')
+
+    def __del__(self):
+        if self.serialdev.isOpen():
+            self.serialdev.close()
 
     def _print(self, text):
         self.newtextmessage.emit(text)

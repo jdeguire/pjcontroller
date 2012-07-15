@@ -9,6 +9,7 @@ will contain one of these pages.
 
 import os
 import hashlib
+import connmanager
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -27,7 +28,7 @@ class UpdatePage(PageBase):
     # new signals have to be declared out here, something the docs aren't very explicit about
     updatestartclicked = QtCore.Signal(str)
 
-    def __init__(self):
+    def __init__(self, connmgr):
         PageBase.__init__(self)
 
         # widgets in the dialog box
@@ -59,6 +60,15 @@ class UpdatePage(PageBase):
         # so our file dialog remembers where we last were (default to home directory)
         self.lasthexdir = os.path.expanduser('~')
 
+        # set up external connections
+        connmgr.addSignal(self.updatestartclicked, 'StartUpdate')
+        connmgr.addSlot(self.setUpdateProgress, 'UpdateProgressed')
+        connmgr.addSlot(self.endUpdate, 'UpdateCompleted')
+
+        # connect signals to internal slots
+        self.browsebutton.clicked.connect(self.browseForHexFile)
+        self.startbutton.clicked.connect(self.startNewUpdate)
+
         # set up our control layout
         self.vbox = QVBoxLayout(self)
         self.filehbox = QHBoxLayout()
@@ -76,9 +86,6 @@ class UpdatePage(PageBase):
         self.vbox.addWidget(self.hashline)
         self.vbox.addStretch()
 
-        # connect signals to internal slots
-        self.browsebutton.clicked.connect(self.browseForHexFile)
-        self.startbutton.clicked.connect(self.startNewUpdate)
 
     @QtCore.Slot()
     def browseForHexFile(self):

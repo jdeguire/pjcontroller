@@ -8,7 +8,8 @@ The entry point for the controller app.
 
 import sys
 import pages
-import commthread
+import serialcomm
+import connmanager
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -16,9 +17,9 @@ from PySide.QtGui import *
 class MainWindow(QDialog):
     serialopenclicked = QtCore.Signal(str)
 
-    def __init__(self):
+    def __init__(self, connmgr):
         QDialog.__init__(self)
-        self.setWindowTitle("Test App")
+        self.setWindowTitle('Test App')
 
         self.serialcombo = QComboBox()
         self.serialcombo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtTop)
@@ -32,10 +33,10 @@ class MainWindow(QDialog):
         self.serialrefreshbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         self.tabwidget = QTabWidget()
-        self.updatepage = pages.UpdatePage()
-        self.tabwidget.addTab(self.updatepage, "Update")
+        self.updatepage = pages.UpdatePage(connmgr)
+        self.tabwidget.addTab(self.updatepage, 'Update')
 
-        self.loglabel = QLabel("Log")
+        self.loglabel = QLabel('Log')
         self.logbox = QTextEdit()
         self.logbox.LineWrapMode = QTextEdit.WidgetWidth
         self.logbox.setReadOnly(True)
@@ -43,8 +44,18 @@ class MainWindow(QDialog):
         self.logbox.setVerticalScrollBarPolicy(Qt.ScrollBarAlwaysOn)
         self.logbox.document().setMaximumBlockCount(1024)
 
-        # alias existing signals so they're easier to access externally
-        self.serialrefreshclicked = self.serialrefreshbutton.clicked
+        self.logclearbutton = QPushButton('Clear')
+        self.logclearbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
+
+        # set up external connections
+        connmgr.addSignal(self.serialrefreshbutton.clicked, 'EnumerateSerial')
+        connmgr.addSignal(self.serialopenclicked, 'OpenSerial')
+        connmgr.addSlot(self.setSerialPortChoices, 'SerialEnumerated')
+        connmgr.addSlot(self.showText, 'WriteToLog')
+
+        # connect signals to internal slots
+        self.serialopenbutton.clicked.connect(self.openSerial)
+        self.logclearbutton.clicked.connect(self.clearLog)
 
         # set up our control layout
         self.vbox = QVBoxLayout(self)
@@ -58,13 +69,18 @@ class MainWindow(QDialog):
         self.vbox.addSpacing(10)
         self.vbox.addWidget(self.loglabel)
         self.vbox.addWidget(self.logbox)
-
-        # connect signals to internal slots
-        self.serialopenbutton.clicked.connect(self.openSerial)
+        self.clearhbox = QHBoxLayout()
+        self.vbox.addLayout(self.clearhbox)
+        self.clearhbox.addWidget(self.logclearbutton)
+        self.clearhbox.addStretch()
 
     @QtCore.Slot(str)
     def showText(self, text):
         self.logbox.append(text)
+
+    @QtCore.Slot()
+    def clearLog(self):
+        self.logbox.clear()
 
     @QtCore.Slot()
     def openSerial(self):
@@ -80,26 +96,20 @@ def main(argv = None):
     if argv is None:
         argv = sys.argv
 
-    comm = commthread.CommThread()
+    connmgr = connmanager.ConnectionManager()
+    comm = serialcomm.SerialComm(connmgr)
     app = QApplication(argv)
-    mainwindow = MainWindow()
+    mainwindow = MainWindow(connmgr)
+    commthread = QThread()
 
-    # connect signals and slots between UI and Comm Thread
-    mainwindow.updatepage.updatestartclicked.connect(comm.doFirmwareUpdate)
-    mainwindow.serialopenclicked.connect(comm.openSerialPort)
-    mainwindow.serialrefreshclicked.connect(comm.enumerateSerialPorts)
-    comm.updateprogressed.connect(mainwindow.updatepage.setUpdateProgress)
-    comm.updatecompleted.connect(mainwindow.updatepage.endUpdate)
-    comm.serialenumerated.connect(mainwindow.setSerialPortChoices)
-    comm.newtextmessage.connect(mainwindow.showText)
-
-    comm.start()
     comm.enumerateSerialPorts()
+    comm.moveToThread(commthread)
+    commthread.start()
     mainwindow.show()
-    
+
     result = app.exec_()
-    comm.quit()
-    comm.wait()
+    commthread.quit()
+    commthread.wait()
 
     return result
 
