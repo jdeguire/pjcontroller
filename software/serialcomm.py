@@ -48,7 +48,20 @@ class SerialComm(QObject):
     def _print(self, text):
         self.newtextmessage.emit(text)
 
+    def _handlesExceptions(func):
+        """A decorator allowing the decorated functions to catch and handle exceptions thrown from
+        the PJCInterface classes in a consistent manner.
+        """
+        def wrapper(self, *args, **kwargs):
+            try:
+                func(self, *args, **kwargs)
+            except Exception as e:
+                self._print(str(e))
+
+        return wrapper
+
     @QtCore.Slot()
+    @_handlesExceptions
     def enumerateSerialPorts(self):
         l = []
 
@@ -63,6 +76,7 @@ class SerialComm(QObject):
         self.serialenumerated.emit(l)
 
     @QtCore.Slot(str)
+    @_handlesExceptions
     def openSerialPort(self, serialpath):
         if serialpath != self.serialdev.port:
             if self.serialdev.isOpen():
@@ -71,10 +85,10 @@ class SerialComm(QObject):
             self.serialdev.open()
 
     @QtCore.Slot(str)
+    @_handlesExceptions
     def doFirmwareUpdate(self, hexfile):
         result = True
 
-        # not final, doesn't handle exceptions and doesn't jump from app to bootloader
         if self.pjcboot.isApplication():
             if self.pjcboot.doJump():
                 self._print('Failed to jump to bootloader')

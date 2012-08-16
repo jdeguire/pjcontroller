@@ -1,25 +1,12 @@
 #! /usr/bin/env python
 
-"""
-pjcbootloader.py
+""" pjcbootloader.py
 
-Contains classes used for interacting with the bootloader on the ATmega devices.  Generally, you
-will want to use the PJCBootloader class to do all of the talking to the device.
+Contains a class that implements commands specific to the PJC Bootloader.  As a child of the
+PJCInterface class, this is used to communicate to the ATMega device over the serial port.
 """
 
 import pjcinterface
-
-class BootStatus:
-    """Contains constants used by the bootloader to indicate the reason why it is running instead of
-    starting up the application.
-    """
-
-    BootOK = 0           # bootup OK; we'll never see this if we're in the bootloader
-    BootPinSet = 1       # the onboard jumper is set, telling the bootloader to stay there
-    RestartByApp = 2     # the application jumped to the bootloader
-    NoAppLoaded = 3      # there is no application on board
-    BadCRC = 4           # the application's CRC is not what it should be
-
 
 class PJCBootloader(pjcinterface.PJCInterface):
     """An interface to the PJC bootloader for ATMega devices.

@@ -42,7 +42,7 @@ class PJCInterface:
     def execCommand(self, cmd, resptype=RespString, timeout=1.0):
         """Execute a command and parse the response into a usable form.
 
-        Pass one of the Cmd_ constants in this class to 'restype' to control how the response is
+        Pass one of the Resp constants in this class to 'restype' to control how the response is
         parsed.  This will raise a subclass of PJCError if a problem occurs.  See the module
         pjcexpect for the classes of exceptions that could be raised.
         """

@@ -14,6 +14,7 @@ from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
+
 class MainWindow(QDialog):
     serialopenclicked = QtCore.Signal(str)
 
