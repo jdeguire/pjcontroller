@@ -1,10 +1,9 @@
 #! /usr/bin/env python
 
 """
-pages.py
+updatepage.py
 
-Defines classes for each page of the application.  The main app will have a tab control and each tab
-will contain one of these pages.
+Contains the UpdatePage class.
 """
 
 import os
@@ -15,21 +14,14 @@ from PySide.QtCore import *
 from PySide.QtGui import *
 
 
-class PageBase(QDialog):
-    """Base class for the pages that can appear in the main tab window.
-    """
-    def __init__(self):
-        QDialog.__init__(self)
-
-
-class UpdatePage(PageBase):
+class UpdatePage(QDialog):
     """The page used for performing firmware updates to the device.
     """
     # new signals have to be declared out here, something the docs aren't very explicit about
     updatestartclicked = QtCore.Signal(str)
 
     def __init__(self, connmgr):
-        PageBase.__init__(self)
+        QDialog.__init__(self)
 
         # widgets in the dialog box
         self.fileline = QLineEdit()
