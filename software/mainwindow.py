@@ -6,8 +6,9 @@ mainwindow.py
 Contains the MainWindow class.
 """
 
-import updatepage
 import connmanager
+import updatepage
+import settingspage
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
@@ -31,8 +32,11 @@ class MainWindow(QDialog):
         self.serialrefreshbutton = QPushButton('Refresh')
         self.serialrefreshbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        self.tabwidget = QTabWidget()
         self.updatepage = updatepage.UpdatePage(connmgr)
+        self.settingspage = settingspage.SettingsPage(connmgr)
+
+        self.tabwidget = QTabWidget()
+        self.tabwidget.addTab(self.settingspage, 'Settings')
         self.tabwidget.addTab(self.updatepage, 'Update')
 
         self.loglabel = QLabel('Log')

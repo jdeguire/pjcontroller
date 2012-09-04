@@ -45,13 +45,45 @@ class PJCApplication(pjcinterface.PJCInterface):
         """
         return self.execCommand('ot', pjcinterface.PJCInterface.RespFloat)
 
+    def setTargetTemperature(self, target):
+        """Set the temperature the firmware will attempt to maintain at the thermistor.  The fan
+        speed is adjusted to keep this temperature.
+        """
+        return self.execCommand('tt ' + str(target), pjcinterface.PJCInterface.RespFloat)
+
+    def getTargetTemperature(self):
+        """Get the temperature the firmware will attempt to maintain at the thermistor.  The fan
+        speed is adjusted to keep this temperature.
+        """
+        return self.execCommand('tt', pjcinterface.PJCInterface.RespFloat)
+
+    def setFanOffPoint(self, fanoff):
+        """Set the point, relative to the ambient temperature, at which the firmware will turn the
+        fan off.  This only takes effect if the lamp is off; the fan always runs while the lamp is
+        on.
+        """
+        return self.execCommand('ft ' + str(fanoff), pjcinterface.PJCInterface.RespFloat)
+
+    def getFanOffPoint(self):
+        """Get the point, relative to the ambient temperature, at which the firmware will turn the
+        fan off.  This only takes effect if the lamp is off; the fan always runs while the lamp is
+        on.
+        """
+        return self.execCommand('ft', pjcinterface.PJCInterface.RespFloat)
+
     def setMinDutyCycle(self, mindc):
         """Set the minimum duty cycle in percent for the PWM controlling the fan speed and return
         the new duty cycle.
         """
         return self.execCommand('dcl ' + str(mindc), pjcinterface.PJCInterface.RespFloat)
 
-    def getMinDutyCycle(self, mindc):
+    def getMinDutyCycle(self):
         """Get the minimum duty cycle in percent for the PWM controlling the fan speed.
         """
         return self.execCommand('dcl', pjcinterface.PJCInterface.RespFloat)
+
+    def saveSettingsToEEPROM(self):
+        """Save application settings to the onboard EEPROM and return True if successful or False
+        otherwise.
+        """
+        return self.execCommand('sv', pjcinterface.PJCInterface.RespDecimal) != 0
