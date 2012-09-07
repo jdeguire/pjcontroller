@@ -7,12 +7,13 @@ The entry point for the controller app.
 """
 
 import sys
-import pages
+
+from PySide.QtCore import QThread
+from PySide.QtGui import QApplication
+
 import serialcomm
 import connmanager
 import mainwindow
-from PySide.QtCore import QThread
-from PySide.QtGui import QApplication
 
 
 def main(argv = None):

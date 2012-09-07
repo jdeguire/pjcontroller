@@ -82,8 +82,19 @@ class PJCApplication(pjcinterface.PJCInterface):
         """
         return self.execCommand('dcl', pjcinterface.PJCInterface.RespFloat)
 
+    def getCurrentDutyCycle(self):
+        """Get the current duty cycle in percent.  The high this value, the faster the fan speed.
+        """
+        return self.execCommand('dc', pjcinterface.PJCInterface.RespFloat)
+
     def saveSettingsToEEPROM(self):
         """Save application settings to the onboard EEPROM and return True if successful or False
         otherwise.
         """
         return self.execCommand('sv', pjcinterface.PJCInterface.RespDecimal) != 0
+
+    def getMostRecentError(self, clear):
+        """Get the most recent error from the device as a hex value.  If 'clear' is True, then the
+        error will be cleared so that future reads do not return the same error.
+        """
+        return self.execCommand('er ' + str(int(clear)), pjcinterface.PJCInterface.RespHex)

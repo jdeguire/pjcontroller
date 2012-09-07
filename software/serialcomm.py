@@ -7,12 +7,21 @@ Contains a class for talking to the devices over a serial port and for the comma
 """
 
 import serial
+
+from PySide import QtCore
+from PySide.QtCore import QObject
+
 import pjcbootloader
 import pjcapplication
 import flashimage
 import connmanager
-from PySide import QtCore
-from PySide.QtCore import QObject
+
+# this package is availabe only in PySerial 2.6 and later
+try:
+    from serial.tools.list_ports import comports
+except ImportError:
+    comports = None
+
 
 class SerialComm(QObject):
     """Class for serial communications.
@@ -23,15 +32,17 @@ class SerialComm(QObject):
 
     # new signals have to be declared out here, something the docs aren't very explicit about
     devicestarted = QtCore.Signal(bool)
+    serialclosed = QtCore.Signal()
     serialenumerated = QtCore.Signal(list)
     updateprogressed = QtCore.Signal(int)
     updatecompleted = QtCore.Signal(bool)
-    newtextmessage = QtCore.Signal(str)      # used to print messages to the UI
+    newlogmessage = QtCore.Signal(str)      # used to print messages to the UI
     lampstateupdated = QtCore.Signal(bool)
     targettempupdated = QtCore.Signal(float)
     overtempupdated = QtCore.Signal(float)
     fanoffupdated = QtCore.Signal(float)
     mindutycycleupdated = QtCore.Signal(float)
+    monitorrefreshed = QtCore.Signal(tuple)
 
     def __init__(self, connmgr):
         QObject.__init__(self)
@@ -42,18 +53,21 @@ class SerialComm(QObject):
 
         # set up connections
         connmgr.addSignal(self.devicestarted, 'DeviceStarted')
+        connmgr.addSignal(self.serialclosed, 'SerialClosed')
         connmgr.addSignal(self.serialenumerated, 'SerialEnumerated')
+        connmgr.addSignal(self.newlogmessage, 'WriteToLog')
+        connmgr.addSlot(self.enumerateSerialPorts, 'EnumerateSerial')
+        connmgr.addSlot(self.openSerialPort, 'OpenSerial')
+
         connmgr.addSignal(self.updateprogressed, 'UpdateProgressed')
         connmgr.addSignal(self.updatecompleted, 'UpdateCompleted')
-        connmgr.addSignal(self.newtextmessage, 'WriteToLog')
+        connmgr.addSlot(self.doFirmwareUpdate, 'StartUpdate')
+
         connmgr.addSignal(self.lampstateupdated, 'LampEnableChanged')
         connmgr.addSignal(self.targettempupdated, 'TargetTempChanged')
         connmgr.addSignal(self.overtempupdated, 'OvertempChanged')
         connmgr.addSignal(self.fanoffupdated, 'FanOffTempChanged')
         connmgr.addSignal(self.mindutycycleupdated, 'MinDutyCycleChanged')
-        connmgr.addSlot(self.enumerateSerialPorts, 'EnumerateSerial')
-        connmgr.addSlot(self.openSerialPort, 'OpenSerial')
-        connmgr.addSlot(self.doFirmwareUpdate, 'StartUpdate')
         connmgr.addSlot(self.setLampState, 'SetLampEnable')
         connmgr.addSlot(self.setTargetTemp, 'SetTargetTemp')
         connmgr.addSlot(self.setOvertempLimit, 'SetOvertemp')
@@ -62,14 +76,18 @@ class SerialComm(QObject):
         connmgr.addSlot(self.refreshAppSettings, 'RefreshSettings')
         connmgr.addSlot(self.saveAppSettings, 'SaveSettings')
 
+        connmgr.addSignal(self.monitorrefreshed, 'MonitorRefreshed')
+        connmgr.addSlot(self.refreshMonitorData, 'RefreshMonitor')
+
     def __del__(self):
         if self.serialdev.isOpen():
             self.serialdev.close()
+            self.serialclosed.emit()
 
     def _print(self, text):
-        self.newtextmessage.emit(text)
+        self.newlogmessage.emit(text)
 
-    def _handlesExceptions(func):
+    def _handlesPJCExceptions(func):
         """A decorator allowing the decorated functions to catch and handle exceptions thrown from
         the PJCInterface classes in a consistent manner.
         """
@@ -82,22 +100,26 @@ class SerialComm(QObject):
         return wrapper
 
     @QtCore.Slot()
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def enumerateSerialPorts(self):
-        l = []
+        if comports:
+            ports = [name for name, unused_desc, unused_hwid in sorted(comports())]
+        else:
+            # works in PySerial 2.5 and below, but misses some ports (like USB)
+            ports = []
 
-        for i in range(256):
-           try:
-                s = serial.Serial(i)
-                l.append(s.name)
-                s.close()
-           except serial.SerialException:
-                pass
+            for i in range(256):
+                try:
+                    s = serial.Serial(i)
+                    ports.append(s.name)
+                    s.close()
+                except serial.SerialException:
+                    pass
 
-        self.serialenumerated.emit(l)
+        self.serialenumerated.emit(ports)
 
     @QtCore.Slot(str)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def openSerialPort(self, serialpath):
         if serialpath != self.serialdev.port:
             if self.serialdev.isOpen():
@@ -107,7 +129,7 @@ class SerialComm(QObject):
             self.devicestarted.emit(self.pjcboot.isApplication())
 
     @QtCore.Slot(str)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def doFirmwareUpdate(self, hexfile):
         result = True
 
@@ -118,6 +140,8 @@ class SerialComm(QObject):
             else:
                 self.devicestarted.emit(False)
                 self._print('Jumped to bootloader')
+        else:
+            self._print('Already in bootloader')
 
         flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
 
@@ -155,32 +179,32 @@ class SerialComm(QObject):
         self.updatecompleted.emit(result)
 
     @QtCore.Slot(bool)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def setLampState(self, state):
         self.lampstateupdated.emit(self.pjcapp.enableLamp(state))
 
     @QtCore.Slot(float)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def setTargetTemp(self, temp):
         self.targettempupdated.emit(self.pjcapp.setTargetTemperature(temp))
     
     @QtCore.Slot(float)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def setOvertempLimit(self, temp):
         self.overtempupdated.emit(self.pjcapp.setOvertempLimit(temp))
 
     @QtCore.Slot(float)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def setFanOffTemp(self, temp):
         self.fanoffupdated.emit(self.pjcapp.setFanOffPoint(temp))
 
     @QtCore.Slot(float)
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def setMinDutyCycle(self, mindc):
         self.mindutycycleupdated.emit(self.pjcapp.setMinDutyCycle(mindc))
 
     @QtCore.Slot()
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def refreshAppSettings(self):
         if self.pjcapp.isApplication():
             self.lampstateupdated.emit(self.pjcapp.isLampEnabled())
@@ -190,9 +214,17 @@ class SerialComm(QObject):
             self.mindutycycleupdated.emit(self.pjcapp.getMinDutyCycle())
 
     @QtCore.Slot()
-    @_handlesExceptions
+    @_handlesPJCExceptions
     def saveAppSettings(self):
         if self.pjcapp.saveSettingsToEEPROM():
             self._print('Settings saved')
         else:
             self._print('Could not save settings')
+
+    @QtCore.Slot()
+    @_handlesPJCExceptions
+    def refreshMonitorData(self):
+        self.monitorrefreshed.emit((self.pjcapp.readADCs(), 
+                                    self.pjcapp.getCurrentDutyCycle(), 
+                                    self.pjcapp.isLampEnabled(), 
+                                    self.pjcapp.getMostRecentError(True)))

@@ -6,12 +6,14 @@ mainwindow.py
 Contains the MainWindow class.
 """
 
-import connmanager
-import updatepage
-import settingspage
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
+
+import connmanager
+import monitorpage
+import settingspage
+import updatepage
 
 
 class MainWindow(QDialog):
@@ -32,10 +34,12 @@ class MainWindow(QDialog):
         self.serialrefreshbutton = QPushButton('Refresh')
         self.serialrefreshbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        self.updatepage = updatepage.UpdatePage(connmgr)
+        self.monitorpage = monitorpage.MonitorPage(connmgr)
         self.settingspage = settingspage.SettingsPage(connmgr)
+        self.updatepage = updatepage.UpdatePage(connmgr)
 
         self.tabwidget = QTabWidget()
+        self.tabwidget.addTab(self.monitorpage, 'Monitor')
         self.tabwidget.addTab(self.settingspage, 'Settings')
         self.tabwidget.addTab(self.updatepage, 'Update')
 
@@ -48,7 +52,6 @@ class MainWindow(QDialog):
         self.logbox.document().setMaximumBlockCount(1024)
 
         self.logclearbutton = QPushButton('Clear')
-        self.logclearbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
         # set up external connections
         connmgr.addSignal(self.serialrefreshbutton.clicked, 'EnumerateSerial')
@@ -63,6 +66,7 @@ class MainWindow(QDialog):
         # set up our control layout
         self.vbox = QVBoxLayout(self)
         self.serialhbox = QHBoxLayout()
+
         self.vbox.addLayout(self.serialhbox)
         self.serialhbox.addWidget(self.serialcombo)
         self.serialhbox.addWidget(self.serialopenbutton)
@@ -72,10 +76,8 @@ class MainWindow(QDialog):
         self.vbox.addSpacing(10)
         self.vbox.addWidget(self.loglabel)
         self.vbox.addWidget(self.logbox)
-        self.clearhbox = QHBoxLayout()
-        self.vbox.addLayout(self.clearhbox)
-        self.clearhbox.addWidget(self.logclearbutton)
-        self.clearhbox.addStretch()
+        self.vbox.addWidget(self.logclearbutton)
+        self.vbox.setAlignment(self.logclearbutton, Qt.AlignLeft)
 
     @QtCore.Slot(str)
     def showText(self, text):

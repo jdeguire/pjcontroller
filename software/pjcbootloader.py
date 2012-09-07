@@ -17,6 +17,12 @@ class PJCBootloader(pjcinterface.PJCInterface):
     these functions will return codes from the CmdResult class in this module.
     """
 
+    BootStatusOK = 0          # booted to application OK
+    BootStatusPinSet = 1      # bootloader startup pin on the board is set
+    BootStatusRestart = 2     # the firmware app jumped to the bootloader
+    BootStatusNoApp = 3       # no application is on the board
+    BootStatusBadCRC = 4      # the application is corrupt
+
     def eraseApp(self):
         """Erase the application on board and return True if successful or False otherwise.
         """
@@ -81,13 +87,17 @@ class PJCBootloader(pjcinterface.PJCInterface):
         """Get a value representing the reason why the device is running the bootloader instead of
         the application or -1 if the bootloader did not provide that info.
 
-        Returns one of the BootStatus values indicating the reason the device is in the bootloader.
+        Returns one of the BootStatus values indicating the reason the device is in the bootloader
+        or 0 if the device is running the application.
         """
         result = -1
 
-        match = re.search(r'(0[0-4])', self.execCommand('s'))
-
-        if match:
-            result = int(match.group(0)[1:])
+        if self.isApplication():
+            result = PJCBootloader.BootStatusOK
+        else:
+            match = re.search(r'(0[0-4])', self.execCommand('s'))
+            
+            if match:
+                result = int(match.group(0)[1:])
 
         return result

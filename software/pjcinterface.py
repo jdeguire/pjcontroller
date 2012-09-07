@@ -6,10 +6,13 @@ pjcinterface.py
 Contains base class PJCInterface for talking to the PJC device.
 """
 
-import pjcexcept
-import serial
 import re
 import sys
+
+import serial
+
+import pjcexcept
+
 
 class PJCInterface:
     """A generic synchronous serial interface to the ATMega device used in the PJC board.

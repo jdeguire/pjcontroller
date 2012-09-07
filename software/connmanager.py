@@ -14,7 +14,7 @@ class ConnectionManager:
     This keeps a list of signals, slots, and names associated with them.  A caller can store a
     signal or slot in an instance of this class and give it a name.  This will then look for
     the slot or signal of the same name and connect them together.  The class allows objects to
-    advertise their signals or slots without actually having to actually know where to connect them.
+    advertise their signals or slots without actually having to know where to connect them.
     """
 
     def __init__(self):

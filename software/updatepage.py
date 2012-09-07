@@ -8,10 +8,12 @@ Contains the UpdatePage class.
 
 import os
 import hashlib
-import connmanager
+
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
+
+import connmanager
 
 
 class UpdatePage(QDialog):
@@ -65,19 +67,18 @@ class UpdatePage(QDialog):
         self.vbox = QVBoxLayout(self)
         self.filehbox = QHBoxLayout()
         self.starthbox = QHBoxLayout()
-        self.vbox.addStretch()
+
+        self.vbox.setAlignment(Qt.AlignCenter)
         self.vbox.addLayout(self.filehbox)
         self.filehbox.addWidget(self.fileline)
         self.filehbox.addWidget(self.browsebutton)
         self.vbox.addLayout(self.starthbox)
+        self.starthbox.setAlignment(Qt.AlignLeft)
         self.starthbox.addWidget(self.startbutton)
         self.starthbox.addWidget(self.progress)
-        self.starthbox.addStretch()
         self.vbox.addSpacing(10)
         self.vbox.addWidget(self.hashlabel)
         self.vbox.addWidget(self.hashline)
-        self.vbox.addStretch()
-
 
     @QtCore.Slot()
     def browseForHexFile(self):
@@ -108,4 +109,3 @@ class UpdatePage(QDialog):
     @QtCore.Slot(bool)
     def endUpdate(self, result):
         self.progress.reset()
-        # may want to handle the result at some point...
