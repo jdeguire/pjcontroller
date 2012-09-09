@@ -10,7 +10,7 @@ from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-import connmanager
+from connmanager import ConnectionManager
 
 
 class MonitorPage(QDialog):

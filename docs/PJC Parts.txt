@@ -1,0 +1,32 @@
+-----
+Connectors
+-----
+Switch input:		2-pin polarized header
+External LEDs:		2-pin polarized header
+12V input:			screw terminal
+Fan output:			polarized 4-pin header--
+						Wieson 2366C888-007,
+						Molex 47053-1000,
+						Foxconn HF27040-M1,
+						Tyco 1470947-1
+Relay On output:	2-pin JST connector
+Thermistor input:	spring terminal
+ICSP Connector:		5x2 pin header (don't use 6-pin header!)
+USB Connector:		Mini-B SMD
+Pin Breakout:		PTH
+App Inhibit:		2-pin jumpers
+
+
+-----
+ICs
+-----
+MCU:				Atmel ATMega328p (PDIP 28-pin)
+USB-Serial:			FTDI FT232RL (SSOP 28-pin)
+Ambient Sensor:		Analog Devices TMP36 (SOIC 8-pin)
+Open-drain buffer:	TI SN74LVC1G07 (SOT-23, TI calls this "DBV" in datasheet)
+Thermistor ADC:		Microchip MCP3201 (SOIC 8-pin) SPI
+Relay/LED Buffers:	
+Reverse Polarity:	
+5V regulator:		
+5V USB switch:		
+Fan MOSFET:			

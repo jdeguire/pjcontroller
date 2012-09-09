@@ -8,10 +8,10 @@ PJCInterface class, this is used to communicate to the ATMega device over the se
 
 import re
 
-import pjcinterface
+from pjcinterface import PJCInterface
 
 
-class PJCBootloader(pjcinterface.PJCInterface):
+class PJCBootloader(PJCInterface):
     """An interface to the PJC bootloader for ATMega devices.
 
     A bootloader allows an application to update firmware on the device without requiring an
@@ -29,12 +29,12 @@ class PJCBootloader(pjcinterface.PJCInterface):
     def eraseApp(self):
         """Erase the application on board and return True if successful or False otherwise.
         """
-        return self.execCommand('ea yes', pjcinterface.PJCInterface.RespStatus, 5.0) == 0
+        return self.execCommand('ea yes', PJCInterface.RespStatus, 5.0) == 0
 
     def eraseEEPROM(self):
         """Erase the device's EEPROM and return True if successful or False otherwise.
         """
-        return self.execCommand('ee yes', pjcinterface.PJCInterface.RespStatus, 5.0) == 0
+        return self.execCommand('ee yes', PJCInterface.RespStatus, 5.0) == 0
 
     def loadPageData(self, pagedata):
         """Load a page of data into the device for writing.  Return True on success or False
@@ -49,7 +49,7 @@ class PJCBootloader(pjcinterface.PJCInterface):
             dstr = ''.join(['{:02x}'.format(i) for i in d])
             cmd = 'pd {:x} {:x}'.format(offset, checksum) + ' ' + dstr
 
-            result = self.execCommand(cmd, pjcinterface.PJCInterface.RespStatus)
+            result = self.execCommand(cmd, PJCInterface.RespStatus)
 
             if result != 0:
                 break
@@ -65,7 +65,7 @@ class PJCBootloader(pjcinterface.PJCInterface):
         The parameter is the page number to program.  Returns True on success or False otherwise.
         """
         cmd = 'pp {:x}'.format(pagenum)
-        return self.execCommand(cmd, pjcinterface.PJCInterface.RespStatus) == 0
+        return self.execCommand(cmd, PJCInterface.RespStatus) == 0
 
     def writeCRC(self):
         """Write the application CRC to flash and return True on success or False otherwise.
@@ -74,17 +74,17 @@ class PJCBootloader(pjcinterface.PJCInterface):
         repeated calls to programPage().  This CRC is used to verify that a valid application is on
         the board at startup.  Returns True if the CRC was written successfully or False otherwise.
         """
-        return self.execCommand('wc', pjcinterface.PJCInterface.RespStatus) == 0
+        return self.execCommand('wc', PJCInterface.RespStatus) == 0
 
     def getPageSize(self):
         """Get the size in bytes of a single page.
         """
-        return self.execCommand('ps', pjcinterface.PJCInterface.RespHex)
+        return self.execCommand('ps', PJCInterface.RespHex)
 
     def getMaxPages(self):
         """Get the maximum number of pages an application can occupy.
         """
-        return self.execCommand('pn', pjcinterface.PJCInterface.RespHex)
+        return self.execCommand('pn', PJCInterface.RespHex)
 
     def getBootStatus(self):
         """Get a value representing the reason why the device is running the bootloader instead of

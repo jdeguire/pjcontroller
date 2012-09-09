@@ -10,6 +10,7 @@
 #include "deviceprog.h"
 #include "localcmd.h"
 #include "watchdog.h"
+#include "led.h"
 #include <stdint.h>
 #include <stdbool.h>
 #include <avr/interrupt.h>
@@ -72,14 +73,14 @@ static void LightBootloaderLED(bool enable)
 {
 	if(enable)
 	{
-		DDRDbits.ddd6 = 1;   // output
-		PORTDbits.pd6 = 1;   // turn on
+		AMBER_LED_DDR = 1;    // output
+		AMBER_LED_PORT = 1;   // turn on
 	}
 	else
 	{
 		// return to defaults
-		PORTDbits.pd6 = 0;
-		DDRDbits.ddd6 = 0;
+		AMBER_LED_DDR = 0;
+		AMBER_LED_PORT = 0;
 	}
 }
 

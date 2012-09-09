@@ -11,10 +11,11 @@ import serial
 from PySide import QtCore
 from PySide.QtCore import QObject
 
-import pjcbootloader
-import pjcapplication
-import flashimage
-import connmanager
+from pjcbootloader import PJCBootloader
+from pjcapplication import PJCApplication
+from flashimage import FlashImage
+from connmanager import ConnectionManager
+import pjcexcept
 
 # This package is available in PySerial 2.6, but has a bug that throws an exception for USB devices, 
 # which is a pretty big problem for us since we connect via a USB-to-RS232 adapter.
@@ -51,8 +52,8 @@ class SerialComm(QObject):
         QObject.__init__(self)
 
         self.serialdev = serial.Serial(None, 115200, timeout=1.0)
-        self.pjcboot = pjcbootloader.PJCBootloader(self.serialdev)
-        self.pjcapp = pjcapplication.PJCApplication(self.serialdev)
+        self.pjcboot = PJCBootloader(self.serialdev)
+        self.pjcapp = PJCApplication(self.serialdev)
 
         # set up connections
         connmgr.addSignal(self.devicestarted, 'DeviceStarted')
@@ -97,9 +98,21 @@ class SerialComm(QObject):
         def wrapper(self, *args, **kwargs):
             try:
                 func(self, *args, **kwargs)
-            except Exception as e:
-                self._print(str(e))
-                raise
+            except pjcexcept.NotRespondingError:
+                self._print('The device is not responding; closing serial port.')
+                self.serialdev.close()
+                self.serialclosed.emit()
+            except pjcexcept.UnknownCommandError:
+                self._print('The device did not recognize an issued command.')
+            except pjcexcept.UnexpectedResponseError:
+                self._print('The device responded incorrectly to a command; closing serial port.')
+                self.serialdev.close()
+                self.serialclosed.emit()
+            except pjcexcept.DeviceRestartError:
+                self._print('The device restarted unexpectedly.')
+                self.devicestarted.emit(self.pjcboot.isApplication())
+            except (pjcexcept.SerialPortNotOpenError, serial.portNotOpenError):
+                self._print('No serial port is open.')
 
         return wrapper
 
@@ -125,12 +138,15 @@ class SerialComm(QObject):
     @QtCore.Slot(str)
     @_handlesPJCExceptions
     def openSerialPort(self, serialpath):
-        if serialpath != self.serialdev.port:
-            if self.serialdev.isOpen():
-                self.serialdev.close()
-            self.serialdev.port = serialpath
-            self.serialdev.open()
-            self.devicestarted.emit(self.pjcboot.isApplication())
+        try:
+            if serialpath != self.serialdev.port  or  not self.serialdev.isOpen():
+                if self.serialdev.isOpen():
+                    self.serialdev.close()
+                self.serialdev.port = serialpath
+                self.serialdev.open()
+                self.devicestarted.emit(self.pjcboot.isApplication())
+        except serial.SerialException:
+            self._print('Could not open serial port at ' + serialpath + '.')
 
     @QtCore.Slot(str)
     @_handlesPJCExceptions
@@ -144,13 +160,10 @@ class SerialComm(QObject):
             else:
                 self.devicestarted.emit(False)
 
-        flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
+        flashmem = FlashImage(self.pjcboot.getMaxPages(), self.pjcboot.getPageSize())
 
         if result:
             if flashmem.buildImageFromFile(hexfile):
-                self._print('File CRC: ' + hex(flashmem.calculateCRC()) + '.')
-                self._print('File pages: ' + str(flashmem.getUsedAppPages()) + '.')
-
                 self._print('Erasing old app...')
                 self.pjcboot.eraseApp()
 
@@ -234,15 +247,15 @@ class SerialComm(QObject):
     def printBootStatus(self):
         status = self.pjcboot.getBootStatus()
 
-        if status == pjcbootloader.PJCBootloader.BootStatusOK:
+        if status == PJCBootloader.BootStatusOK:
             self._print('The application is running OK.')
-        elif status == pjcbootloader.PJCBootloader.BootStatusPinSet:
+        elif status == PJCBootloader.BootStatusPinSet:
             self._print('The bootloader startup jumper is set.')
-        elif status == pjcbootloader.PJCBootloader.BootStatusRestart:
+        elif status == PJCBootloader.BootStatusRestart:
             self._print('The application jumped to the bootloader.')
-        elif status == pjcbootloader.PJCBootloader.BootStatusNoApp:
+        elif status == PJCBootloader.BootStatusNoApp:
             self._print('The device does not have an application.')
-        elif status == pjcbootloader.PJCBootloader.BootStatusBadCRC:
+        elif status == PJCBootloader.BootStatusBadCRC:
             self._print('The application on board is corrupt.')
         else:
             self._print('The device is in the bootloader for an unknown reason.')

@@ -6,6 +6,7 @@
 #include "regmap.h"
 #include "uart.h"
 #include "cmd.h"
+#include "led.h"
 #include "watchdog.h"
 #include "localcmd.h"
 #include <stdbool.h>
@@ -13,8 +14,8 @@
 
 int main(void)
 {
-	DDRDbits.ddd7 = 1;   // output
-	PORTDbits.pd7 = 1;   // turn on
+	GREEN_LED_DDR = 1;   // output
+	GREEN_LED_PORT = 1;  // turn on
 
 	wdt_enable(WDTO_250MS);
 

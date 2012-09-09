@@ -10,10 +10,10 @@ from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
-import connmanager
-import monitorpage
-import settingspage
-import updatepage
+from connmanager import ConnectionManager
+from monitorpage import MonitorPage
+from settingspage import SettingsPage
+from updatepage import UpdatePage
 
 
 class MainWindow(QDialog):
@@ -34,9 +34,9 @@ class MainWindow(QDialog):
         self.serialrefreshbutton = QPushButton('Refresh')
         self.serialrefreshbutton.setSizePolicy(QSizePolicy.Fixed, QSizePolicy.Fixed)
 
-        self.monitorpage = monitorpage.MonitorPage(connmgr)
-        self.settingspage = settingspage.SettingsPage(connmgr)
-        self.updatepage = updatepage.UpdatePage(connmgr)
+        self.monitorpage = MonitorPage(connmgr)
+        self.settingspage = SettingsPage(connmgr)
+        self.updatepage = UpdatePage(connmgr)
 
         self.tabwidget = QTabWidget()
         self.tabwidget.addTab(self.monitorpage, 'Monitor')

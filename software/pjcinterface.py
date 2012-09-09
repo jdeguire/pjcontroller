@@ -126,13 +126,16 @@ class PJCInterface:
         """Flush out any previous command data and send a new command, adding the proper line
         ending.
         """
-        waiting = self.serial.read(self.serial.inWaiting())
+        if self.serial.isOpen():
+            waiting = self.serial.read(self.serial.inWaiting())
 
-        if PJCInterface.StartupString in waiting:
-            desc = 'Device restarted since the last command was issued.'
-            raise pjcexcept.DeviceRestartError(cmd, desc)
+            if PJCInterface.StartupString in waiting:
+                desc = 'Device restarted since the last command was issued.'
+                raise pjcexcept.DeviceRestartError(cmd, desc)
 
-        self.serial.write(cmd + '\r')
+            self.serial.write(cmd + '\r')
+        else:
+            raise pjcexcept.SerialPortNotOpenError(cmd, 'No serial port is currently open.')
 
     def _readSerialResponse(self, timeout=1.0):
         """Read in any data available from the device.
@@ -146,16 +149,11 @@ class PJCInterface:
 
         temp = self.serial.read(max(self.serial.inWaiting(), 1))
         resp += temp
- 
+
         while temp != ''  and  not resp.endswith(PJCInterface.CommandPrompt):
             temp = self.serial.read(max(self.serial.inWaiting(), 1))
             resp += temp
-            
-        print resp
 
-        resphex = ''.join([hex(ord(i)) + ' ' for i in resp])
-
-        print '------\n' + resphex + '\n\n'
         resp = resp.replace(PJCInterface.CommandPrompt, '')
         return resp
 

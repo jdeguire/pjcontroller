@@ -11,19 +11,19 @@ import sys
 from PySide.QtCore import QThread
 from PySide.QtGui import QApplication
 
-import serialcomm
-import connmanager
-import mainwindow
+from serialcomm import SerialComm
+from connmanager import ConnectionManager
+from mainwindow import MainWindow
 
 
 def main(argv = None):
     if argv is None:
         argv = sys.argv
 
-    connmgr = connmanager.ConnectionManager()
-    comm = serialcomm.SerialComm(connmgr)
+    connmgr = ConnectionManager()
+    comm = SerialComm(connmgr)
     app = QApplication(argv)
-    appwindow = mainwindow.MainWindow(connmgr)
+    appwindow = MainWindow(connmgr)
     commthread = QThread()
 
     comm.enumerateSerialPorts()
