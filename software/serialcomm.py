@@ -16,11 +16,14 @@ import pjcapplication
 import flashimage
 import connmanager
 
-# this package is availabe only in PySerial 2.6 and later
-try:
-    from serial.tools.list_ports import comports
-except ImportError:
-    comports = None
+# This package is available in PySerial 2.6, but has a bug that throws an exception for USB devices, 
+# which is a pretty big problem for us since we connect via a USB-to-RS232 adapter.
+comports = None
+if float(serial.VERSION) > 2.7:
+    try:
+        from serial.tools.list_ports import comports
+    except ImportError:
+        comports = None
 
 
 class SerialComm(QObject):
@@ -78,11 +81,11 @@ class SerialComm(QObject):
 
         connmgr.addSignal(self.monitorrefreshed, 'MonitorRefreshed')
         connmgr.addSlot(self.refreshMonitorData, 'RefreshMonitor')
+        connmgr.addSlot(self.printBootStatus, 'PrintBootStatus')
 
     def __del__(self):
         if self.serialdev.isOpen():
             self.serialdev.close()
-            self.serialclosed.emit()
 
     def _print(self, text):
         self.newlogmessage.emit(text)
@@ -96,6 +99,7 @@ class SerialComm(QObject):
                 func(self, *args, **kwargs)
             except Exception as e:
                 self._print(str(e))
+                raise
 
         return wrapper
 
@@ -135,20 +139,17 @@ class SerialComm(QObject):
 
         if self.pjcboot.isApplication():
             if self.pjcboot.doJump():
-                self._print('Failed to jump to bootloader')
+                self._print('Failed to jump to bootloader.')
                 result = False
             else:
                 self.devicestarted.emit(False)
-                self._print('Jumped to bootloader')
-        else:
-            self._print('Already in bootloader')
 
         flashmem = flashimage.FlashImage(224, 128)      # for ATMega328p
 
         if result:
             if flashmem.buildImageFromFile(hexfile):
-                self._print('File CRC: ' + hex(flashmem.calculateCRC()))
-                self._print('File pages: ' + str(flashmem.getUsedAppPages()))
+                self._print('File CRC: ' + hex(flashmem.calculateCRC()) + '.')
+                self._print('File pages: ' + str(flashmem.getUsedAppPages()) + '.')
 
                 self._print('Erasing old app...')
                 self.pjcboot.eraseApp()
@@ -160,12 +161,12 @@ class SerialComm(QObject):
                         if self.pjcboot.programPage(i):
                             self.updateprogressed.emit(i * 100 // flashmem.getUsedAppPages())
                         else:
-                            self._print('Failed to program page ' + str(i))
+                            self._print('Failed to program page ' + str(i) + '.')
                             result = False
                             break;
                     else:
                         result = False
-                        self._print('Failed to load page data ' + str(i))
+                        self._print('Failed to load page data ' + str(i) + '.')
                         break;
 
                 if result:
@@ -174,7 +175,7 @@ class SerialComm(QObject):
                         self.devicestarted.emit(True)
                     self._print('Update complete!')
             else:
-                self._print('File parse failed')
+                self._print('File parse failed.')
 
         self.updatecompleted.emit(result)
 
@@ -187,7 +188,7 @@ class SerialComm(QObject):
     @_handlesPJCExceptions
     def setTargetTemp(self, temp):
         self.targettempupdated.emit(self.pjcapp.setTargetTemperature(temp))
-    
+
     @QtCore.Slot(float)
     @_handlesPJCExceptions
     def setOvertempLimit(self, temp):
@@ -206,20 +207,19 @@ class SerialComm(QObject):
     @QtCore.Slot()
     @_handlesPJCExceptions
     def refreshAppSettings(self):
-        if self.pjcapp.isApplication():
-            self.lampstateupdated.emit(self.pjcapp.isLampEnabled())
-            self.targettempupdated.emit(self.pjcapp.getTargetTemperature())
-            self.overtempupdated.emit(self.pjcapp.getOvertempLimit())
-            self.fanoffupdated.emit(self.pjcapp.getFanOffPoint())
-            self.mindutycycleupdated.emit(self.pjcapp.getMinDutyCycle())
+        self.lampstateupdated.emit(self.pjcapp.isLampEnabled())
+        self.targettempupdated.emit(self.pjcapp.getTargetTemperature())
+        self.overtempupdated.emit(self.pjcapp.getOvertempLimit())
+        self.fanoffupdated.emit(self.pjcapp.getFanOffPoint())
+        self.mindutycycleupdated.emit(self.pjcapp.getMinDutyCycle())
 
     @QtCore.Slot()
     @_handlesPJCExceptions
     def saveAppSettings(self):
         if self.pjcapp.saveSettingsToEEPROM():
-            self._print('Settings saved')
+            self._print('Settings saved.')
         else:
-            self._print('Could not save settings')
+            self._print('Could not save settings.')
 
     @QtCore.Slot()
     @_handlesPJCExceptions
@@ -228,3 +228,21 @@ class SerialComm(QObject):
                                     self.pjcapp.getCurrentDutyCycle(), 
                                     self.pjcapp.isLampEnabled(), 
                                     self.pjcapp.getMostRecentError(True)))
+
+    @QtCore.Slot()
+    @_handlesPJCExceptions
+    def printBootStatus(self):
+        status = self.pjcboot.getBootStatus()
+
+        if status == pjcbootloader.PJCBootloader.BootStatusOK:
+            self._print('The application is running OK.')
+        elif status == pjcbootloader.PJCBootloader.BootStatusPinSet:
+            self._print('The bootloader startup jumper is set.')
+        elif status == pjcbootloader.PJCBootloader.BootStatusRestart:
+            self._print('The application jumped to the bootloader.')
+        elif status == pjcbootloader.PJCBootloader.BootStatusNoApp:
+            self._print('The device does not have an application.')
+        elif status == pjcbootloader.PJCBootloader.BootStatusBadCRC:
+            self._print('The application on board is corrupt.')
+        else:
+            self._print('The device is in the bootloader for an unknown reason.')

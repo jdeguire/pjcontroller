@@ -15,7 +15,7 @@ static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len);
 static void PrintHelp_CMD(const char *cmdbuf, uint8_t len);
 static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)  __attribute__((noinline));
 
-static const prog_char m_versionstr[] = "\r\r" VERSION_STRING "\r";
+static const prog_char m_versionstr[] = VERSION_STRING "\r";
 
 static char m_cmdbuf[CMD_BUFSIZE+1];    // one extra for null terminator
 static uint8_t m_cmdlen;
@@ -41,6 +41,7 @@ void Cmd_InitInterface()
 {
 	m_cmdstate = eCmd_Prompt;
 	m_helpindex = 0;
+	UART_TxString_P(PSTR("\r\r---Startup---\r"));
 	UART_TxString_P(m_versionstr);
 
 	Cmd_RegisterCommand("crc", CalcAppCRC_CMD,  PSTR("Calculate app CRC"));
@@ -222,5 +223,5 @@ static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
  */
 static void ShowVersion_CMD(const char *cmdbuf, uint8_t len)
 {
-	UART_TxString_P(m_versionstr + 2);
+	UART_TxString_P(m_versionstr);
 }

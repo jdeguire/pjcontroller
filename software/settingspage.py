@@ -27,7 +27,7 @@ class SettingsPage(QDialog):
         degreesC = unichr(176).encode("latin-1") + 'C'
 
         # widgets in the dialog box
-        self.lampcheck = QCheckBox('Enable lamp')
+        self.lampcheck = QCheckBox('Lamp Enabled')
 
         self.targettempspin = QDoubleSpinBox()
         self.targettempspin.setSuffix(degreesC)

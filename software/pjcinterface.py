@@ -36,6 +36,7 @@ class PJCInterface:
     RespFltList = 8      # list of floating-point numbers
 
     CommandPrompt = '\r#> '
+    StartupString = '---Startup---\r'
 
     def __init__(self, serialdevice):
         """Create a new PJCInterface object which will communicate over the given serial port.
@@ -53,17 +54,20 @@ class PJCInterface:
         respstr = self._readSerialResponse(timeout)
 
         if respstr:
-            if 'Unknown command\r' != respstr:
+            if PJCInterface.StartupString in respstr:
+                desc = 'Device restarted while executing command "' + cmd.partition(' ')[0] + '".'
+                raise pjcexcept.DeviceRestartError(cmd, desc)
+            elif 'Unknown command\r' in respstr:
+                desc = 'Device does not recognize command "' + cmd.partition(' ')[0] + '".'
+                raise pjcexcept.UnknownCommandError(cmd, desc)
+            else:
                 try:
                     result = self._parseResponseString(respstr, resptype)
                 except ValueError:
-                    desc = 'Command "' + cmd + '" yielded unexpected response'
+                    desc = 'Command "' + cmd + '" yielded unexpected response.'
                     raise pjcexcept.UnexpectedResponseError(cmd, desc)
-            else:
-                desc = 'Device does not recognize command "' + cmd.partition(' ')[0] + '"'
-                raise pjcexcept.UnknownCommandError(cmd, desc)
         else:
-            desc = 'Device did not respond to command "' + cmd.partition(' ')[0] + '"'
+            desc = 'Device did not respond to command "' + cmd.partition(' ')[0] + '".'
             raise pjcexcept.NotRespondingError(cmd, desc)
 
         return result
@@ -101,7 +105,10 @@ class PJCInterface:
         """Jump from bootloader to application or vice versa.  Returns True if the device started
         the application or False if it started the bootloader.
         """
-        return ('Bootloader' not in self.execCommand('j', timeout=5.0))
+        try:
+            return ('Bootloader' not in self.execCommand('j', timeout=5.0))
+        except pjcexcept.DeviceRestartError:
+            return self.isApplication()
 
     def resetDevice(self):
         """Reset device and restart in whatever program it was running previously.  Returns True if
@@ -110,13 +117,21 @@ class PJCInterface:
         Note that the bootloader may start up even if the application should have in the event that
         the application could not be started.
         """
-        return ('Bootloader' not in self.execCommand('r', timeout=5.0))
+        try:
+            return ('Bootloader' not in self.execCommand('r', timeout=5.0))
+        except pjcexcept.DeviceRestartError:
+            return self.isApplication()
 
     def _sendCommand(self, cmd):
         """Flush out any previous command data and send a new command, adding the proper line
         ending.
         """
-        self.serial.flushInput()
+        waiting = self.serial.read(self.serial.inWaiting())
+
+        if PJCInterface.StartupString in waiting:
+            desc = 'Device restarted since the last command was issued.'
+            raise pjcexcept.DeviceRestartError(cmd, desc)
+
         self.serial.write(cmd + '\r')
 
     def _readSerialResponse(self, timeout=1.0):
@@ -135,7 +150,12 @@ class PJCInterface:
         while temp != ''  and  not resp.endswith(PJCInterface.CommandPrompt):
             temp = self.serial.read(max(self.serial.inWaiting(), 1))
             resp += temp
+            
+        print resp
 
+        resphex = ''.join([hex(ord(i)) + ' ' for i in resp])
+
+        print '------\n' + resphex + '\n\n'
         resp = resp.replace(PJCInterface.CommandPrompt, '')
         return resp
 

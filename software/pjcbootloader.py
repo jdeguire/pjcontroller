@@ -6,7 +6,10 @@ Contains a class that implements commands specific to the PJC Bootloader.  As a 
 PJCInterface class, this is used to communicate to the ATMega device over the serial port.
 """
 
+import re
+
 import pjcinterface
+
 
 class PJCBootloader(pjcinterface.PJCInterface):
     """An interface to the PJC bootloader for ATMega devices.

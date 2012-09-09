@@ -57,11 +57,11 @@ class MainWindow(QDialog):
         connmgr.addSignal(self.serialrefreshbutton.clicked, 'EnumerateSerial')
         connmgr.addSignal(self.serialopenclicked, 'OpenSerial')
         connmgr.addSlot(self.setSerialPortChoices, 'SerialEnumerated')
-        connmgr.addSlot(self.showText, 'WriteToLog')
+        connmgr.addSlot(self.logbox.append, 'WriteToLog')
 
         # connect signals to internal slots
         self.serialopenbutton.clicked.connect(self.openSerial)
-        self.logclearbutton.clicked.connect(self.clearLog)
+        self.logclearbutton.clicked.connect(self.logbox.clear)
 
         # set up our control layout
         self.vbox = QVBoxLayout(self)
@@ -78,14 +78,6 @@ class MainWindow(QDialog):
         self.vbox.addWidget(self.logbox)
         self.vbox.addWidget(self.logclearbutton)
         self.vbox.setAlignment(self.logclearbutton, Qt.AlignLeft)
-
-    @QtCore.Slot(str)
-    def showText(self, text):
-        self.logbox.append(text)
-
-    @QtCore.Slot()
-    def clearLog(self):
-        self.logbox.clear()
 
     @QtCore.Slot()
     def openSerial(self):

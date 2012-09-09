@@ -19,6 +19,7 @@ class MonitorPage(QDialog):
 
     lampstateupdate = QtCore.Signal(bool)     # update others on lamp state
     newlogmessage = QtCore.Signal(str)        # used to print to the log
+    printbootstatus = QtCore.Signal()         # print bootloader status to log
 
     def __init__(self, connmgr):
         QDialog.__init__(self)
@@ -55,6 +56,7 @@ class MonitorPage(QDialog):
         connmgr.addSignal(self.timer.timeout, 'RefreshMonitor')
         connmgr.addSignal(self.lampstateupdate, 'LampEnableChanged')
         connmgr.addSignal(self.newlogmessage, 'WriteToLog')
+        connmgr.addSignal(self.printbootstatus, 'PrintBootStatus')
         connmgr.addSlot(self.doDeviceStartAction, 'DeviceStarted')
         connmgr.addSlot(self.stopMonitor, 'SerialClosed')
         connmgr.addSlot(self.setMonitorData, 'MonitorRefreshed')
@@ -83,7 +85,7 @@ class MonitorPage(QDialog):
         self.lampstateupdate.emit(monitordata[2] != 0)
 
         if monitordata[3] != 0:
-            self._print('Device reported error code ' + str(monitordata[3]))
+            self._print('Device reported error code ' + str(monitordata[3]) + '.')
 
     @QtCore.Slot(bool)
     def doDeviceStartAction(self, isApp):
@@ -91,6 +93,8 @@ class MonitorPage(QDialog):
             self.timer.start()
         else:
             self.timer.stop()
+
+        self.printbootstatus.emit()
 
     @QtCore.Slot()
     def stopMonitor(self):

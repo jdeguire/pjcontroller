@@ -42,3 +42,10 @@ class UnexpectedResponseError(PJCError):
     """
     pass
 
+class DeviceRestartError(PJCError):
+    """ Exception raised if the device restarted at some point since the last command.  If the
+    command is supposed to restart the device, then this exception will have to be caught and
+    handled appropriately.
+    """
+    pass
+
