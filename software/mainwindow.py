@@ -19,9 +19,9 @@ from updatepage import UpdatePage
 class MainWindow(QDialog):
     serialopenclicked = QtCore.Signal(str)
 
-    def __init__(self, connmgr):
+    def __init__(self, connmgr, title):
         QDialog.__init__(self)
-        self.setWindowTitle('Test App')
+        self.setWindowTitle(title)
 
         self.serialcombo = QComboBox()
         self.serialcombo.setInsertPolicy(QComboBox.InsertPolicy.InsertAtTop)
@@ -87,3 +87,6 @@ class MainWindow(QDialog):
     def setSerialPortChoices(self, portlist):
         self.serialcombo.clear()
         self.serialcombo.addItems(portlist)
+
+    def writeToLog(self, text):
+        self.logbox.append(text)

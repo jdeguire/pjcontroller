@@ -20,16 +20,20 @@ def main(argv = None):
     if argv is None:
         argv = sys.argv
 
+    version = '20120911'      # modification date in yyyymmdd format
+
     connmgr = ConnectionManager()
     comm = SerialComm(connmgr)
     app = QApplication(argv)
-    appwindow = MainWindow(connmgr)
+    appwindow = MainWindow(connmgr, 'Projector Control Panel')
     commthread = QThread()
 
     comm.enumerateSerialPorts()
     comm.moveToThread(commthread)
     commthread.start()
+
     appwindow.show()
+    appwindow.writeToLog('Software version ' + version + '.')
 
     result = app.exec_()
     commthread.quit()
