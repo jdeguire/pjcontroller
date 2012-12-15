@@ -28,11 +28,11 @@ typedef struct cmdinfo_tag
 {
 	const char *name;
 	cmdhandler_t cmdfunc;
-	const prog_char *help;    // must be non-NULL (use "" to not display help)
+	const __flash char *help;    // must be non-NULL (use "" to not display help)
 } cmdinfo_t;
 
 void Cmd_InitInterface();
-bool Cmd_RegisterCommand(const char *cmdname, cmdhandler_t cmdfunc, const prog_char *help);
+bool Cmd_RegisterCommand(const char *cmdname, cmdhandler_t cmdfunc, const __flash char *help);
 void Cmd_ProcessInterface();
 
 #endif // INCLUDE_CMD_H

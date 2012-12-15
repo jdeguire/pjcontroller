@@ -32,7 +32,7 @@ ldscript = 'bootloader' + os.sep + 'pjcbootloader.x'
 copts   = ['-mcall-prologues', '-ffunction-sections']
 
 # linker options for just the bootloader
-lopts = ['--gc-sections']
+lopts = ['-gc-sections']
 
 #---------------
 # End of bootloader options

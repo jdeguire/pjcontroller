@@ -13,8 +13,8 @@
 
 // These are defined in the custom linker scripts for the app and bootloader.
 // Their addresses are the important part.
-extern prog_uint8_t _app_space_start;
-extern prog_uint8_t _app_space_end;
+extern const __flash uint8_t _app_space_start;
+extern const __flash uint8_t _app_space_end;
 
 #define APP_SPACE_START ((uint16_t)&_app_space_start)
 #define APP_SPACE_END   ((uint16_t)&_app_space_end)

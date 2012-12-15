@@ -113,7 +113,7 @@ uint16_t UART_TxData(const char *data, uint16_t len)
 
 /* Same as above, but the data string is in program space.
  */
-uint16_t UART_TxData_P(const prog_char *data, uint16_t len)
+uint16_t UART_TxData_P(const __flash char *data, uint16_t len)
 {
 	uint16_t i;
 
