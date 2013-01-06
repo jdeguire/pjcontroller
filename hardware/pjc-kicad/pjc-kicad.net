@@ -1,0 +1,147 @@
+# EESchema Netlist Version 1.1 created  Wed 02 Jan 2013 12:05:16 AM EST
+(
+ ( /50E3BFE1 $noname  SW1 SW_PUSH {Lib=SW_PUSH}
+  (    1 ? )
+  (    2 ? )
+ )
+ ( /50E3BE3F $noname  R1 10k {Lib=R}
+  (    1 +5V )
+  (    2 N-000007 )
+ )
+ ( /50E3BB42 SparkFun-TACTILE-PTH  S1 TAC_SWITCHPTH {Lib=TAC_SWITCHPTH}
+  (    1 ? )
+  (    2 ? )
+  (    3 ? )
+  (    4 ? )
+ )
+ ( /50E3B927 $noname  U1 7805 {Lib=7805}
+  (  GND ? )
+  (   VI ? )
+  (   VO ? )
+ )
+ ( /50E3B58C $noname  C5 22pF {Lib=C}
+  (    1 N-000010 )
+  (    2 GND )
+ )
+ ( /50E3B4C6 $noname  X1 20MHz {Lib=CRYSTAL}
+  (    1 N-000010 )
+  (    2 N-000009 )
+ )
+ ( /50E3B309 $noname  C4 22pF {Lib=C}
+  (    1 N-000009 )
+  (    2 GND )
+ )
+ ( /50E3AC80 $noname  C1 100nF {Lib=C}
+  (    1 +5V )
+  (    2 GND )
+ )
+ ( /50E3AC72 $noname  C2 100nF {Lib=C}
+  (    1 +5V )
+  (    2 GND )
+ )
+ ( /50E3AB48 $noname  C3 100nF {Lib=C}
+  (    1 N-000008 )
+  (    2 GND )
+ )
+ ( /50E38676 DIL28  IC1 ATMEGA328-P {Lib=ATMEGA328-P}
+  (    1 N-000007 )
+  (    2 ? )
+  (    3 ? )
+  (    4 ? )
+  (    5 ? )
+  (    6 ? )
+  (    7 +5V )
+  (    8 GND )
+  (    9 N-000009 )
+  (   10 N-000010 )
+  (   11 ? )
+  (   12 ? )
+  (   13 ? )
+  (   14 ? )
+  (   15 ? )
+  (   16 ? )
+  (   17 ? )
+  (   18 ? )
+  (   19 ? )
+  (   20 +5V )
+  (   21 N-000008 )
+  (   22 GND )
+  (   23 ? )
+  (   24 ? )
+  (   25 ? )
+  (   26 ? )
+  (   27 ? )
+  (   28 ? )
+ )
+)
+*
+{ Allowed footprints by component:
+$component R1
+ R?
+ SM0603
+ SM0805
+ R?-*
+ SM1206
+$endlist
+$component C5
+ SM*
+ C?
+ C1-1
+$endlist
+$component C4
+ SM*
+ C?
+ C1-1
+$endlist
+$component C1
+ SM*
+ C?
+ C1-1
+$endlist
+$component C2
+ SM*
+ C?
+ C1-1
+$endlist
+$component C3
+ SM*
+ C?
+ C1-1
+$endlist
+$component IC1
+ 28DIP-ELL600
+ 28dip600
+$endlist
+$endfootprintlist
+}
+{ Pin List by Nets
+Net 1 "+5V" "+5V"
+ IC1 20
+ R1 1
+ IC1 7
+ C2 1
+ C1 1
+Net 7 "" ""
+ R1 2
+ IC1 1
+Net 8 "" ""
+ IC1 21
+ C3 1
+Net 9 "" ""
+ X1 2
+ IC1 9
+ C4 1
+Net 10 "" ""
+ IC1 10
+ X1 1
+ C5 1
+Net 35 "GND" "GND"
+ IC1 22
+ C3 2
+ C2 2
+ C1 2
+ C4 2
+ C5 2
+ IC1 8
+}
+#End

@@ -1,0 +1,496 @@
+EESchema Schematic File Version 2  date Wed 02 Jan 2013 02:11:37 AM EST
+LIBS:power
+LIBS:device
+LIBS:transistors
+LIBS:conn
+LIBS:linear
+LIBS:regul
+LIBS:74xx
+LIBS:cmos4000
+LIBS:adc-dac
+LIBS:memory
+LIBS:xilinx
+LIBS:special
+LIBS:microcontrollers
+LIBS:dsp
+LIBS:microchip
+LIBS:analog_switches
+LIBS:motorola
+LIBS:texas
+LIBS:intel
+LIBS:audio
+LIBS:interface
+LIBS:digital-audio
+LIBS:philips
+LIBS:display
+LIBS:cypress
+LIBS:siliconi
+LIBS:opto
+LIBS:atmel
+LIBS:contrib
+LIBS:valves
+LIBS:SparkFun
+LIBS:pjc-kicad-cache
+EELAYER 25  0
+EELAYER END
+$Descr A2 23400 16535
+encoding utf-8
+Sheet 1 1
+Title "Projector Controller Board"
+Date "2 jan 2013"
+Rev "0"
+Comp ""
+Comment1 ""
+Comment2 ""
+Comment3 ""
+Comment4 ""
+$EndDescr
+Connection ~ 5270 3970
+Wire Wire Line
+	5010 3970 5270 3970
+Wire Wire Line
+	3810 3970 3990 3970
+Wire Wire Line
+	3990 3970 4210 3970
+Wire Wire Line
+	3060 3970 3230 3970
+Wire Wire Line
+	3230 3970 3410 3970
+Wire Wire Line
+	3230 4630 3230 4550
+Wire Wire Line
+	3030 4930 2440 4930
+Wire Wire Line
+	2440 4930 2440 4070
+Wire Wire Line
+	3490 3280 3490 3390
+Connection ~ 3230 3970
+Wire Wire Line
+	2440 4070 2370 4070
+Connection ~ 4610 4930
+Connection ~ 16790 9390
+Wire Wire Line
+	16790 9390 16890 9390
+Wire Wire Line
+	16890 9390 16890 9330
+Wire Wire Line
+	16790 8930 16790 8870
+Wire Wire Line
+	16790 8870 16790 8810
+Wire Wire Line
+	16280 8770 16280 8710
+Connection ~ 16790 8230
+Wire Wire Line
+	13910 8230 16280 8230
+Wire Wire Line
+	16280 8230 16790 8230
+Connection ~ 16210 7480
+Wire Wire Line
+	16210 7610 16210 7480
+Wire Wire Line
+	16210 7480 16210 6880
+Wire Wire Line
+	16210 6880 16020 6880
+Connection ~ 15210 6880
+Wire Wire Line
+	15620 6880 15210 6880
+Wire Wire Line
+	15210 6880 14900 6880
+Wire Wire Line
+	14900 6880 14900 7380
+Wire Wire Line
+	14900 7380 13910 7380
+Wire Wire Line
+	11760 7510 11760 7380
+Wire Wire Line
+	11760 7380 12010 7380
+Wire Wire Line
+	11380 9180 11380 9080
+Wire Wire Line
+	11380 9080 11380 8980
+Wire Wire Line
+	11380 8980 11380 8290
+Connection ~ 11380 9080
+Wire Wire Line
+	12010 6780 11380 6780
+Wire Wire Line
+	11380 6780 10980 6780
+Wire Wire Line
+	10980 6780 10980 8270
+Wire Wire Line
+	12010 9080 11380 9080
+Wire Wire Line
+	11380 9080 10980 9080
+Wire Wire Line
+	10980 9080 10980 8670
+Connection ~ 11380 7080
+Wire Wire Line
+	11380 6680 11380 6780
+Wire Wire Line
+	11380 6780 11380 7080
+Wire Wire Line
+	11380 7080 11380 7890
+Connection ~ 11380 6780
+Wire Wire Line
+	12010 7080 11380 7080
+Wire Wire Line
+	12010 8980 11380 8980
+Connection ~ 11380 8980
+Wire Wire Line
+	11760 7910 11760 7970
+Wire Wire Line
+	13910 7480 15210 7480
+Wire Wire Line
+	15210 7480 15620 7480
+Connection ~ 15210 7480
+Wire Wire Line
+	16020 7480 16210 7480
+Wire Wire Line
+	16790 7600 16790 7650
+Wire Wire Line
+	16790 8870 16890 8870
+Wire Wire Line
+	16890 8870 16890 8930
+Connection ~ 16790 8870
+Wire Wire Line
+	16280 8310 16280 8230
+Connection ~ 16280 8230
+Wire Wire Line
+	16790 8150 16790 8230
+Wire Wire Line
+	16790 8230 16790 8310
+Wire Wire Line
+	16790 9440 16790 9390
+Wire Wire Line
+	16790 9390 16790 9330
+Wire Wire Line
+	4610 4270 4610 4930
+Wire Wire Line
+	5270 4550 5270 4930
+Wire Wire Line
+	5270 3820 5270 3970
+Wire Wire Line
+	5270 3970 5270 4150
+Wire Wire Line
+	3230 3280 3230 3350
+Wire Wire Line
+	5270 4930 4610 4930
+Wire Wire Line
+	4610 4930 3990 4930
+Wire Wire Line
+	3990 4930 3430 4930
+Connection ~ 3990 4930
+Wire Wire Line
+	3230 4050 3230 3970
+Wire Wire Line
+	3230 3970 3230 3830
+Wire Wire Line
+	2370 3970 2560 3970
+Wire Wire Line
+	3990 4550 3990 4930
+Wire Wire Line
+	3990 4930 3990 5030
+Wire Wire Line
+	3990 4150 3990 3970
+Connection ~ 3990 3970
+$Comp
+L CP1 C?
+U 1 1 50E3CE6C
+P 3990 4350
+F 0 "C?" H 4040 4450 50  0000 L CNN
+F 1 "100uF" H 4040 4250 50  0000 L CNN
+	1    3990 4350
+	1    0    0    -1  
+$EndComp
+$Comp
+L MOSFET_N Q?
+U 1 1 50E3DA87
+P 3230 4830
+F 0 "Q?" V 3110 4750 60  0000 R CNN
+F 1 "IRFZ34N" V 3430 5050 60  0000 R CNN
+	1    3230 4830
+	0    -1   1    0   
+$EndComp
+$Comp
+L FUSE F?
+U 1 1 50E3D977
+P 2810 3970
+F 0 "F?" H 2800 3840 40  0000 C CNN
+F 1 "3A Max" H 2810 4090 40  0000 C CNN
+	1    2810 3970
+	1    0    0    -1  
+$EndComp
+$Comp
+L PWR_FLAG #FLG?
+U 1 1 50E3D8F6
+P 3230 3280
+F 0 "#FLG?" H 3230 3375 30  0001 C CNN
+F 1 "PWR_FLAG" H 3230 3460 30  0000 C CNN
+	1    3230 3280
+	1    0    0    -1  
+$EndComp
+$Comp
+L PWR_FLAG #FLG?
+U 1 1 50E3D8EB
+P 3490 3280
+F 0 "#FLG?" H 3490 3375 30  0001 C CNN
+F 1 "PWR_FLAG" H 3490 3460 30  0000 C CNN
+	1    3490 3280
+	1    0    0    -1  
+$EndComp
+$Comp
+L +12V #PWR?
+U 1 1 50E3D8D6
+P 3230 3350
+F 0 "#PWR?" H 3230 3300 20  0001 C CNN
+F 1 "+12V" H 3230 3450 30  0000 C CNN
+	1    3230 3350
+	-1   0    0    1   
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3D8D3
+P 3490 3390
+F 0 "#PWR?" H 3490 3390 30  0001 C CNN
+F 1 "GND" H 3490 3320 30  0001 C CNN
+	1    3490 3390
+	1    0    0    -1  
+$EndComp
+$Comp
+L +12V #PWR?
+U 1 1 50E3D83D
+P 3230 3830
+F 0 "#PWR?" H 3230 3780 20  0001 C CNN
+F 1 "+12V" H 3230 3930 30  0000 C CNN
+	1    3230 3830
+	1    0    0    -1  
+$EndComp
+$Comp
+L +5V #PWR?
+U 1 1 50E3D7E8
+P 5270 3820
+F 0 "#PWR?" H 5270 3910 20  0001 C CNN
+F 1 "+5V" H 5270 3910 30  0000 C CNN
+	1    5270 3820
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R?
+U 1 1 50E3D7C3
+P 3230 4300
+F 0 "R?" H 3330 4380 50  0000 C CNN
+F 1 "10k" H 3350 4200 50  0000 C CNN
+	1    3230 4300
+	1    0    0    -1  
+$EndComp
+$Comp
+L M025MM JP?
+U 1 1 50E3D591
+P 2070 4070
+F 0 "JP?" H 1970 4300 50  0000 L BNN
+F 1 "M025MM" H 1970 3870 50  0000 L BNN
+F 2 "SparkFun-SCREWTERMINAL-5MM-2" H 2070 4220 50  0001 C CNN
+	1    2070 4070
+	1    0    0    -1  
+$EndComp
+$Comp
+L DIODE D?
+U 1 1 50E3D208
+P 3610 3970
+F 0 "D?" H 3610 4070 40  0000 C CNN
+F 1 "1N4001" H 3610 3870 40  0000 C CNN
+	1    3610 3970
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3CEA8
+P 3990 5030
+F 0 "#PWR?" H 3990 5030 30  0001 C CNN
+F 1 "GND" H 3990 4960 30  0001 C CNN
+	1    3990 5030
+	1    0    0    -1  
+$EndComp
+$Comp
+L CP1 C?
+U 1 1 50E3CE48
+P 5270 4350
+F 0 "C?" H 5320 4450 50  0000 L CNN
+F 1 "10uF" H 5320 4250 50  0000 L CNN
+	1    5270 4350
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3C69F
+P 16790 9440
+F 0 "#PWR?" H 16790 9440 30  0001 C CNN
+F 1 "GND" H 16790 9370 30  0001 C CNN
+	1    16790 9440
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R?
+U 1 1 50E3C636
+P 16790 8560
+F 0 "R?" H 16890 8640 50  0000 C CNN
+F 1 "330" H 16910 8460 50  0000 C CNN
+	1    16790 8560
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3C5D7
+P 16280 8770
+F 0 "#PWR?" H 16280 8770 30  0001 C CNN
+F 1 "GND" H 16280 8700 30  0001 C CNN
+	1    16280 8770
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C?
+U 1 1 50E3C5CE
+P 16280 8510
+F 0 "C?" H 16330 8610 50  0000 L CNN
+F 1 "100nF" H 16330 8410 50  0000 L CNN
+	1    16280 8510
+	1    0    0    -1  
+$EndComp
+$Comp
+L R R?
+U 1 1 50E3BE3F
+P 16790 7900
+F 0 "R?" H 16890 7980 50  0000 C CNN
+F 1 "10k" H 16910 7800 50  0000 C CNN
+	1    16790 7900
+	1    0    0    -1  
+$EndComp
+$Comp
+L +5V #PWR?
+U 1 1 50E3BE37
+P 16790 7600
+F 0 "#PWR?" H 16790 7690 20  0001 C CNN
+F 1 "+5V" H 16790 7690 30  0000 C CNN
+	1    16790 7600
+	1    0    0    -1  
+$EndComp
+$Comp
+L TAC_SWITCHPTH S?
+U 1 1 50E3BB42
+P 16890 9130
+F 0 "S?" V 16900 9370 50  0000 L BNN
+F 1 "TAC_SWITCHPTH" H 16790 8880 50  0001 L BNN
+F 2 "SparkFun-TACTILE-PTH" H 17090 8830 50  0001 C CNN
+	1    16890 9130
+	0    1    1    0   
+$EndComp
+$Comp
+L 7805 U?
+U 1 1 50E3B927
+P 4610 4020
+F 0 "U?" H 4740 3800 60  0000 C CNN
+F 1 "LM7805" H 4610 4220 60  0000 C CNN
+	1    4610 4020
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3B623
+P 16210 7610
+F 0 "#PWR?" H 16210 7610 30  0001 C CNN
+F 1 "GND" H 16210 7540 30  0001 C CNN
+	1    16210 7610
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C?
+U 1 1 50E3B58C
+P 15820 7480
+F 0 "C?" V 15980 7440 50  0000 L CNN
+F 1 "22pF" V 15660 7380 50  0000 L CNN
+	1    15820 7480
+	0    -1   -1   0   
+$EndComp
+$Comp
+L CRYSTAL X?
+U 1 1 50E3B4C6
+P 15210 7180
+F 0 "X?" V 15380 7090 60  0000 C CNN
+F 1 "20MHz" V 15040 6990 60  0000 C CNN
+	1    15210 7180
+	0    -1   -1   0   
+$EndComp
+$Comp
+L C C?
+U 1 1 50E3B309
+P 15820 6880
+F 0 "C?" V 15980 6840 50  0000 L CNN
+F 1 "22pF" V 15660 6780 50  0000 L CNN
+	1    15820 6880
+	0    -1   -1   0   
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3AED0
+P 11760 7970
+F 0 "#PWR?" H 11760 7970 30  0001 C CNN
+F 1 "GND" H 11760 7900 30  0001 C CNN
+	1    11760 7970
+	1    0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50E3AD2D
+P 11380 9180
+F 0 "#PWR?" H 11380 9180 30  0001 C CNN
+F 1 "GND" H 11380 9110 30  0001 C CNN
+	1    11380 9180
+	1    0    0    -1  
+$EndComp
+$Comp
+L +5V #PWR?
+U 1 1 50E3ACB1
+P 11380 6680
+F 0 "#PWR?" H 11380 6770 20  0001 C CNN
+F 1 "+5V" H 11380 6770 30  0000 C CNN
+	1    11380 6680
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C?
+U 1 1 50E3AC80
+P 10980 8470
+F 0 "C?" H 11030 8570 50  0000 L CNN
+F 1 "100nF" H 11030 8370 50  0000 L CNN
+	1    10980 8470
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C?
+U 1 1 50E3AC72
+P 11380 8090
+F 0 "C?" H 11430 8190 50  0000 L CNN
+F 1 "100nF" H 11430 7990 50  0000 L CNN
+	1    11380 8090
+	1    0    0    -1  
+$EndComp
+$Comp
+L C C?
+U 1 1 50E3AB48
+P 11760 7710
+F 0 "C?" H 11810 7810 50  0000 L CNN
+F 1 "100nF" H 11810 7610 50  0000 L CNN
+	1    11760 7710
+	1    0    0    -1  
+$EndComp
+$Comp
+L ATMEGA328-P IC?
+U 1 1 50E38676
+P 12910 7880
+F 0 "IC?" H 12210 9130 50  0000 L BNN
+F 1 "ATMEGA328-P" H 13160 6480 50  0000 L BNN
+F 2 "DIL28" H 12310 6530 50  0001 C CNN
+	1    12910 7880
+	1    0    0    -1  
+$EndComp
+$EndSCHEMATC
