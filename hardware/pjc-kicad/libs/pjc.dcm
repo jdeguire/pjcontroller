@@ -1,0 +1,13 @@
+EESchema-DOCLIB  Version 2.0  Date: Sun 06 Jan 2013 06:35:10 AM EST
+#
+$CMP MCP3302
+D Microchp MCP3302 13-bit ADC
+K ADC
+$ENDCMP
+#
+$CMP SPRING_TERM_2
+D 2-pin spring terminal
+K spring
+$ENDCMP
+#
+#End Doc Library
