@@ -1,13 +1,18 @@
-EESchema-DOCLIB  Version 2.0  Date: Sun 06 Jan 2013 06:35:10 AM EST
+EESchema-DOCLIB  Version 2.0  Date: Mon 07 Jan 2013 02:26:55 AM EST
 #
-$CMP MCP3302
-D Microchp MCP3302 13-bit ADC
+$CMP MCP3301
+D Microchp MCP3301 13-bit ADC
 K ADC
 $ENDCMP
 #
 $CMP SPRING_TERM_2
 D 2-pin spring terminal
 K spring
+$ENDCMP
+#
+$CMP TMP36_SOIC
+D Analog Devices TMP36 Temperature Sensor
+K temp AD TMP356
 $ENDCMP
 #
 #End Doc Library

@@ -1,8 +1,6 @@
-update=Sun 06 Jan 2013 06:39:00 AM EST
+update=Mon 07 Jan 2013 02:27:21 AM EST
 version=1
-last_client=pcbnew
-[general]
-version=1
+last_client=kicad
 [cvpcb]
 version=1
 NetIExt=net
@@ -81,3 +79,5 @@ LibName10=pga_sockets
 LibName11=valves
 LibName12=SparkFun
 LibName13=pjc
+[general]
+version=1
