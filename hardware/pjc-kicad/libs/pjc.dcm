@@ -1,8 +1,23 @@
-EESchema-DOCLIB  Version 2.0  Date: Mon 07 Jan 2013 02:26:55 AM EST
+EESchema-DOCLIB  Version 2.0  Date: Sun 13 Jan 2013 11:25:51 PM EST
+#
+$CMP 4PIN_FAN_CONN
+D Intel 4-pin PWM fan connector
+K fan connector pwm
+$ENDCMP
 #
 $CMP MCP3301
 D Microchp MCP3301 13-bit ADC
 K ADC
+$ENDCMP
+#
+$CMP NUD3124
+D On Semiconductor NUD3124 Dual Low-Side Driver
+K Driver FET Dual
+$ENDCMP
+#
+$CMP SN74LVC1G07
+D TI SN74LVC1G07 Open-drain Buffer
+K Buffer Driver TI
 $ENDCMP
 #
 $CMP SPRING_TERM_2
