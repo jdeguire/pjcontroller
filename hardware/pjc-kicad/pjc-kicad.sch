@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Sun 13 Jan 2013 11:35:03 PM EST
+EESchema Schematic File Version 2  date Mon 14 Jan 2013 09:36:05 PM EST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -38,7 +38,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 1 1
 Title "Projector Controller Board"
-Date "14 jan 2013"
+Date "15 jan 2013"
 Rev "0"
 Comp ""
 Comment1 ""
@@ -1552,4 +1552,62 @@ Wire Wire Line
 	13220 12840 13350 12840
 Wire Wire Line
 	13350 12840 13350 12660
+$Comp
+L CONN_2 CON?
+U 1 1 50F4A8EC
+P 10600 2800
+F 0 "CON?" V 10550 2800 40  0000 C CNN
+F 1 "CONN_2" V 10650 2800 40  0000 C CNN
+	1    10600 2800
+	-1   0    0    -1  
+$EndComp
+$Comp
+L GND #PWR?
+U 1 1 50F4A8F7
+P 11080 3350
+F 0 "#PWR?" H 11080 3350 30  0001 C CNN
+F 1 "GND" H 11080 3280 30  0001 C CNN
+	1    11080 3350
+	1    0    0    -1  
+$EndComp
+Wire Wire Line
+	10950 2900 11080 2900
+Wire Wire Line
+	11080 2900 11080 3270
+Wire Wire Line
+	11080 3270 11080 3350
+$Comp
+L R R?
+U 1 1 50F4AA2E
+P 11400 2700
+F 0 "R?" V 11500 2810 50  0000 C CNN
+F 1 "1k" V 11500 2600 50  0000 C CNN
+	1    11400 2700
+	0    -1   -1   0   
+$EndComp
+Wire Wire Line
+	10950 2700 11150 2700
+$Comp
+L ZENER D?
+U 1 1 50F4BF4A
+P 11810 2990
+F 0 "D?" V 11890 2870 50  0000 C CNN
+F 1 "4.7V" V 11770 2850 40  0000 C CNN
+	1    11810 2990
+	0    -1   -1   0   
+$EndComp
+Text Label 12010 2700 0    60   ~ 0
+PROJECTOR_ON
+Wire Wire Line
+	11650 2700 11810 2700
+Wire Wire Line
+	11810 2700 12010 2700
+Wire Wire Line
+	11810 2790 11810 2700
+Connection ~ 11810 2700
+Wire Wire Line
+	11810 3190 11810 3270
+Wire Wire Line
+	11810 3270 11080 3270
+Connection ~ 11080 3270
 $EndSCHEMATC
