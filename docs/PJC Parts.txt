@@ -25,9 +25,10 @@ USB-Serial:			FTDI FT232RL (SSOP 28-pin)
 Ambient Sensor:		Analog Devices TMP36 (SOIC 8-pin)
 Open-drain buffer:	TI SN74LVC1G07 (SOT23-5, "DBV" in datasheet)
 Thermistor ADC:		Microchip MCP3301 (SOIC 8-pin) SPI
-Relay/LED LSD:		On Semiconductor NUD3124DMT1G (SOT23-6, "SC-74" in datasheet) x2
+Relay/LED LSD:		ON Semiconductor NUD3124DMT1G (SOT23-6, "SC-74" in datasheet) x2
 Reverse Polarity:	IRFZ34N
 5V regulator:		LM7805
 5V USB switch:		
 Fan High-side Driver:	Infineon ISP762T (DSO-8)
 5V PTC Fuse:		Cooper Bussmann PTS120616V025 (1206 SMT)
+Input Regulator Zener:	ON Semiconductor MM3Z4V7ST1G (SOD-323)
