@@ -1,34 +1,48 @@
 -----
 Connectors
 -----
-Switch input:		2-pin polarized header
-External LEDs:		2-pin polarized header
-12V input:			screw terminal
-Fan output:			polarized 4-pin header--
-						Wieson 2366C888-007,
-						Molex 47053-1000,
-						Foxconn HF27040-M1,
-						Tyco 1470947-1
-Relay On output:	2-pin JST connector
-Thermistor input:	spring terminal
-ICSP Connector:		5x2 pin header (don't use 6-pin header!)
-USB Connector:		Mini-B SMD
-Pin Breakout:		PTH
-App Inhibit:		2-pin jumpers
+Thermistor input:	Header: JST B2B-PH-K-S(LF)(SN) (PH Series 2.0mm pitch 2-pos)
+			Pigtail: Sparkfun PRT-08670 (Jumper Wire - JST Black Red)
+External LEDs/Relay:	Header: TE Connectivity 292207-2 (Mini CT Series 1.5mm pitch 2-pos) x4
+			Receptacle:  TE Connectivity 353293-2 (Mini CT "MT" Connector 28-26AWG) x4
+			Unstripped wire inserts directly into connector.
+Switch input:		Header: TE Connectivity 292207-3 (Mini CT Series 1.5mm pitch 3-pos)
+			Receptacle:  TE Connectivity 353293-3 (Mini CT "MT" Connector 28-26AWG)
+			Unstripped wire inserts directly into connector.
 
+26AWG Wire, black and red
+
+Fan output:		Molex 47053-1000 (4-pin PC Fan connector, 2.54mm pitch) +
+12V input:		TE Connectivity 1776275-2 (3.5mm pitch 2-pos screw terminal) +
+ICSP Connector:		Sullins SBH11-PBPC-D05-ST-BK (2.54mm pitch 2x5 shrouded black)
+USB Connector:		On Shore Technology USB-M26FTR (Mini-B SMD)
+App Inhibit:		Header: Sparkfun PRT-00116 (Break Away Headers - Straight 40pin)
+			Jumpers: TE Connectivity 2-382811-1 (Or pretty much anything...)
 
 -----
 ICs
 -----
-MCU:				Atmel ATMega328p (PDIP 28-pin)
-USB-Serial:			FTDI FT232RL (SSOP 28-pin)
+MCU:			Atmel ATMega328p (PDIP 28-pin)
+USB-Serial:		FTDI FT232RL (SSOP 28-pin) +
 Ambient Sensor:		Analog Devices TMP36 (SOIC 8-pin)
 Open-drain buffer:	TI SN74LVC1G07 (SOT23-5, "DBV" in datasheet)
 Thermistor ADC:		Microchip MCP3301 (SOIC 8-pin) SPI
 Relay/LED LSD:		ON Semiconductor NUD3124DMT1G (SOT23-6, "SC-74" in datasheet) x2
-Reverse Polarity:	IRFZ34N
-5V regulator:		LM7805
-5V USB switch:		
+Backfeed Diode:		Diodes Inc. S1M-13-F (SMA)
+5V regulator:		ST Microeletronics L78M05C (DPAK) +
+Reverse Polarity:	Rohm Semiconductor RSQ035N03 (TSOT-23-6, Thin SOT-23-6)
+USB Suspend FET:	Diodes Inc. DMP2215L (SOT-23) +
+USB Ferrite Bead:	Laird MI1206L391R-10 (1206 SMT)
 Fan High-side Driver:	Infineon ISP762T (DSO-8)
-5V PTC Fuse:		Cooper Bussmann PTS120616V025 (1206 SMT)
-Input Regulator Zener:	ON Semiconductor MM3Z4V7ST1G (SOD-323)
+PTC Fuse:		Cooper Bussmann PTS120630V012 (1206 SMT) x5
+Input Optoisolator:	Vishay VOM618A-4T (SOP-4)
+LEDs:			Kingbright APT3216SGC (Green), APT3216EC (Red), APT3216YC (Yellow) (1206 SMT)
+20MHz Oscillator:	Fox FOXSDLF/200-20, HC49SDLF Series (SMD 2-lead)
+
+-----
+Other
+-----
+Reset Button:		TE Connectivity FSM4JH (PTH 4-pin)
+MCU Socket:		TE Connectivity 390261 (DIP-28 300mil)
+5V Selector Switch:	J&S JS102011SAQN (3-pin SMT)
+Thermistor:		Vishay NTCALUG02A103G 10k (Ring Terminal, M3 screw)

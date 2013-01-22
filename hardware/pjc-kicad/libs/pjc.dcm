@@ -1,4 +1,4 @@
-EESchema-DOCLIB  Version 2.0  Date: Sun 13 Jan 2013 11:25:51 PM EST
+EESchema-DOCLIB  Version 2.0  Date: Sun 20 Jan 2013 04:58:06 AM EST
 #
 $CMP 4PIN_FAN_CONN
 D Intel 4-pin PWM fan connector
@@ -13,6 +13,11 @@ $ENDCMP
 $CMP NUD3124
 D On Semiconductor NUD3124 Dual Low-Side Driver
 K Driver FET Dual
+$ENDCMP
+#
+$CMP RSQ035N03
+D Rohm Semiconductor RSQ035N03 N-MOSFET
+K MOSFET Rohm
 $ENDCMP
 #
 $CMP SN74LVC1G07
