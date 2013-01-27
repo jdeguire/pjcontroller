@@ -1,4 +1,4 @@
-EESchema-DOCLIB  Version 2.0  Date: Sun 20 Jan 2013 04:58:06 AM EST
+EESchema-DOCLIB  Version 2.0  Date: Sun 27 Jan 2013 02:00:55 AM EST
 #
 $CMP 4PIN_FAN_CONN
 D Intel 4-pin PWM fan connector
@@ -8,6 +8,11 @@ $ENDCMP
 $CMP MCP3301
 D Microchp MCP3301 13-bit ADC
 K ADC
+$ENDCMP
+#
+$CMP MNT_HOLE_NPT
+D Unplated mounting hole
+K Hole Mounting Mount
 $ENDCMP
 #
 $CMP NUD3124
