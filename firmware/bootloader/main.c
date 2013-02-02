@@ -1,4 +1,22 @@
-/* main.c
+/* Copyright © 2011-2013 Jesse DeGuire
+ *
+ * This file is part of Projector Controller.
+ *
+ * Projector Controller is free software: you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Projector Controller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Projector Controller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * File:   main.c
+ * Author: Jesse DeGuire
  *
  * Main code module for the bootloader.
  */
@@ -35,8 +53,8 @@ static bootstatus_t m_status;
 static bool BootloaderPinSet()
 {
 	// we'll use an external pull-down for this
-	DDRBbits.ddb0 = 0;        // 0 for input
-	return PINBbits.pinb0;
+	DDRDbits.ddd4 = 0;        // 0 for input
+	return PINDbits.pind4;
 }
 
 /* Check if there is any reason why the bootloader should not start the app and sets 'm_status' to
@@ -73,14 +91,14 @@ static void LightBootloaderLED(bool enable)
 {
 	if(enable)
 	{
-		AMBER_LED_DDR = 1;    // output
-		AMBER_LED_PORT = 1;   // turn on
+		YELLOW_LED_DDR = 1;    // output
+		YELLOW_LED_PORT = 1;   // turn on
 	}
 	else
 	{
 		// return to defaults
-		AMBER_LED_DDR = 0;
-		AMBER_LED_PORT = 0;
+		YELLOW_LED_DDR = 0;
+		YELLOW_LED_PORT = 0;
 	}
 }
 

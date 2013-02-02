@@ -1,4 +1,22 @@
-/* cmd.c
+/* Copyright © 2011-2013 Jesse DeGuire
+ *
+ * This file is part of Projector Controller.
+ *
+ * Projector Controller is free software: you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Projector Controller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Projector Controller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * File:   cmd.c
+ * Author: Jesse DeGuire
  *
  * Command interface for talking over the serial port to the application or bootloader.  Common
  * commands are defined in here along with a function allowing you to add your own.
@@ -206,8 +224,7 @@ static void CalcAppCRC_CMD(const char *cmdbuf, uint8_t len)
 	UART_TxChar('\r');
 }
 
-/* Print help info for all registered commands.  If the help string is NULL for that command, then
- * only the command name is printed.
+/* Print help info for all registered commands.
  * Syntax: h
  * Response: multiline string (printed in state machine)
  */
@@ -216,7 +233,7 @@ static void PrintHelp_CMD(const char *cmdbuf, uint8_t len)
 	m_cmdstate = eCmd_Help;
 }
 
-/* Show the version string for the app/bootloader.  This is defined in system.h, which is where
+/* Show the version string for the app/bootloader.  This is defined in appcfg.h, which is where
  * application-specific macros are defined.
  * Syntax: v
  * Response: string

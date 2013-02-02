@@ -1,5 +1,23 @@
-/* regmap.h
+/* Copyright © 2011-2013 Jesse DeGuire
  *
+ * This file is part of Projector Controller.
+ *
+ * Projector Controller is free software: you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Projector Controller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Projector Controller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * File:   regmap.h
+ * Author: Jesse DeGuire
+ * 
  * A register map for the ATmega328P (and the related 168/88/48/etc.) allowing access to the
  * device's special function registers as though they were structures.	The addresses are known at
  * compile time, meaning that the compiler can use the faster SBI/CBI/IN/OUT instructions as

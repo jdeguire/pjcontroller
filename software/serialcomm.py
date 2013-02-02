@@ -1,7 +1,25 @@
 #! /usr/bin/env python
+#
+# Copyright © 2011-2013 Jesse DeGuire
+#
+# This file is part of Projector Controller.
+#
+# Projector Controller is free software: you can redistribute it and/or 
+# modify it under the terms of the GNU General Public License as published
+# by the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# Projector Controller is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of 
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+# General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with Projector Controller.  If not, see <http://www.gnu.org/licenses/>.
 
 """
-commthread.py
+File:   commthread.py
+Author: Jesse DeGuire
 
 Contains a class for talking to the devices over a serial port and for the commands it will accept.
 """
@@ -17,14 +35,12 @@ from flashimage import FlashImage
 from connmanager import ConnectionManager
 import pjcexcept
 
-# This package is available in PySerial 2.6, but has a bug that throws an exception for USB devices, 
-# which is a pretty big problem for us since we connect via a USB-to-RS232 adapter.
-comports = None
-if float(serial.VERSION) > 2.7:
-    try:
-        from serial.tools.list_ports import comports
-    except ImportError:
-        comports = None
+# This package is available in PySerial 2.6, but at this time (Feb. 1, 2013) still comes with
+# PySerial 2.5, so make sure we can go on without it.
+try:
+    from serial.tools.list_ports import comports
+except ImportError:
+    comports = None
 
 
 class SerialComm(QObject):
@@ -119,10 +135,19 @@ class SerialComm(QObject):
     @QtCore.Slot()
     @_handlesPJCExceptions
     def enumerateSerialPorts(self):
+        fallback = True
+
         if comports:
-            ports = [name for name, unused_desc, unused_hwid in sorted(comports())]
-        else:
-            # works in PySerial 2.5 and below, but misses some ports (like USB)
+            try:
+                ports = [name for name, unused_desc, unused_hwid in sorted(comports())]
+                fallback = False
+            except:
+                fallback = True
+
+        if fallback:
+            # PySerial 2.6 has a bug in which comports() throws an exception with USB devices, so
+            # handle that and the case of having an older version.  This should always work, but
+            # will miss some ports (like USB ones).
             ports = []
 
             for i in range(256):

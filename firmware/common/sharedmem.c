@@ -1,4 +1,22 @@
-/* sharedmem.c
+/* Copyright © 2011-2013 Jesse DeGuire
+ *
+ * This file is part of Projector Controller.
+ *
+ * Projector Controller is free software: you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Projector Controller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Projector Controller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * File:   sharedmem.c
+ * Author: Jesse DeGuire
  *
  * Used for routines and memory shared between the PJC Bootloader and the application.
  */
@@ -6,10 +24,8 @@
 #include "sharedmem.h"
 #include "watchdog.h"
 #include "misc.h"
-#include <avr/io.h>
-#include <avr/pgmspace.h>
 #include <util/crc16.h>
-
+#include <avr/interrupt.h>
 
 // Not initialized by the startup module, so that memory contents are retained after a watchdog
 // reset.  Note that the memory state is not trustworthy for other reset sources.
@@ -40,6 +56,7 @@ void ClearAppRestartRequest()
  */
 void RestartApp()
 {
+	cli();
 	m_loadApplication = true;
     wdt_enable(WDTO_15MS);
 	for(;;) ;
@@ -50,6 +67,7 @@ void RestartApp()
  */
 void RestartBootloader()
 {
+	cli();
 	m_loadApplication = false;
     wdt_enable(WDTO_15MS);
 	for(;;)	;
@@ -62,8 +80,12 @@ uint16_t CalculateAppCRC()
 	uint16_t crc = 0xFFFF;
 	uint16_t addr;
 
+	wdt_reset();
+
 	for(addr = APP_SPACE_START; addr <= APP_SPACE_END; ++addr)
 		crc = _crc_ccitt_update(crc, pgm_read_byte(addr));
+
+	wdt_reset();
 
 	return crc;
 }

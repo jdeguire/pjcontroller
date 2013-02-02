@@ -1,4 +1,22 @@
-/* localcmd.c
+/* Copyright © 2011-2013 Jesse DeGuire
+ *
+ * This file is part of Projector Controller.
+ *
+ * Projector Controller is free software: you can redistribute it and/or 
+ * modify it under the terms of the GNU General Public License as published
+ * by the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * Projector Controller is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of 
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU 
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License along
+ * with Projector Controller.  If not, see <http://www.gnu.org/licenses/>.
+ *
+ * File:   localcmd.c
+ * Author: Jesse DeGuire
  *
  * Serial interface commmands specific to the bootloader.  See common/cmd.c for the implementation
  * of the interface itself.
@@ -37,7 +55,7 @@ uint8_t m_pagebuf[SPM_PAGESIZE];
 
 /* Convert a string of hex characters pointed to by 'str' into an unsigned integer.  If 'endptr' is
  * non-NULL, it will point to the character after the last-converted digit in 'str' if any hex
- * characterw were converted; otherwise, it will be set equal to 'str'.  Use 'maxchars' to limit the
+ * characters were converted; otherwise, it will be set equal to 'str'.  Use 'maxchars' to limit the
  * number of hex characters this function will process.  This function will move past any initial
  * spaces in 'str'.
  */
