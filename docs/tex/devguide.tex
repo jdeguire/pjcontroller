@@ -1,0 +1,186 @@
+% Copyright © 2011-2013 Jesse DeGuire
+%
+% This file is part of Projector Controller.
+%
+% This work is licensed under the Creative Commons Attribution-ShareAlike 3.0 Unported License. You
+% should have received a copy of the license along with this work.  If not, see
+% <http://creativecommons.org/licenses/by-sa/3.0/>.
+%
+% File:   devguide.tex
+% Author: Jesse DeGuire
+%
+% LaTeX source for the PJC Developers Guide document.  This can be made into a PDF using a suitable
+% LaTeX distribution such as TeX Live for GNU/Linux or MiKTeX for Windows.
+
+\documentclass{article}
+
+\usepackage{anysize} 
+\usepackage{graphicx}
+\usepackage{wrapgfig} 
+\usepackage[pdftex]{hyperref}
+\hypersetup{colorlinks=true, urlcolor=cyan, linkcolor=blue}
+
+\marginsize{1in}{1in}{1in}{1in}
+
+% just so that the document revision is somewhere convenient
+\newcommand{\docrev}{A}
+
+% makes a backslash
+\newcommand{\bs}{$\backslash$}
+
+
+\begin{document}
+
+% don't add extra space to sentence ends when justifying text
+\frenchspacing
+
+\noindent {\Huge Projector Controller} \\
+{\large Developers Guide} Rev. \docrev \\
+Author: Jesse DeGuire \\
+Email: \href{mailto:jesse.a.deguire+pjc@gmail.com}{jesse.a.deguire+pjc@gmail.com} \\
+Date: \today \\
+
+\tableofcontents
+
+% redefine \section command to start section on new page
+\let\stdsection\section
+\renewcommand{\section}{\newpage\stdsection}
+
+% additional space between paragraphs
+\addtolength{\parskip}{6pt}
+
+\section*{Revision History}
+\phantomsection
+This section describes revisions made to this document.  Changes made to the hardware, firmware, or
+software are described in their respective sections.
+
+\begin {description}
+  \item[Rev. A:] February 3, 2013\\
+    Initial revision.
+\end {description}
+
+\section{Introduction}
+This document provides implementation details for the various pieces of the Projector Controller
+system.  The information contain within will hopefully be useful for anyone who wishes to modify or
+tinker with the any part of the system or at least will satisfy an interested user's curiosity.
+Anyone who is only looking to get the Controller running in his or her projector should instead
+consult the \textit{Projector Controller Users Guide}.
+
+This guide is divided up into a few sections.  The \hyperref[Hardware_sec]{Hardware} section
+describes the components used on the board itself as well as the power requirements and capabilities
+of the board.  The \hyperref[Firmware_sec]{Firmware} section contains information regarding the
+program flow of the bootloader and application firmwares used by the Projector Controller.  This
+also contains documentation for the command interfaces used by both to communicate to the host PC as
+well as brief descriptions of many of the source code files.  Finally, the
+\hyperref[Software_sec]{Software} section describes how the PC-side software communicates to the
+board.  All sections will additionally state what tools were used in their development so that
+anyone can build and modify the various pieces.
+
+\subsection{Sources and Licenses} \label{SourceLic_sec}
+All source files used to create the board, software, and firmwares are available in a Git repository
+on GitHub at \url{https://github.com/jdeguire/pjcontroller}.  The repository also contains
+datasheets for the hardware components and other reference material.
+
+The firmware and software, the sources of which are located in the \texttt{firmware/} and
+\texttt{software/} directories in the aforementioned repository, are made available under the GNU
+Public License Version 3.  A copy of the GPLv3 is provided in the file \texttt{COPYING.txt} in the
+repository root or online at \url{http://www.gnu.org/licenses/}.
+
+This document, the \textit{Users Guide}, their associated \LaTeX{} source files, and the board
+design files are all made available under the Creative Commons Attribution-ShareAlike 3.0 Unported
+License.  The source files for the \textit{Developers Guide} and \textit{Users Guide} are available
+in the \texttt{docs/tex/} directory.  The board design files are found in
+\texttt{hardware/pjc-kicad/}.  A copy of the Creative Commons BY-SA 3.0 license is provided in the
+file \texttt{CC BY-SA 3.0 legalcode.txt} in the repository root or online at
+\url{http://creativecommons.org/licenses/by-sa/3.0/}.
+
+Where attribution is required, it is sufficient to include a statement of reasonable visibility in
+the derived work or supporting documentation mentioning that the work is derived from this project
+and giving this author's name.  It would be appreciated if the statement also contained the URL,
+given above, for the version control repository.
+
+Located in \texttt{hardware/pjc-kicad/libs} are two files \texttt{SparkFun.lib} and
+\texttt{SparkFun.mod}.  These were converted into their current form for use with KiCad from the
+original Eagle libraries provided by SparkFun Electronics under the CC BY-SA 3.0 license.  The
+latest such libraries can be found on GitHub at
+\url{https://github.com/sparkfun/SparkFun-Eagle-Libraries}.
+
+\subsection{Open Source Hardware}
+\begin{wrapfigure}{r}{0.3\textwidth}
+    \begin{center}
+        \includgraphics[0.25\textwidth]{oshw-logo-200-px}
+    \end{center}
+\end{wrapfigure}
+
+As described above, all design and source code files for Projector Controller are available under
+licenses allowing one to ``study, modify, distribute, make, and sell the design or hardware based on
+that design''.  The project was developed using freely-available tools, most of which are also open
+source, lowering the barrier to accessing the design.  Therefore, the author believes that the
+Projector Controller qualifies as Open Source Hardware as given in the Open Source Hardware
+Definition 1.0.  The defintions is availabe from the Open Source Hardware Association at
+\url{http://www.oshwa.org/definition/}.
+
+Note that the logo itself does not have a license associated with it, but the guidelines presented
+at \url{http://www.oshwa.org/faq/} recommded its use.  Any derived works which do not adhere to the
+definition of Open Source Hardware should remove the logo from any files which contain it.
+
+
+\section{Hardware} \label{Hardware_sec}
+The hardware was designed using KiCad EDA, an open source (GPLv2) multi-purpose EDA tool available
+for various flavors of GNU/Linux, Windows, and OS X.  Get KiCad from the official site at
+\url{http://www.kicad-pcb.org/display/KICAD/Download+Kicad}.  If possible, download a Snapshot build
+as those contain additional features over the rather old stable release.  Ubuntu users should use
+the Adam Wolf PPA given on that page.
+
+Datasheets for the various components used are available in the repository under
+\texttt{hardware/datasheets}.  The datasheets are provided for reference only and belong to their
+respective manufacturers.
+
+\subsection{Design Considerations} \label{DesignConsid_ssec}
+Becuase the Projector Controller will probably never acheive high-volume production, the main
+consideration was ease of assembly.  When possible, the components used are of a large form factor
+(such as 1206 for resistors) and the footprints for surface-mount devices use long pads to make
+accessing them with a soldering iron easier.  The board uses a socket for the 28-pin DIP
+microcontroller to allow easy replacement.  These choices allow the board to be assembled by hand
+for small production runs and the allow user to more easily tinker with the board.
+
+Other considerations were size of the board itself and price, which are related since larger PCBs
+are more expensive.  These may seem to conflict with the previous consideration, but the Controller
+is relatively simple, making use of not many components and reusing multiple of the same component
+when possible (the board uses multiple 10k\Omega resistors, for example).  Fewer components also
+means a smaller board size and less assembly.  A smaller board size means that the device will be
+easier to install into one's projector.
+
+Though not a primary consideration, the board was also designed with an eye on power consumption.
+The board will be able to run certain componenets from USB power.  USB provides 5V at 100mA by
+default, though a device can request up to 500mA.  The USB interface device does not identify itself
+as a high-power device by default, so all 5V components will consume less than 100mA combined.  The
+power consumption of the board is characterized in the section \hyperref[PowerUsage_ssec]{Power
+ Usage}.
+
+\subsection{Circuit Details} \label{CircuitDetails_ssec}
+Following are desciptions of the different circuit pieces developed for the board.  The reader of
+this section may want to have the schematic handy in order to follow along.  The titles of the
+descriptions will closely match the text titles used in the schematic for the different circuits.
+
+\subsubsection{Microcontroller} \label{Microcontroller_sssec}
+The heart of the Projector Controller is an Atmel ATMega328p 8-bit microcontroller.  The MCU has
+32KB of flash, 4KB of which is used for the bootloader, 2KB of RAM and several useful peripherals,
+such as 10-bit ADCs, SPI, PWM outputs, timers, and quite a few IO pins.  The MCU is a 28-pin DIP
+package which will insert into a socket on the board, making removal and replacement easy.
+
+A Fox 20MHz crystal oscillator provides the CPU clock.
+
+Three LEDs--red, yellow, and green--are provided to allow the firmware to convey diagnostic
+information while running.  The LED outputs also control low-side drivers, which is explained in the
+\hyperref[RelayLED_sssec]{Relay and LED Outputs} description.
+
+A jumper, pulled low, is connected to an IO pin on the microcontroller.  Shorting the jumper sets
+the state of that IO pin high.  The state of this pin is read by the bootloader when it first starts
+up.  If the pin state is high, the bootloader will not start the application and will instead stay
+in the bootloader.  This allows one to recover from a problematic application that fails on startup.
+
+\subsubsection{USB/UART IO} \label{USB_UART_sssec}
+
+
+\end{document}
