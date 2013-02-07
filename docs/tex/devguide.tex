@@ -14,19 +14,24 @@
 
 \documentclass{article}
 
+\usepackage{textgreek}
 \usepackage{anysize} 
 \usepackage{graphicx}
-\usepackage{wrapgfig} 
+\usepackage{amsmath}
+\usepackage{floatflt} 
 \usepackage[pdftex]{hyperref}
 \hypersetup{colorlinks=true, urlcolor=cyan, linkcolor=blue}
 
-\marginsize{1in}{1in}{1in}{1in}
+\marginsize{.75in}{.75in}{.75in}{.75in}
 
 % just so that the document revision is somewhere convenient
 \newcommand{\docrev}{A}
 
 % makes a backslash
 \newcommand{\bs}{$\backslash$}
+
+% degree symbol without having to enter math mode
+\newcommand{\degree}{\ensuremath{^\circ}}
 
 
 \begin{document}
@@ -76,7 +81,7 @@ well as brief descriptions of many of the source code files.  Finally, the
 board.  All sections will additionally state what tools were used in their development so that
 anyone can build and modify the various pieces.
 
-\subsection{Sources and Licenses} \label{SourceLic_sec}
+\subsection{Sources and Licenses} \label{ssec:SourceLic}
 All source files used to create the board, software, and firmwares are available in a Git repository
 on GitHub at \url{https://github.com/jdeguire/pjcontroller}.  The repository also contains
 datasheets for the hardware components and other reference material.
@@ -105,12 +110,12 @@ original Eagle libraries provided by SparkFun Electronics under the CC BY-SA 3.0
 latest such libraries can be found on GitHub at
 \url{https://github.com/sparkfun/SparkFun-Eagle-Libraries}.
 
-\subsection{Open Source Hardware}
-\begin{wrapfigure}{r}{0.3\textwidth}
-    \begin{center}
-        \includgraphics[0.25\textwidth]{oshw-logo-200-px}
-    \end{center}
-\end{wrapfigure}
+\subsection{Open Source Hardware} \label{ssec:OpenSourceHW}
+\begin{floatingfigure}{0.22\textwidth}
+    \centering
+    \vspace{-6pt}
+    \includegraphics[width=0.17\textwidth]{oshw-logo-200-px}
+\end{floatingfigure}
 
 As described above, all design and source code files for Projector Controller are available under
 licenses allowing one to ``study, modify, distribute, make, and sell the design or hardware based on
@@ -125,7 +130,7 @@ at \url{http://www.oshwa.org/faq/} recommded its use.  Any derived works which d
 definition of Open Source Hardware should remove the logo from any files which contain it.
 
 
-\section{Hardware} \label{Hardware_sec}
+\section{Hardware} \label{ssec:Hardware}
 The hardware was designed using KiCad EDA, an open source (GPLv2) multi-purpose EDA tool available
 for various flavors of GNU/Linux, Windows, and OS X.  Get KiCad from the official site at
 \url{http://www.kicad-pcb.org/display/KICAD/Download+Kicad}.  If possible, download a Snapshot build
@@ -136,7 +141,7 @@ Datasheets for the various components used are available in the repository under
 \texttt{hardware/datasheets}.  The datasheets are provided for reference only and belong to their
 respective manufacturers.
 
-\subsection{Design Considerations} \label{DesignConsid_ssec}
+\subsection{Design Considerations} \label{ssec:DesignConsid}
 Becuase the Projector Controller will probably never acheive high-volume production, the main
 consideration was ease of assembly.  When possible, the components used are of a large form factor
 (such as 1206 for resistors) and the footprints for surface-mount devices use long pads to make
@@ -147,7 +152,7 @@ for small production runs and the allow user to more easily tinker with the boar
 Other considerations were size of the board itself and price, which are related since larger PCBs
 are more expensive.  These may seem to conflict with the previous consideration, but the Controller
 is relatively simple, making use of not many components and reusing multiple of the same component
-when possible (the board uses multiple 10k\Omega resistors, for example).  Fewer components also
+when possible (the board uses multiple 10k\textOmega{} resistors, for example).  Fewer components also
 means a smaller board size and less assembly.  A smaller board size means that the device will be
 easier to install into one's projector.
 
@@ -155,15 +160,15 @@ Though not a primary consideration, the board was also designed with an eye on p
 The board will be able to run certain componenets from USB power.  USB provides 5V at 100mA by
 default, though a device can request up to 500mA.  The USB interface device does not identify itself
 as a high-power device by default, so all 5V components will consume less than 100mA combined.  The
-power consumption of the board is characterized in the section \hyperref[PowerUsage_ssec]{Power
- Usage}.
+power consumption of the board is characterized in the \hyperref[ssec:PowerUsage]{Power Usage}
+section.
 
-\subsection{Circuit Details} \label{CircuitDetails_ssec}
+\subsection{Circuit Details} \label{ssec:CircuitDetails}
 Following are desciptions of the different circuit pieces developed for the board.  The reader of
 this section may want to have the schematic handy in order to follow along.  The titles of the
 descriptions will closely match the text titles used in the schematic for the different circuits.
 
-\subsubsection{Microcontroller} \label{Microcontroller_sssec}
+\subsubsection{Microcontroller} \label{sssec:Microcontroller}
 The heart of the Projector Controller is an Atmel ATMega328p 8-bit microcontroller.  The MCU has
 32KB of flash, 4KB of which is used for the bootloader, 2KB of RAM and several useful peripherals,
 such as 10-bit ADCs, SPI, PWM outputs, timers, and quite a few IO pins.  The MCU is a 28-pin DIP
@@ -173,14 +178,107 @@ A Fox 20MHz crystal oscillator provides the CPU clock.
 
 Three LEDs--red, yellow, and green--are provided to allow the firmware to convey diagnostic
 information while running.  The LED outputs also control low-side drivers, which is explained in the
-\hyperref[RelayLED_sssec]{Relay and LED Outputs} description.
+\hyperref[sssec:RelayLED]{Relay and LED Outputs} description.
 
 A jumper, pulled low, is connected to an IO pin on the microcontroller.  Shorting the jumper sets
 the state of that IO pin high.  The state of this pin is read by the bootloader when it first starts
 up.  If the pin state is high, the bootloader will not start the application and will instead stay
 in the bootloader.  This allows one to recover from a problematic application that fails on startup.
 
-\subsubsection{USB/UART IO} \label{USB_UART_sssec}
+\subsubsection{USB/UART IO} \label{sssec:USBUART}
+The Projector Controller communicates with the outside world by utilizing an FTDI FT232R UART to
+USB interface chip.  The chip connects to a standard USB Mini-B connector on one side and the
+microcontroller's logic-level UART pins on the other, acting as a translator between the two
+protocols.  The chip presents itself to the connected USB host as a virutal COM port to
+allow one to communicate with the board using a terminal program such as TeraTerm or HyperTerminal.
+Newer operating systems should have drivers for the device pre-installed; however, drivers are also
+available from \url{http://www.ftdichip.com/FTDrivers.htm}.
+
+The circuit used is similar to the one presented in Section 6.3 of the FT232R datasheet.  Because
+the 5V components on the board can be powered over USB (see the \hyperref[sssec:MainPower]{Main
+  Power Input} description), this device needs to comply with USB suspend mode requirements.  When
+the USB host enters USB Suspend Mode, the attached device must power down and draw less than 2.5mA
+of current.  To facilitate the, pin 14 of the FT232R defaults to an active low ``Power Enable'' pin.
+When entering USB suspend mode, that pin will be pulled high by the 10k\textOmega{} pullup and will
+``turn off'' the Diodes Inc. DMP2215L P-channel MOSFET, essentially cutting power to the rest of the
+5V system.  When the USB host exits Suspend Mode, the FT232R will pull the line low to re-active the
+MOSFET.  The datasheet for the MOSFET give a current rating of 2A at 70\degree C.  The 5V devices
+are designed to draw under 100mA total because of the board's ability to power them from USB power.
+
+Given a thermal resistance of 115\degree C/W and on-resistance of 100m\textOmega{}, a 100mA draw
+would raise the device's temperature over ambient by
+
+\begin{align*}
+    \Delta T &= P * R_{th} \\
+    &= (I^2R) * R_{th} \\
+    &= (0.01 * 0.1) * 115 \\
+    \Delta T &= 0.115\degree C
+\end{align*}
+
+Both the USB connector and the FT232R are fine-pitch parts, the latter using a 28-pin SSOP package.
+These two are probably the most challenging parts on the board to solder, so they will need to be
+placed appropriately to help make soldering them a bit easier.
+
+\subsubsection{Main Power Input} \label{sssec:MainPower}
+The board accepts a nominal 12V supply through a screw terminal rated up to 7A input, which is much
+higher than the continuous current the board is designed for (see the \hyperref[sssec:PowerUsage]{Power
+ Usage} and \hyperref[sssec:FanControl]{Fan Control} descriptions).  
+
+To help prevent damage from occurring due to hooking up the power supply backwards, a Rohm
+Semiconductor RSQ035N03 N-channel MOSFET is placed across what is normally the current return path
+and the gate connected through a 3.3k\textOmega{} resistor to the normally-positive side.  When the
+power is connected correctly, the gate is pulled up to 12V and the FET is fully-on.  When the power
+is connected backwards, the gate is pulled low and the MOSFET is turned off.  The MOSFET has a
+steady-state current rating of 3.5A and a peak rating of 14A.  The device also has a max
+on-resistance of 62m\textOmega{}.  With a maximum temperature of 150\degree C and a thermal
+resistance of 100\degree C/W, at 40\degree C ambient\footnote{The inside of a projector will certainly
+  be warmer then the outside air temperature, with the actual ambient temperature depending on where
+  inside the projector the board is placed.  The chosen 40\degree C value is probably on the warmer
+  side of normal, but provides some safety margin.  This is used as the ambient temp throughout this
+  document.} the maximum power dissipated by the device is given by
+
+\begin{align*}
+    P_{max} &= \frac{T_{max}-T_{amb}}{R_{th}} \\
+    &= \frac{150 - 40}{100} \\
+    &= 1.1W
+\end{align*}
+
+which gives a maximum current of
+
+\begin{align*}
+    I &= \sqrt{\frac{P}{R}} \\
+    &= \sqrt{\frac{1.1}{0.062}} \\
+    &\approx 4.21A
+\end{align*}
+
+meaning that the device is limited by the specified limit of 3.5A rather than by heat.
+
+The 5V supply comes from an ST Microelectronics L78M05C linear regulator fed from the 12V supply.
+The device is rated to output currents up to 0.5A and features thermal overload shutdown that will
+cut output power in order to protect itself.  The device has a maximum temperature of 150\degree C
+and a worst-case thermal resistance of 100\degree C/W, assuming minimal heatsinking.
+
+As previously stated, the 5V devices are designed to draw at most 100mA so that they can be powered
+via USB.  A selector switch allows the user to select between USB and the 5V regulator as the 5V
+power source.  This is useful in the case the user needs to remove the board from the projector and
+connect it to the PC for configuring it.  The output side of the selector switch has a Cooper
+Bussmann PTS120630V012 PTC fuse rated at 120mA at 23\degree C.  Using the derating curve in the
+datasheet shows that the hold current drops to about 100mA at an ambient temperature of 40\degree
+C.  A Diodes Inc. S1M-13-F diode, rated at 1A continuous and 1000V reverse DC voltage, is placed
+between the regulator and 12V input to prevent USB current from back-feeding through the regulator.
+
+Given a worst-case thermal resistance of 100\degree C/W and nominal voltage drop of 7V, a 100mA draw
+would raise the device's temperature over ambient by
+
+\begin{align*}
+    \Delta T &= P * R_{th} \\
+    &= (V*I) * R_{th} \\
+    &= (7 * 0.1) * 100 \\
+    \Delta T &= 70\degree C
+\end{align*}
+
+Some heatsinking can be provided by englarged pads or copper pours on the board.
+
 
 
 \end{document}
