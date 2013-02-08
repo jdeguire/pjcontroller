@@ -14,6 +14,7 @@
 
 \documentclass{article}
 
+\usepackage{textcomp}
 \usepackage{textgreek}
 \usepackage{anysize} 
 \usepackage{graphicx}
@@ -30,8 +31,10 @@
 % makes a backslash
 \newcommand{\bs}{$\backslash$}
 
-% degree symbol without having to enter math mode
-\newcommand{\degree}{\ensuremath{^\circ}}
+% degree symbol and overbar in either math or text mode
+% found these on the TeX Stack Exchange
+\newcommand{\degree}{\ensuremath{^{\circ}}}
+\newcommand{\textoverline}[1]{$\overline{\mbox{#1}}$}
 
 
 \begin{document}
@@ -71,13 +74,13 @@ tinker with the any part of the system or at least will satisfy an interested us
 Anyone who is only looking to get the Controller running in his or her projector should instead
 consult the \textit{Projector Controller Users Guide}.
 
-This guide is divided up into a few sections.  The \hyperref[Hardware_sec]{Hardware} section
+This guide is divided up into a few sections.  The \hyperref[sec:Hardware]{Hardware} section
 describes the components used on the board itself as well as the power requirements and capabilities
-of the board.  The \hyperref[Firmware_sec]{Firmware} section contains information regarding the
+of the board.  The \hyperref[sec:Firmware]{Firmware} section contains information regarding the
 program flow of the bootloader and application firmwares used by the Projector Controller.  This
 also contains documentation for the command interfaces used by both to communicate to the host PC as
 well as brief descriptions of many of the source code files.  Finally, the
-\hyperref[Software_sec]{Software} section describes how the PC-side software communicates to the
+\hyperref[sec:Software]{Software} section describes how the PC-side software communicates to the
 board.  All sections will additionally state what tools were used in their development so that
 anyone can build and modify the various pieces.
 
@@ -130,7 +133,7 @@ at \url{http://www.oshwa.org/faq/} recommded its use.  Any derived works which d
 definition of Open Source Hardware should remove the logo from any files which contain it.
 
 
-\section{Hardware} \label{ssec:Hardware}
+\section{Hardware} \label{sec:Hardware}
 The hardware was designed using KiCad EDA, an open source (GPLv2) multi-purpose EDA tool available
 for various flavors of GNU/Linux, Windows, and OS X.  Get KiCad from the official site at
 \url{http://www.kicad-pcb.org/display/KICAD/Download+Kicad}.  If possible, download a Snapshot build
@@ -147,7 +150,7 @@ consideration was ease of assembly.  When possible, the components used are of a
 (such as 1206 for resistors) and the footprints for surface-mount devices use long pads to make
 accessing them with a soldering iron easier.  The board uses a socket for the 28-pin DIP
 microcontroller to allow easy replacement.  These choices allow the board to be assembled by hand
-for small production runs and the allow user to more easily tinker with the board.
+for small production runs and allow the user to more easily tinker with the board.
 
 Other considerations were size of the board itself and price, which are related since larger PCBs
 are more expensive.  These may seem to conflict with the previous consideration, but the Controller
@@ -159,9 +162,9 @@ easier to install into one's projector.
 Though not a primary consideration, the board was also designed with an eye on power consumption.
 The board will be able to run certain componenets from USB power.  USB provides 5V at 100mA by
 default, though a device can request up to 500mA.  The USB interface device does not identify itself
-as a high-power device by default, so all 5V components will consume less than 100mA combined.  The
-power consumption of the board is characterized in the \hyperref[ssec:PowerUsage]{Power Usage}
-section.
+as a high-power device by default, so all 5V components will need to consume less than 100mA
+combined.  The power consumption of the board is characterized in the
+\hyperref[ssec:PowerUsage]{Power Usage} section.
 
 \subsection{Circuit Details} \label{ssec:CircuitDetails}
 Following are desciptions of the different circuit pieces developed for the board.  The reader of
@@ -198,15 +201,15 @@ The circuit used is similar to the one presented in Section 6.3 of the FT232R da
 the 5V components on the board can be powered over USB (see the \hyperref[sssec:MainPower]{Main
   Power Input} description), this device needs to comply with USB suspend mode requirements.  When
 the USB host enters USB Suspend Mode, the attached device must power down and draw less than 2.5mA
-of current.  To facilitate the, pin 14 of the FT232R defaults to an active low ``Power Enable'' pin.
+of current.  To facilitate this, pin 14 of the FT232R defaults to an active low ``Power Enable'' pin.
 When entering USB suspend mode, that pin will be pulled high by the 10k\textOmega{} pullup and will
 ``turn off'' the Diodes Inc. DMP2215L P-channel MOSFET, essentially cutting power to the rest of the
 5V system.  When the USB host exits Suspend Mode, the FT232R will pull the line low to re-active the
-MOSFET.  The datasheet for the MOSFET give a current rating of 2A at 70\degree C.  The 5V devices
-are designed to draw under 100mA total because of the board's ability to power them from USB power.
+MOSFET.  The datasheet for the MOSFET give a current rating of 2A at 70\textcelsius{}.
 
-Given a thermal resistance of 115\degree C/W and on-resistance of 100m\textOmega{}, a 100mA draw
-would raise the device's temperature over ambient by
+The FT232R defaults to USB low-power mode, which requires that the device in question draw at most
+100mA.  Given a thermal resistance of 115\textcelsius{}/W and on-resistance of 100m\textOmega{}, a
+100mA draw would raise the MOSFET's temperature over ambient by
 
 \begin{align*}
     \Delta T &= P * R_{th} \\
@@ -221,8 +224,8 @@ placed appropriately to help make soldering them a bit easier.
 
 \subsubsection{Main Power Input} \label{sssec:MainPower}
 The board accepts a nominal 12V supply through a screw terminal rated up to 7A input, which is much
-higher than the continuous current the board is designed for (see the \hyperref[sssec:PowerUsage]{Power
- Usage} and \hyperref[sssec:FanControl]{Fan Control} descriptions).  
+higher than the continuous current the board is designed for (see the
+\hyperref[sssec:PowerUsage]{Power Usage} and \hyperref[sssec:FanControl]{Fan Control} descriptions).
 
 To help prevent damage from occurring due to hooking up the power supply backwards, a Rohm
 Semiconductor RSQ035N03 N-channel MOSFET is placed across what is normally the current return path
@@ -230,45 +233,47 @@ and the gate connected through a 3.3k\textOmega{} resistor to the normally-posit
 power is connected correctly, the gate is pulled up to 12V and the FET is fully-on.  When the power
 is connected backwards, the gate is pulled low and the MOSFET is turned off.  The MOSFET has a
 steady-state current rating of 3.5A and a peak rating of 14A.  The device also has a max
-on-resistance of 62m\textOmega{}.  With a maximum temperature of 150\degree C and a thermal
-resistance of 100\degree C/W, at 40\degree C ambient\footnote{The inside of a projector will certainly
-  be warmer then the outside air temperature, with the actual ambient temperature depending on where
-  inside the projector the board is placed.  The chosen 40\degree C value is probably on the warmer
-  side of normal, but provides some safety margin.  This is used as the ambient temp throughout this
-  document.} the maximum power dissipated by the device is given by
+on-resistance of 62m\textOmega{}.  With a maximum temperature of 150\textcelsius{} and a thermal
+resistance of 100\textcelsius{}/W, at 40\textcelsius{} ambient\footnote{The inside of a projector
+  will certainly be warmer then the outside air temperature, with the actual ambient temperature
+  depending on where inside the projector the board is placed.  The chosen 40\textcelsius{} value is
+  probably on the warmer side of normal, but provides some safety margin.  This is used as the
+  ambient temp throughout this document.} the maximum power dissipated by the device is given by
 
 \begin{align*}
     P_{max} &= \frac{T_{max}-T_{amb}}{R_{th}} \\
     &= \frac{150 - 40}{100} \\
-    &= 1.1W
+    P_{max} &= 1.1W
 \end{align*}
 
 which gives a maximum current of
 
 \begin{align*}
-    I &= \sqrt{\frac{P}{R}} \\
+    I &= \sqrt{\frac{P}{R_{th}}} \\
     &= \sqrt{\frac{1.1}{0.062}} \\
-    &\approx 4.21A
+    I &\approx 4.21A
 \end{align*}
 
 meaning that the device is limited by the specified limit of 3.5A rather than by heat.
 
 The 5V supply comes from an ST Microelectronics L78M05C linear regulator fed from the 12V supply.
 The device is rated to output currents up to 0.5A and features thermal overload shutdown that will
-cut output power in order to protect itself.  The device has a maximum temperature of 150\degree C
-and a worst-case thermal resistance of 100\degree C/W, assuming minimal heatsinking.
+cut output power in order to protect itself.  The device has a maximum temperature of
+150\textcelsius{} and a worst-case thermal resistance of 100\textcelsius{}/W, assuming minimal
+heatsinking.
 
 As previously stated, the 5V devices are designed to draw at most 100mA so that they can be powered
 via USB.  A selector switch allows the user to select between USB and the 5V regulator as the 5V
 power source.  This is useful in the case the user needs to remove the board from the projector and
 connect it to the PC for configuring it.  The output side of the selector switch has a Cooper
-Bussmann PTS120630V012 PTC fuse rated at 120mA at 23\degree C.  Using the derating curve in the
-datasheet shows that the hold current drops to about 100mA at an ambient temperature of 40\degree
-C.  A Diodes Inc. S1M-13-F diode, rated at 1A continuous and 1000V reverse DC voltage, is placed
-between the regulator and 12V input to prevent USB current from back-feeding through the regulator.
+Bussmann PTS120630V012 PTC fuse rated at 120mA at 23\textcelsius{}.  Using the derating curve in the
+datasheet shows that the hold current drops to about 100mA at an ambient temperature of
+40\textcelsius{}.  A Diodes Inc. S1M-13-F diode, rated at 1A continuous and 1000V reverse DC voltage,
+is placed between the regulator and 12V input to prevent USB current from back-feeding through the
+regulator.  If only a USB cable is connected to the board, only the 5V devices will be powered.
 
-Given a worst-case thermal resistance of 100\degree C/W and nominal voltage drop of 7V, a 100mA draw
-would raise the device's temperature over ambient by
+Given a worst-case thermal resistance of 100\textcelsius{}/W and nominal voltage drop of 7V, a 100mA
+draw would raise the device's temperature over ambient by
 
 \begin{align*}
     \Delta T &= P * R_{th} \\
@@ -279,6 +284,99 @@ would raise the device's temperature over ambient by
 
 Some heatsinking can be provided by englarged pads or copper pours on the board.
 
+\subsubsection{Programming and Reset} \label{sssec:ProgReset}
+The ATMega328p microcontroller can be reprogrammed using a standard 10-pin AVR ISP header.  The
+pinout used should work with most, if not all, external programmers.  The microcontroller is
+programmed through the SPI lines while the device is held in reset.  The 5V pin on the header allows
+the board to power the programmer so that the logic signals are at the correct voltage levels.
 
+The user can reset the board using a push button connected to ground.  The device's
+\textoverline{RESET} pin is active low, so it is normally pulled high and pressing the button
+creates a connection to ground.
+
+\subsubsection{Analog Inputs} \label{sssec:AnalogIn}
+Two of the microcontroller's analog inputs are used to monitor the 12V input and ambient temperature
+from an Analog Devices TMP36 temperature sensor.
+
+The 12V input is divided down using a simple resistive divider in a 3:1 ratio, meaning that the
+input into the ADC is 1/4 the actual voltage.  For example, an ideal 12V source would be 3V at the
+ADC input.
+
+The TMP36 ``F Grade'' part used here has a worst-case accuracy of \textpm3\textcelsius{}.  At
+0\textcelsius{} the device outputs 500mV and the output changes by 10mV/\textcelsius{}.
+
+\subsubsection{Relay and LED Outputs} \label{sssec:RelayLED} 
+Four 12V outputs are provided to control external devices.  The outputs are controlled using two ON
+Semiconductor NUD3124DMT1G dual low-side drivers.  The drivers are meant to be single-chip solutions
+for driving small motors and relays and so include a flyback diode and gate resistor.
+
+Three of the driver outputs are controlled by the three LED outputs on the microcontroller (see
+\hyperref[sssec:Microcontroller]{Microcontroller} description).  The user can connect external LEDs
+to these outputs and mount them to the projector's chassis so that the firmware's diagnostic
+signaling is visible from outside the projector.  The outputs provide 12V power, so the user will
+need to use an appropriate current-limiting resistor with the external LED.  Alternatively,
+electronics stores sell LEDs packages with the proper resistor built in.  The current-limiting
+resistors for the onboard LEDs also act as pulldowns for these outputs.
+
+The fourth output is used as a lamp enable output and can be used to turn on, for example, an
+external relay coil which in turn turns the lamp on.  This output has a 10k pulldown on it.
+
+The high side of each output has a Cooper Bussmann PTS120630V012 PTC fuse rated at 120mA at
+23\textcelsius{}.  Using the derating curve in the datasheet shows that the hold current drops to
+about 100mA at an ambient temperature of 40\textcelsius{}.  Given a thermal resistance of
+329\textcelsius{}/W and worst-case on-resistance of 1.1\textOmega, both outputs drawing 100mA would
+raise the driver's temperature over ambient by
+
+\begin{align*}
+    \Delta T &= P * R_{th} \\
+    &= (I^2R) * R_{th} \\
+    &= (0.04 * 1.1) * 329 \\
+    \Delta T &\approx 14.5\degree C
+\end{align*}
+
+\subsubsection{Fan Control} \label{sssec:FanControl}
+A single Molex 4-pin fan header is provided for connecting a standard PWM-controlled PC fan.  The
+connector is rated at 4A max per contact.  12V power is controlled by an Infineon BSP762T high-side
+driver.  The driver has a worst-case on-resistance of 200m\textOmega.  With a maximum temperature of
+150\textcelsius{} and a thermal resistance of 95\textcelsius{}/W, at 40\textcelsius{} ambient the
+maximum power dissipated by the device is given by
+
+\begin{align*}
+    P_{max} &= \frac{T_{max}-T_{amb}}{R_{th}} \\
+    &= \frac{150 - 40}{95} \\
+    P_{max} &\approx 1.15W
+\end{align*}
+
+which is below the rated absolute maximum of 1.5W and therefore gives a maximum current of
+
+\begin{align*}
+    I &= \sqrt{\frac{P}{R_{th}}} \\
+    &= \sqrt{\frac{1.15}{0.2}} \\
+    I &\approx 2.4A
+\end{align*}
+
+which matches the typical load current ($I_{L(nom)}$) provided in the datasheet.  Note that the
+on-resistance value used will occur only when the device is operating at its max junction
+temperature; the on-resistance, and therefore temperature, will usually be much lower.  Users will
+be instructed to draw 2A max.
+
+The driver has a thermal shutdown feature to protect the device in over-current or short circuit
+conditions.  The device will turn the output off when in thermal overload and turn it back on when
+it has cooled sufficiently.  In the case of short circuit, the driver will repeatedly turn off and
+back on with a repetitive short circuit current of 7A.  The driver is not designed to continuously
+operate in this state, so the user will need to take care to not leave the output shorted.
+
+The PWM output signal is supplied from one of the microcontroller's 8-bit PWM outputs.  According to
+the Intel 4-pin fan specification (available in the \texttt{/hardware/datasheets} directory of the
+repository), the nominal PWM output is 25kHz.  The PWM signal goes through a TI SN74LVC1G07
+non-inverting open-drain buffer since the fan pulls up the signal internally.  The Intel fan spec
+recommends a current sink capability of 8mA.  The recommended max for the buffer is 32mA (the
+absolute max is 50mA), so a user could theoretically control 4 fans using splitters assuming they do
+not overload the high-side driver.
+
+If the connected fan does not have a PWM input signal (standard PC 3-pin fan), the Projector
+Controller will still provide basic on/off control with the high-side driver.
+
+The driver input and buffer input signals each have a 10k\textOmega pulldown.
 
 \end{document}

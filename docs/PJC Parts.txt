@@ -24,7 +24,7 @@ ICs
 -----
 MCU:			Atmel ATMega328p (PDIP 28-pin)
 USB-Serial:		FTDI FT232RL (SSOP 28-pin)
-Ambient Sensor:		Analog Devices TMP36 (SOIC 8-pin)
+Ambient Sensor:		Analog Devices TMP36 "F-Grade" (SOIC 8-pin)
 Open-drain buffer:	TI SN74LVC1G07DVB (SOT23-5, "DBV" in datasheet)
 Thermistor ADC:		Microchip MCP3301 (SOIC 8-pin)
 Relay/LED LSD:		ON Semiconductor NUD3124DMT1G (SOT23-6, "SC-74" in datasheet) x2
@@ -47,11 +47,12 @@ Passive
 10k Resistor:		Stackpole Electronics RMCF1206FT10K0 (1%, 0.25W, 1206 SMT) x9
 2.2k Resistor:		Stackpole Electronics RMCF1206FT2K20 (1%, 0.25W, 1206 SMT) x1
 1.5k Resistor:		Stackpole Electronics RMCF1206FT1K50 (1%, 0.25W, 1206 SMT) x1
+1k Resistor:		Stackpole Electronics RMCF1206FT1K00 (1%, 0.25W, 1206 SMT) x1
 470 Resistor:		Stackpole Electronics RMCF1206FT470R (1%, 0.25W, 1206 SMT) x1
 10uF Capacitor:		Taiyo Yuden GMK316BJ106KL-T (10%, 35V, X5R, 1206 SMT) x1
 1uF Capacitor:		Taiyo Yuden UMK316B7105KL-T (10%, 50V, X7R, 1206 SMT) x1
 4.7uF Capacitor:	Taiyo Yuden UMK316AB7475KL-T (10%, 50V, X7R, 1206 SMT) x1
-100nF Capacitor:	Murata GRM319R71H104KA01D (10%, 50V, X7R, 1206 SMT) x7
+100nF Capacitor:	Murata GRM319R71H104KA01D (10%, 50V, X7R, 1206 SMT) x8
 10nF Capacitor:		Murata GRM319R71H103KA01D (10%, 50V, X7R, 1206 SMT) x1
 22pF Capacitor:		Kemet C1206C220K5GACTU (10%, 50V, C0G, 1206 SMT) x2
 USB Ferrite Bead:	Laird MI1206L391R-10 (1206 SMT)
