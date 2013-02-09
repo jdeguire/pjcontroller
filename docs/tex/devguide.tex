@@ -225,7 +225,7 @@ placed appropriately to help make soldering them a bit easier.
 \subsubsection{Main Power Input} \label{sssec:MainPower}
 The board accepts a nominal 12V supply through a screw terminal rated up to 7A input, which is much
 higher than the continuous current the board is designed for (see the
-\hyperref[sssec:PowerUsage]{Power Usage} and \hyperref[sssec:FanControl]{Fan Control} descriptions).
+\hyperref[ssec:PowerUsage]{Power Usage} and \hyperref[sssec:FanControl]{Fan Control} descriptions).
 
 To help prevent damage from occurring due to hooking up the power supply backwards, a Rohm
 Semiconductor RSQ035N03 N-channel MOSFET is placed across what is normally the current return path
@@ -298,9 +298,9 @@ creates a connection to ground.
 Two of the microcontroller's analog inputs are used to monitor the 12V input and ambient temperature
 from an Analog Devices TMP36 temperature sensor.
 
-The 12V input is divided down using a simple resistive divider in a 3:1 ratio, meaning that the
-input into the ADC is 1/4 the actual voltage.  For example, an ideal 12V source would be 3V at the
-ADC input.
+The 12V input is divided down using a simple resistive divider in an approximate 3:1 ratio, meaning that the
+input into the ADC is about 1/4 the actual voltage.  More specifically, to determine the actual
+voltage on the 12V input, multiply the ADC voltage by 4.03.
 
 The TMP36 ``F Grade'' part used here has a worst-case accuracy of \textpm3\textcelsius{}.  At
 0\textcelsius{} the device outputs 500mV and the output changes by 10mV/\textcelsius{}.
@@ -309,6 +309,10 @@ The TMP36 ``F Grade'' part used here has a worst-case accuracy of \textpm3\textc
 Four 12V outputs are provided to control external devices.  The outputs are controlled using two ON
 Semiconductor NUD3124DMT1G dual low-side drivers.  The drivers are meant to be single-chip solutions
 for driving small motors and relays and so include a flyback diode and gate resistor.
+
+The 4 connectors are 2-pin TE Connectivity Mini CT series connectors, which are 1.5mm pitch and
+rated for 2A maximum.  The LED connectors will be grouped together and the relay connector separated
+a bit to help differentiate them.
 
 Three of the driver outputs are controlled by the three LED outputs on the microcontroller (see
 \hyperref[sssec:Microcontroller]{Microcontroller} description).  The user can connect external LEDs
@@ -336,10 +340,11 @@ raise the driver's temperature over ambient by
 
 \subsubsection{Fan Control} \label{sssec:FanControl}
 A single Molex 4-pin fan header is provided for connecting a standard PWM-controlled PC fan.  The
-connector is rated at 4A max per contact.  12V power is controlled by an Infineon BSP762T high-side
-driver.  The driver has a worst-case on-resistance of 200m\textOmega.  With a maximum temperature of
-150\textcelsius{} and a thermal resistance of 95\textcelsius{}/W, at 40\textcelsius{} ambient the
-maximum power dissipated by the device is given by
+connector is rated at 4A max per contact.  The Sense output, which acts as a tachometer signal from
+the fan, is not used.  12V power is controlled by an Infineon BSP762T high-side driver.  The driver
+has a worst-case on-resistance of 200m\textOmega.  With a maximum temperature of 150\textcelsius{}
+and a thermal resistance of 95\textcelsius{}/W, at 40\textcelsius{} ambient the maximum power
+dissipated by the device is given by
 
 \begin{align*}
     P_{max} &= \frac{T_{max}-T_{amb}}{R_{th}} \\
@@ -369,7 +374,8 @@ operate in this state, so the user will need to take care to not leave the outpu
 The PWM output signal is supplied from one of the microcontroller's 8-bit PWM outputs.  According to
 the Intel 4-pin fan specification (available in the \texttt{/hardware/datasheets} directory of the
 repository), the nominal PWM output is 25kHz.  The PWM signal goes through a TI SN74LVC1G07
-non-inverting open-drain buffer since the fan pulls up the signal internally.  The Intel fan spec
+non-inverting open-drain buffer since the fan pulls up the signal internally. The buffer has a max
+switching time of 3.5ns, which is far faster then required by the PWM signal.  The Intel fan spec
 recommends a current sink capability of 8mA.  The recommended max for the buffer is 32mA (the
 absolute max is 50mA), so a user could theoretically control 4 fans using splitters assuming they do
 not overload the high-side driver.
@@ -377,6 +383,164 @@ not overload the high-side driver.
 If the connected fan does not have a PWM input signal (standard PC 3-pin fan), the Projector
 Controller will still provide basic on/off control with the high-side driver.
 
-The driver input and buffer input signals each have a 10k\textOmega pulldown.
+The driver input and buffer input signals each have a 10k\textOmega{} pulldown.
+
+\subsubsection{Temperature Input} \label{sssec:TempInput}
+Temperature is read using a Vishay NTCALUG02A103G 10k (\textpm2\% at 25\textcelsius) thermistor,
+which is enclosed in a ring terminal for easy mounting in the projector.  The ring terminal accepts
+a metric M3 screw.  The user will normally want to place the thermistor as close to the monitored
+object, usually the LCD panel, as he or she can.  The user may need to try a few locations to find
+the best one.
+
+The thermistor input is a 2-pin JST PH Series connector, which is 2.0mm pitch and rated for 2A maximum.
+
+The equation for getting the temperature from a thermistor is the Steinhart-Hart equation, which is
+given by Vishay as
+
+\[
+T = \frac{1}{A + Bln\frac{R_T}{R_{25}} + Cln^2\frac{R_T}{R_{25}} + Dln^3\frac{R_T}{R_{25}}}
+\]
+
+where $R_T/R_{25}$ is the ratio between the thermistor's current resistance and its reference
+resistance (10k\textOmega{} in this case).  This means that it is necessary to determine the
+thermistor's current resistance and that can be done using the voltage going into the ADC.
+
+The ADC is a Microchip MCP3301 differential SPI ADC that returns data in 13-bit two's complement
+representation.  The positive input to the ADC, $IN+$, is the output of a voltage divider formed by
+the thermistor and a 10k\textOmega{} resistor.  The ADC has a separate reference voltage input,
+$V_{REF}$, and the input range is $\pm V_{REF}$.  To take advantage of the full 13-bit scale, a
+voltage divider with two 10k\textOmega{} resistors splits the 5V input in half and the resulting
+2.5V is fed into both the $V_{REF}$ and $IN-$ inputs.  If the thermistor is 25\textcelsius{}, it
+will also be at 2.5V and so the ADC reading will be 0.  The ADC reading will be negative if the
+thermistor is colder than 25\textcelsius{} and positive if warmer.  To get the actual voltage going
+into the ADC positive input, convert the ADC reading to voltage (remember to sign-extend the
+reading) and then add 2.5V to it.
+
+The thermistor's current resistance can now be calculated with
+
+\[
+R_T = \frac{R_2*V_{in}}{V_{ADC}} - R_2
+\]
+
+which is just the standard resistor divider equation solved for $R1$ (which is $R_T$ in this case).
+To get the ratio between the current resistance and the reference resistance required by the 
+Steinhart-Hart equation, the above equation can be divided by $R_{25}$.  Doing that and plugging in
+the appropriate values for $V_{in}$ and $R_2$ yields
+
+\begin{align*}
+    \frac{R_T}{R_{25}} &= \frac{\frac{10k * 5}{V_{out}} - 10k}{R_{25}} \\
+    &= \frac{\frac{50k}{V_{out}} - 10k}{10k} \\
+    \frac{R_T}{R_{25}} &= \frac{5}{V_{out}} - 1
+\end{align*}
+
+The cofficients for the Steinhart-Hart equation come from a Microsoft Excel spreadsheet on Vishay's
+website at \url{http://www.vishay.com/resistors-non-linear/curve-computation-list/}.  The
+spreadsheet for the NTCALUG02A103G is available in the repository at
+\texttt{/hardware/datasheets/Vishay Thm Calc.xls}.  The coefficients are on the RTCOEF page of the
+spreadsheet and are
+
+\begin{align*}
+    A = 0.0033540164 \\
+    B = 0.0002565236 \\
+    C = 2.605970e-6 \\
+    D = 6.329261e-8
+\end{align*}
+
+\subsubsection{Projector On Input} \label{sssec:PJOnInput}
+The controller card for the projector's LCD panel also controls the LCD's backlight and will output
+a 5V or 12V signal to a backlight inverter to turn it on.  Since the projector discards the
+backlight in favor of a high-power lamp, the Projector Controller has an input for that backlight
+signal and will use that for the similar purpose of turning on the lamp.  The input connector is a
+3-pin TE Connectivity Mini CT series connector, which is 1.5mm pitch and rated for 2A maximum.  A
+3-pin connector was used to differentiate it from the output connectors; the middle pin is not used.
+
+The used connector pins go to the input of a Vishay VOM618A-4T opto-isolator. The opto has a minimum
+current transfer ratio (gain) of 160\% when the current through the LED is 1mA.  The output is a
+collector-emitter junction with the LED acting as the base of a transistor, so if the forward
+current through the LED is 1mA then the collector current will be 1.6mA (assuming the device is not
+saturated).
+
+The collector of the opto is connected to 5V and the emitter connects to the microcontroller input
+pin and a 10k\textOmega{} pulldown, making the input active-high.  With a typical collector-emitter
+saturation voltage of 0.12V (max is 0.4V), the collector current is
+
+\begin{align*}
+    I_C &= \frac{V_{in} - V_{CESat}}{R_L} \\
+    &= \frac{5 - 0.12}{10k} \\
+    I_C &= 0.488mA
+\end{align*}
+
+so the LED forward current times the current transfer ratio must be greater than 0.488mA in order to
+drive the opto in to saturation.  This is much lower than the maximum allowed collector current of
+50mA.
+
+Between the positive input pin and the anode of the LED is a 3.3k\textOmega{} current-limiting
+resistor.  An LCD controller board with a 5V backlight enable signal will, with a typical LED
+forward voltage of 1.1V, need to be capable of supplying
+
+\begin{align*}
+    I_F &= \frac{V_{in} - V_f}{R_I} \\
+    &= \frac{5 - 1.1}{3.3k} \\
+    I_F &= 1.18mA
+\end{align*}
+
+of current.  This is very close to the test current at which the opto's transfer ratio is rated.
+Using an ambient temperature of 40\textcelsius{} derates the ratio to 90\%, according to Figure 9 on
+page 5 of the datasheet, giving a minimum ratio of 1.44.  This make the theoretical collector
+current 1.70mA, driving the opto well into saturation.  Performing similar math for a 12V input
+shows that it will need to be able to supply about 3.3mA of current and will provide a theoretical
+collector current of 4.75mA.  Doing the same math, but with $V_F$ at the max of 1.6V, shows that a
+5V backlight signal will supply about 1mA with a theoretical collector current of 1.44mA and a 12V
+signal will supply 3.15mA with a collector current of about 4.53mA.  In short, LCD controller boards
+that provide a 5V or 12V backlight signal should have no trouble driving the opto into saturation
+and should be able to do so while supplying only a small amount of current.
+
+Future LCD controller boards, however, could have a 3.3V or lower backlight control signal.  Doing
+the above math again with a 3.3V signal yields an LED forward current of
+
+\begin{align*}
+    I_F &= \frac{V_{in} - V_f}{R_I} \\
+    &= \frac{3.3 - 1.1}{3.3k} \\
+    I_F &= 0.67mA
+\end{align*}
+
+when using the typical LED forward voltage rating.  Because the current is below the 1mA test
+current used by the datasheet, a additional derating of the current transfer ratio needs to be
+applied.  Figure 11 on page 5 of the datasheet shows a derating of about 75\% at 25\textcelsius{}
+ambient.  Applying that to the already-derated current transfer ratio of 1.44 gives 1.08.  This means
+that a 3.3V input will typically have a theoretical collector current of 0.72mA.  This is higher
+than the actual collector current by about 50\%, which should drive the opto into saturation.
+Unfortunately, doing the same math with the max forward voltage of 1.6V gives a forward current of
+0.5mA for a collector current of 0.54mA.  Users are welcome to try a 3.3V signal with the Projector
+Controller, but it is not assured to work as intended.  The user may need to use an external circuit
+with a 3.3V signal to provide a higher voltage to the Projector Controller.
+
+It should be noted that orignially a more standard zener diode circuit was considered.  However,
+zener diodes appeared to be rated with a 5mA current.  This would mean that more current is required
+from LCD controller boards that output their backlight signals to this board.  Drive specificatons
+are rarely, if ever, available for LCD controller boards so it was decided to aim for a lower
+current draw, which the VOM618A allows since its test current is 1mA.
+
+\subsubsection{Mounting Holes} \label{sssec:MountingHoles}
+The Projector Controller will have one mounting hole on each of its four corners.  The holes have a
+4mm inner diameter and 10mm outer diameter for screw head clearance.  This is the same size used for
+PC motherboards, so standoffs and screws that come with PC cases should be useable with this board.
+The holes will accommodate either M3 metric screws or 6-32 standard UTS screws.
+
+
+\subsection{Power Usage} \label{ssec:PowerUsage}
+
+
+
+
+\subsection{Microcontroller Pinout} \label{ssec:MicroPinout}
+
+
+
+\subsection{Connector Pinout} \label{ssec:ConnPinout}
+
+
+
+\subsection{Conversion Formulas} \label{ssec:ConversionFormulas}
 
 \end{document}
