@@ -36,6 +36,9 @@
 \newcommand{\degree}{\ensuremath{^{\circ}}}
 \newcommand{\textoverline}[1]{$\overline{\mbox{#1}}$}
 
+% enclose argument in angle brackets
+\newcommand{\abrackets}[1]{\textlangle #1\textrangle}
+
 
 \begin{document}
 
@@ -63,7 +66,7 @@ This section describes revisions made to this document.  Changes made to the har
 software are described in their respective sections.
 
 \begin {description}
-  \item[Rev. A:] February 3, 2013\\
+  \item[Rev. A:] February 3, 2013 \\
     Initial revision.
 \end {description}
 
@@ -265,12 +268,13 @@ heatsinking.
 As previously stated, the 5V devices are designed to draw at most 100mA so that they can be powered
 via USB.  A selector switch allows the user to select between USB and the 5V regulator as the 5V
 power source.  This is useful in the case the user needs to remove the board from the projector and
-connect it to the PC for configuring it.  The output side of the selector switch has a Cooper
-Bussmann PTS120630V012 PTC fuse rated at 120mA at 23\textcelsius{}.  Using the derating curve in the
-datasheet shows that the hold current drops to about 100mA at an ambient temperature of
-40\textcelsius{}.  A Diodes Inc. S1M-13-F diode, rated at 1A continuous and 1000V reverse DC voltage,
-is placed between the regulator and 12V input to prevent USB current from back-feeding through the
-regulator.  If only a USB cable is connected to the board, only the 5V devices will be powered.
+connect it to the PC for configuring it.  The switch is rated for 6VDC at 300mA or 30VDC at 100mA.
+The output side of the selector switch has a Cooper Bussmann PTS120630V012 PTC fuse rated at 120mA
+at 23\textcelsius{}.  Using the derating curve in the datasheet shows that the hold current drops to
+about 100mA at an ambient temperature of 40\textcelsius{}.  A Diodes Inc. S1M-13-F diode, rated at
+1A continuous and 1000V reverse DC voltage, is placed between the regulator and 12V input to prevent
+USB current from back-feeding through the regulator.  If only a USB cable is connected to the board,
+only the 5V devices will be powered.
 
 Given a worst-case thermal resistance of 100\textcelsius{}/W and nominal voltage drop of 7V, a 100mA
 draw would raise the device's temperature over ambient by
@@ -288,7 +292,9 @@ Some heatsinking can be provided by englarged pads or copper pours on the board.
 The ATMega328p microcontroller can be reprogrammed using a standard 10-pin AVR ISP header.  The
 pinout used should work with most, if not all, external programmers.  The microcontroller is
 programmed through the SPI lines while the device is held in reset.  The 5V pin on the header allows
-the board to power the programmer so that the logic signals are at the correct voltage levels.
+the board to power the programmer so that the logic signals are at the correct voltage levels.  If
+the board is powered via USB, care must be taken to not exceed a total of 100mA draw when powering
+the programmer in this manner.  See \hyperref[ssec:PowerUsage]{Power Usage} for more information.
 
 The user can reset the board using a push button connected to ground.  The device's
 \textoverline{RESET} pin is active low, so it is normally pulled high and pressing the button
@@ -440,10 +446,10 @@ spreadsheet for the NTCALUG02A103G is available in the repository at
 spreadsheet and are
 
 \begin{align*}
-    A = 0.0033540164 \\
-    B = 0.0002565236 \\
-    C = 2.605970e-6 \\
-    D = 6.329261e-8
+    A &= 0.0033540164 \\
+    B &= 0.0002565236 \\
+    C &= 2.605970e-6 \\
+    D &= 6.329261e-8
 \end{align*}
 
 \subsubsection{Projector On Input} \label{sssec:PJOnInput}
@@ -458,7 +464,8 @@ The used connector pins go to the input of a Vishay VOM618A-4T opto-isolator. Th
 current transfer ratio (gain) of 160\% when the current through the LED is 1mA.  The output is a
 collector-emitter junction with the LED acting as the base of a transistor, so if the forward
 current through the LED is 1mA then the collector current will be 1.6mA (assuming the device is not
-saturated).
+saturated).  The LED on the opto can handle a reverse voltage of 6V, so the user needs to be careful
+when connecting an input greater than that and make sure to not connect it backwards.
 
 The collector of the opto is connected to 5V and the emitter connects to the microcontroller input
 pin and a 10k\textOmega{} pulldown, making the input active-high.  With a typical collector-emitter
@@ -529,18 +536,254 @@ The holes will accommodate either M3 metric screws or 6-32 standard UTS screws.
 
 
 \subsection{Power Usage} \label{ssec:PowerUsage}
+The following tables lists the current draw of the different components on the board.  When
+possible, the values used are the worst-case useage given in the data sheet; actual usage should
+normally be lower.  The device has 5V and 12V power, so multiplying the current given in the table
+by its voltage input will give the power used.
 
+\begin{center}
+    \begin{tabular}{|l|c|l|}
+        \hline
+        Component & Current (mA) & Notes \\
+        \hline
+        \multicolumn{3}{|c|}{\textbf{5V Components}} \\
+        \hline
+        ATMega328p Active Current & 23 & See Note below \\
+        Fox HC49SDLF 20MHz Crystal & 0.1 & Derived from ``Drive Level'' rating \\
+        FT232R Operating Current & 15 & Powered only from USB VBUS \\
+        FT232R USB\_PWREN Current & 0.5 & Powered only from USB VBUS \\
+        12V Feedback Divider & 0.9 & R1 = 10k\textOmega{}, R2 = 3.3k\textOmega{} \\
+        TMP36 Supply Current & 0.05 & \\
+        BSP772T Input Current & 0.015 & Current at IN pin while device is on \\
+        MCP3301 $V_{REF}$ Current &  0.15 & Current at $V_{REF}$ while clocking data \\
+        MCP3301 Operating Current & 0.45 & \\
+        MCP3301 2.5V Divider & 0.25 & R1 = R2 = 10k\textOmega{} \\
+        Thermistor Input Current & 0.5 & Worst case is shorted thermistor \\
+        VOM618A-4T Collector Current & 0.5 & Assumes $V_{CE} = 0$ \\
+        Green LED & 6.1 & \\
+        Yellow LED & 2 & \\
+        Red LED & 1.3  & \\
+        5V, 10k\textOmega{} Pulldowns (4) & 0.5 x4 & \\
+        5V, 10k\textOmega{} Pullups (2) & 0.5 x2 & \\
+        \textbf{Total} & \textbf{53.815} & \\ 
 
+        \hline
+        \hline
 
+        \multicolumn{3}{|c|}{\textbf{12V Components}} \\
+        \hline
+        5V Component Draw & 53.815 & See above \\
+        L78M05C Quiescent Current & 6 & \\
+        BSP762T Operating Current & 1.3 & \\
+        \textbf{Total} & \textbf{61.115} & \\
+        \hline
+    \end{tabular}
+\end{center}
+
+{\small \textbf{Note}: Values were taken from Section 30.7 of the datasheet and includes all peripherals and
+programming current but not external IO.  This assumes a 5.0V input voltage and 20MHz clock input.}
+
+Any external 5V devices connected to the Projector Controller, including a board-powered ISP
+programmer, must keep the total current draw under 100mA.  Given the total shown above, external
+devices can use up to 46mA or so.
+
+In addition to the loads shown here, the 12V supply also needs to be able to handle the external fan
+and 4 outputs.  Therefore, the user will need to determine the current draw of his or her choosen
+components and size a power supply that can handle those plus another 62mA for this board.
 
 \subsection{Microcontroller Pinout} \label{ssec:MicroPinout}
+Following is a table showing how the pins on the microcontroller are used and their net names on the
+schematic, if applicable.
 
-
+\begin{center}
+    \begin{tabular}{c|l|l|l}
+        Pin \# & Pin Name & Net Name & Description \\
+        \hline 
+        1  & (PCINT14/\textoverline{RESET}) PC6 & \textoverline{RESET} & Active-low CPU reset line \\
+        2  & (PCINT16/RXD) PD0 & UART\_RX & UART receiver input \\
+        3  & (PCINT17/TXD) PD1 & UART\_TX & UART transmitter output \\
+        4  & (PCINT18/INT0) PD2 & FAN\_EN & Fan power enable \\
+        5  & (PCINT19/OC2B/INT1) PD3 & FAN\_PWM & 25kHz fan control PWM signal \\
+        6  & (PCINT20/XCK/T0) PD4 & \abrackets{None} & Bootloader enable pin \\
+        7  & VCC & \abrackets{None} & Main supply input \\
+        8  & GND & \abrackets{None} & Ground \\
+        9  & (PCINT6/XTAL1/TOSC1) PB6 & \abrackets{None} & 20MHz crystal oscillator input \\
+        10 & (PCINT7/XTAL2/TOSC2) PB7 & \abrackets{None} & 20MHz crystal oscillator input \\
+        11 & (PCINT21/OC0B/T1) PD5 & LEN\_EN\_RED & Red LED enable \\
+        12 & (PCINT22/OC0A/AIN0) PD6 & LED\_EN\_YELLOW & Yellow LED enable \\
+        13 & (PCINT23/AIN1) PD7 & LED\_EN\_GREEN & Green LED enable \\
+        14 & (PCINT0/CLKO/ICP1) PB0 & LAMP\_EN & Lamp relay enable \\
+        15 & (PCINT1/OC1A) PB1 & \abrackets{Unused} & Not used \\
+        16 & (PCINT2/OC1B/SS) PB2 & \textoverline{ADC\_CS} & SPI ADC chip select \\
+        17 & (PCINT3/OC2A/MOSI) PB3 & MOSI & SPI master output \\
+        18 & (PCINT4/MISO) PB4 & MISO & SPI master input \\
+        19 & (PCINT5/SCK) PB5 & SCK & SPI clock \\
+        20 & AVCC & \abrackets{None} & Analog suppy input \\
+        21 & AREF & \abrackets{None} & Analog reference voltage \\
+        22 & GND & \abrackets{None} & Ground \\
+        23 & (PCINT8/ADC0) PC0 & AVA\_12V\_FB & 12V supply feedback \\
+        24 & (PCINT9/ADC1) PC1 & ANA\_AMBIENT & Ambient temperature reading \\
+        25 & (PCINT10/ADC2) PC2 & PROJECTOR\_ON & Projector on input \\
+        26 & (PCINT11/ADC3) PC3 & \abrackets{Unused} & Not used \\
+        27 & (PCINT12/ADC4) PC4 & \abrackets{Unused} & Not used \\
+        28 & (PCINT13/ADC5) PC5 & \abrackets{Unused} & Not used \\
+    \end{tabular}
+\end{center}
 
 \subsection{Connector Pinout} \label{ssec:ConnPinout}
+The following tables gives the functions of the pins on each connector.  Pin 1 on through-hole
+connectors can be found by looking for the square solder pad around the through-hole.  The USB
+connector is the only surface mount connector and pin 1 is denoted by a small circle next to the
+pin.
 
-
+\begin{description}
+  \item[CON1:] Communication (USB Mini-B) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & VBUS \\
+            2 & D- \\
+            3 & D+ \\
+            4 & ID (Not Used) \\
+            5 & GND \\
+        \end{tabular}
+    \end{center}
+  \item[CON2:] Projector On Input (Mini CT 3-pin) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & Input positve \\
+            2 & Not Used \\
+            3 & Input Negative \\
+        \end{tabular}
+    \end{center}
+  \item[CON3:] Thermistor (JST PH 2-pin) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & 5V to thermistor \\
+            2 & Voltage from thermistor to ADC \\
+        \end{tabular}
+    \end{center}
+  \item[CON4:] 12V Input (Screw Terminal) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & 12V \\
+            2 & Ground \\
+        \end{tabular}
+    \end{center}
+  \item[CON5:] Fan Output (4-pin PC Fan Connector) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & Ground \\
+            2 & 12V \\
+            3 & Sense (Not Used) \\
+            4 & Control (PWM) \\
+        \end{tabular}
+    \end{center}
+  \item[CON6:] External Red LED (Mini CT 2-pin) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & 12V \\
+            2 & Ground \\
+        \end{tabular}
+    \end{center}
+  \item[CON7:] External Yellow LED (Mini CT 2-pin) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & 12V \\
+            2 & Ground \\
+        \end{tabular}
+    \end{center}
+  \item[CON8:] AVR ISP Header (10-pin Shrouded) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1  & MOSI (SPI Out) \\
+            2  & VCC (5V) \\
+            3  & LED/NC (Not Used) \\
+            4  & Ground \\
+            5  & Reset \\
+            6  & Ground \\
+            7  & SCK (SPI Clock) \\
+            8  & Ground \\
+            9  & MISO (SPI In) \\
+            10 & Ground \\
+        \end{tabular}
+    \end{center}
+  \item[CON9:] External Green LED (Mini CT 2-pin) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & 12V \\
+            2 & Ground \\
+        \end{tabular}
+    \end{center}
+  \item[CON10:] Lamp Relay Enable (Mini CT 2-pin) \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & 12V \\
+            2 & Ground \\
+        \end{tabular}
+    \end{center}
+  \item[JP1:] Bootloader Enable Jumper \\
+    \begin{center}
+        \begin{tabular}{l|l}
+            Pin \# & Description \\
+            \hline
+            1 & Jumper Pin 1 \\
+            2 & Jumper Pin 2 \\
+        \end{tabular}
+    \end{center}
+\end{description}
 
 \subsection{Conversion Formulas} \label{ssec:ConversionFormulas}
+The conversion formulas for the analong inputs discussed earlier are available here as well for
+convenience.
+
+\subsubsection{12V Feedback}
+\begin{align*}
+    V_{ADC} &= \frac{5 * Counts}{1024}\\
+    V_{FB}  &= V_{ADC} * 4.03
+\end{align*}
+
+\subsubsection{Ambient Temperature}
+\begin{align*}
+    V_{ADC} &= \frac{5 * Counts}{1024} \\
+    T_{Amb} &= 100 * (V_{ADC} - 0.5)
+\end{align*}
+
+\subsubsection{Thermistor Temperature}
+The MCP3301 is a signed 13-bit ADC, so the reading must be sign-extended first.
+
+\begin{align*}
+    V_{ADC} &= \frac{5 * Counts}{4096} + 2.5 \\
+    R &= \frac{5}{V_{ADC}} - 1 \\
+    T &= \frac{1}{A + BlnR + Cln^2R + Dln^3R}
+\end{align*}
+
+where
+
+\begin{align*}
+    A &= 0.0033540164 \\
+    B &= 0.0002565236 \\
+    C &= 2.605970e-6 \\
+    D &= 6.329261e-8
+\end{align*}
 
 \end{document}
