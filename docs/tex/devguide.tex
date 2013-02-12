@@ -16,10 +16,12 @@
 
 \usepackage{textcomp}
 \usepackage{textgreek}
+\usepackage{url}
 \usepackage{anysize} 
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{floatflt} 
+\usepackage{enumerate}
 \usepackage[pdftex]{hyperref}
 \hypersetup{colorlinks=true, urlcolor=cyan, linkcolor=blue}
 
@@ -92,17 +94,17 @@ All source files used to create the board, software, and firmwares are available
 on GitHub at \url{https://github.com/jdeguire/pjcontroller}.  The repository also contains
 datasheets for the hardware components and other reference material.
 
-The firmware and software, the sources of which are located in the \texttt{firmware/} and
-\texttt{software/} directories in the aforementioned repository, are made available under the GNU
-Public License Version 3.  A copy of the GPLv3 is provided in the file \texttt{COPYING.txt} in the
+The firmware and software, the sources of which are located in the \path{firmware/} and
+\path{software/} directories in the aforementioned repository, are made available under the GNU
+Public License Version 3.  A copy of the GPLv3 is provided in the file \path{COPYING.txt} in the
 repository root or online at \url{http://www.gnu.org/licenses/}.
 
 This document, the \textit{Users Guide}, their associated \LaTeX{} source files, and the board
 design files are all made available under the Creative Commons Attribution-ShareAlike 3.0 Unported
 License.  The source files for the \textit{Developers Guide} and \textit{Users Guide} are available
-in the \texttt{docs/tex/} directory.  The board design files are found in
-\texttt{hardware/pjc-kicad/}.  A copy of the Creative Commons BY-SA 3.0 license is provided in the
-file \texttt{CC BY-SA 3.0 legalcode.txt} in the repository root or online at
+in the \path{docs/tex/} directory.  The board design files are found in
+\path{hardware/pjc-kicad/}.  A copy of the Creative Commons BY-SA 3.0 license is provided in the
+file \path{CC BY-SA 3.0 legalcode.txt} in the repository root or online at
 \url{http://creativecommons.org/licenses/by-sa/3.0/}.
 
 Where attribution is required, it is sufficient to include a statement of reasonable visibility in
@@ -110,8 +112,8 @@ the derived work or supporting documentation mentioning that the work is derived
 and giving this author's name.  It would be appreciated if the statement also contained the URL,
 given above, for the version control repository.
 
-Located in \texttt{hardware/pjc-kicad/libs} are two files \texttt{SparkFun.lib} and
-\texttt{SparkFun.mod}.  These were converted into their current form for use with KiCad from the
+Located in \path{hardware/pjc-kicad/libs/} are two files \path{SparkFun.lib} and
+\path{SparkFun.mod}.  These were converted into their current form for use with KiCad from the
 original Eagle libraries provided by SparkFun Electronics under the CC BY-SA 3.0 license.  The
 latest such libraries can be found on GitHub at
 \url{https://github.com/sparkfun/SparkFun-Eagle-Libraries}.
@@ -144,8 +146,21 @@ as those contain additional features over the rather old stable release.  Ubuntu
 the Adam Wolf PPA given on that page.
 
 Datasheets for the various components used are available in the repository under
-\texttt{hardware/datasheets}.  The datasheets are provided for reference only and belong to their
+\path{hardware/datasheets}.  The datasheets are provided for reference only and belong to their
 respective manufacturers.
+
+\subsection{Hardware Changes} \label{ssec:HWChanges}
+This section lists the changes that have been made to the different board revisions over time.
+Board revisions will be formatted as ``A0'', where the letter indicates a major revision and the
+number is a minor fix.
+
+\begin{enumerate}[A.]
+  \item Initial major revision.
+    \begin{enumerate}[(1)]
+        \setcounter{enumii}{-1}    % make next counter start at 0
+      \item Initial minor revision
+    \end{enumerate}
+\end{enumerate}
 
 \subsection{Design Considerations} \label{ssec:DesignConsid}
 Becuase the Projector Controller will probably never acheive high-volume production, the main
@@ -175,7 +190,7 @@ this section may want to have the schematic handy in order to follow along.  The
 descriptions will closely match the text titles used in the schematic for the different circuits.
 
 \subsubsection{Microcontroller} \label{sssec:Microcontroller}
-The heart of the Projector Controller is an Atmel ATMega328p 8-bit microcontroller.  The MCU has
+The heart of the Projector Controller is an Atmel ATMega328P 8-bit microcontroller.  The MCU has
 32KB of flash, 4KB of which is used for the bootloader, 2KB of RAM and several useful peripherals,
 such as 10-bit ADCs, SPI, PWM outputs, timers, and quite a few IO pins.  The MCU is a 28-pin DIP
 package which will insert into a socket on the board, making removal and replacement easy.
@@ -289,7 +304,7 @@ draw would raise the device's temperature over ambient by
 Some heatsinking can be provided by englarged pads or copper pours on the board.
 
 \subsubsection{Programming and Reset} \label{sssec:ProgReset}
-The ATMega328p microcontroller can be reprogrammed using a standard 10-pin AVR ISP header.  The
+The ATMega328P microcontroller can be reprogrammed using a standard 10-pin AVR ISP header.  The
 pinout used should work with most, if not all, external programmers.  The microcontroller is
 programmed through the SPI lines while the device is held in reset.  The 5V pin on the header allows
 the board to power the programmer so that the logic signals are at the correct voltage levels.  If
@@ -378,7 +393,7 @@ back on with a repetitive short circuit current of 7A.  The driver is not design
 operate in this state, so the user will need to take care to not leave the output shorted.
 
 The PWM output signal is supplied from one of the microcontroller's 8-bit PWM outputs.  According to
-the Intel 4-pin fan specification (available in the \texttt{/hardware/datasheets} directory of the
+the Intel 4-pin fan specification (available in the \path{/hardware/datasheets} directory of the
 repository), the nominal PWM output is 25kHz.  The PWM signal goes through a TI SN74LVC1G07
 non-inverting open-drain buffer since the fan pulls up the signal internally. The buffer has a max
 switching time of 3.5ns, which is far faster then required by the PWM signal.  The Intel fan spec
@@ -442,7 +457,7 @@ the appropriate values for $V_{in}$ and $R_2$ yields
 The cofficients for the Steinhart-Hart equation come from a Microsoft Excel spreadsheet on Vishay's
 website at \url{http://www.vishay.com/resistors-non-linear/curve-computation-list/}.  The
 spreadsheet for the NTCALUG02A103G is available in the repository at
-\texttt{/hardware/datasheets/Vishay Thm Calc.xls}.  The coefficients are on the RTCOEF page of the
+\path{/hardware/datasheets/Vishay Thm Calc.xls}.  The coefficients are on the RTCOEF page of the
 spreadsheet and are
 
 \begin{align*}
@@ -548,7 +563,7 @@ by its voltage input will give the power used.
         \hline
         \multicolumn{3}{|c|}{\textbf{5V Components}} \\
         \hline
-        ATMega328p Active Current & 23 & See Note below \\
+        ATMega328P Active Current & 23 & See Note below \\
         Fox HC49SDLF 20MHz Crystal & 0.1 & Derived from ``Drive Level'' rating \\
         FT232R Operating Current & 15 & Powered only from USB VBUS \\
         FT232R USB\_PWREN Current & 0.5 & Powered only from USB VBUS \\
@@ -637,7 +652,7 @@ connector is the only surface mount connector and pin 1 is denoted by a small ci
 pin.
 
 \begin{description}
-  \item[CON1:] Communication (USB Mini-B) \\
+  \item[CON1:] Communication (USB Mini-B)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -649,7 +664,7 @@ pin.
             5 & GND \\
         \end{tabular}
     \end{center}
-  \item[CON2:] Projector On Input (Mini CT 3-pin) \\
+  \item[CON2:] Projector On Input (Mini CT 3-pin)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -659,7 +674,7 @@ pin.
             3 & Input Negative \\
         \end{tabular}
     \end{center}
-  \item[CON3:] Thermistor (JST PH 2-pin) \\
+  \item[CON3:] Thermistor (JST PH 2-pin)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -668,7 +683,7 @@ pin.
             2 & Voltage from thermistor to ADC \\
         \end{tabular}
     \end{center}
-  \item[CON4:] 12V Input (Screw Terminal) \\
+  \item[CON4:] 12V Input (Screw Terminal)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -677,7 +692,7 @@ pin.
             2 & Ground \\
         \end{tabular}
     \end{center}
-  \item[CON5:] Fan Output (4-pin PC Fan Connector) \\
+  \item[CON5:] Fan Output (4-pin PC Fan Connector)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -688,7 +703,7 @@ pin.
             4 & Control (PWM) \\
         \end{tabular}
     \end{center}
-  \item[CON6:] External Red LED (Mini CT 2-pin) \\
+  \item[CON6:] External Red LED (Mini CT 2-pin)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -697,7 +712,7 @@ pin.
             2 & Ground \\
         \end{tabular}
     \end{center}
-  \item[CON7:] External Yellow LED (Mini CT 2-pin) \\
+  \item[CON7:] External Yellow LED (Mini CT 2-pin)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -706,7 +721,7 @@ pin.
             2 & Ground \\
         \end{tabular}
     \end{center}
-  \item[CON8:] AVR ISP Header (10-pin Shrouded) \\
+  \item[CON8:] AVR ISP Header (10-pin Shrouded)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -723,7 +738,7 @@ pin.
             10 & Ground \\
         \end{tabular}
     \end{center}
-  \item[CON9:] External Green LED (Mini CT 2-pin) \\
+  \item[CON9:] External Green LED (Mini CT 2-pin)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -732,7 +747,7 @@ pin.
             2 & Ground \\
         \end{tabular}
     \end{center}
-  \item[CON10:] Lamp Relay Enable (Mini CT 2-pin) \\
+  \item[CON10:] Lamp Relay Enable (Mini CT 2-pin)
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -741,7 +756,7 @@ pin.
             2 & Ground \\
         \end{tabular}
     \end{center}
-  \item[JP1:] Bootloader Enable Jumper \\
+  \item[JP1:] Bootloader Enable Jumper
     \begin{center}
         \begin{tabular}{l|l}
             Pin \# & Description \\
@@ -785,5 +800,383 @@ where
     C &= 2.605970e-6 \\
     D &= 6.329261e-8
 \end{align*}
+
+
+\section{Firmware} \label{sec:Firmware}
+The onboard ATMega328P has two different firmwares on it.  The first is a small bootloader that must
+be programmed on using an external programming device.  A 10-pin header is provided onboard for this
+purpose.  The bootloader is reponsible for programming application code into flash, allowing field
+updates without the programming device. and to make sure a functional application is present before
+handing over control to it.  The second firmware is the actual application code.  This is programmed
+on by the bootloader and is what actually does the projector controlling.
+
+This section will describe functionality common to each firmware and then delve into the functions
+specific to each.  First is information on how to build and program the firmwares onto the board.
+
+\subsection{Tools Used} \label{ssec:FWTools}
+The firmware was developed in various versions Ubuntu Linux with the current one as of this writing
+being version 12.10 Quantal Quetzal.  The applications listed should be available on other
+distributions (or they can be built from source), but they may use different package names from what
+is given here.
+
+The firmwares use the AVR GCC cross-compiler, which is at version 4.7 as of this writing, with
+the associated LibC and Binutils packages.  AVRDUDE is used to program the built firmware onto the
+board.  Building and programming the firmware is handled by the SCons build tool, which itself
+requires Python 2.4 or higher.
+
+On Ubuntu, the following packages need to be installed to get everything:
+
+\begin{itemize}
+\item gcc-avr
+\item gcc-binutils
+\item avr-libc
+\item avrdude
+\item scons
+\end{itemize}
+
+The \texttt{scons} package should also grab the needed Python package.  If not, then that will need to be
+installed as well.
+
+Windows users can use Atmel Studio, which is a free IDE provided by Atmel which also includes the
+needed toolchain.  The IDE is available on Atmel's website at
+\url{http://www.atmel.com/tools/atmelstudio.aspx?tab=overview}.  Using the IDE itself would require
+one to create projects, one each for the bootloader and application, for the IDE since they are not
+provided here.  Another possibility is to install SCons for Windows and Python alongside the IDE and
+build using SCons.  The SCons Windows installer is available on the SCons website at
+\url{http://www.scons.org/download.php}.  SCons should be able to find the toolchain as long as it
+is in the Windows PATH.
+
+\subsection{Building With SCons} \label{ssec:FWBuilding}
+SCons is a build system (essentially a replacement for GNU Make) written in Python.  The build
+scripts themselves are special Python files.  In the \path{firmware/} is a file called
+\path{SConstruct}.  This is the top-level build script and contains settings that are used by both
+the application and bootloader, such as include file paths and some compiler options.  The
+\path{firmware/bootloader/} and \path{firmware/app/} directories each contain a file called
+\path{SConscript}.  These are called from the \path{SConstruct} file and contain options
+specific to the app or bootloader, such as the output file path, source files, and so on.  The files
+themselves are commented so that anyone who wishes to modify build options can at least figure out
+what needs to change in the files.
+
+The SCons documentation is very good and even those inexperienced with SCons can set up a build just
+by following the documentation.  The documentation is available on the SCons website at
+\url{http://www.scons.org/doc/production/HTML/scons-user/index.html} and a wiki is available at
+\url{http://www.scons.org/wiki/}.
+
+To use SCons, open up a command-line window or terminal and navigate to the location of the
+\path{SConstruct} file, which is \path{firmware/}.  Now run \texttt{scons \abrackets{command}},
+where \texttt{\abrackets{command}} is one of the following:
+
+\begin{description}
+  \item[build-bootloader]: \\
+    Build the bootloader using AVR GCC and output the resulting Intel hex file to
+    \path{firmware/bootloader/output/pjc-bootloader.hex}.
+  \item[write-bootloader]: \\
+    Write the bootloader to the microcontroller using AVRDUDE and a compatible programmer (see
+    below).  The bootloader must have been built using \texttt{build-bootloader} for this to work.
+  \item[read-flash]: \\
+    Read the entire contents of the microcontroller's flash memory and output the contents as an
+    Intel hex file to \path{firmware/bootloader/output/pjc-flash-image.hex}.
+  \item[erase-device]: \\
+    Erase the device's flash, EEPROM, and lock bits, but not its fuse bits.
+  \item[write-fuses]: \\
+    Write the proper fuse and lock bits to the device.  This should be done the first time a new
+    device is programmed.
+  \item[build-app]: \\
+    Build the application using AVR GCC and output the resulting Intel hex file to
+    \path{firmware/app/output/pjc-app.hex}.
+\end{description}
+
+Multiple commands can be executed at once by putting more than one on the command line.  For
+example, running \texttt{scons build-bootloader write-bootloader} will compile the bootloader and,
+if successful, program it to flash.
+
+The actions of these commands are defined in the \path{SConscript} files.  For example. the values
+of the fuse bits programmed using the \texttt{write-fuses} command are defined in the
+\path{firmware/bootloader/SConscript} file.
+
+\subsection{Programming Flash} \label{ssec:FWProgFlash}
+An external programming device is required to program the bootloader onto the device.  A 10-pin
+header is provided onboard for this purpose.  The header pinout is standard across AVR device
+programmers and so there are multiple programmers that will work.  
+
+The build scripts are configured to use the ``usbtiny'' programmer protocol with AVRDUDE.  Any
+programmer that conforms to that protocol will work.  Two such low-cost examples are the Adafruit
+USBtinyISP (available at \url{http://www.ladyada.net/make/usbtinyisp/}) and the Sparkfun Pocket AVR
+Programmer (available at \url{https://www.sparkfun.com/products/9825}).
+
+To use a different programmer, open \path{firmware/bootloader/SConscript} and look for the line
+that says ``\texttt{icspdevice = 'usbtiny'}''.  Change it to a programmer that AVRDUDE recognizes (find
+AVRDUDE documentation online) and save the file.
+
+Linux users may find that trying to program a device results in AVRDUDE complaining that it cannot
+talk to the programmer, saying something along the lines of ``Operation not permitted''.  If this
+happens, running the command as root should make it work.  Another option is to create a new udev
+rule for the programmer.  Create a new file in \path{/etc/udev/rules.d/}, or wherever udev rules
+are stored, and add the line
+
+\texttt{SUBSYSTEM=="usb", ATTR{idProduct}=="0c9f", ATTR{idVendor}=="1781", MODE="0666", GROUP="adm"}
+
+Save the file with a descriptive name, such as \path{90-avrisp.rules}.  The number determines the
+order in which the rule is processed.  In this case, 90 means that the rule is processed later and
+so overrides lower-numbered rules.  Disconnect and reconnect the programmer and try again.  Note
+that the ``idProduct'' (0c9f) and ``idVendor'' (1781) are dependent on the actual device; the values
+shown are for the ``usbtiny'' programmers mentioned earlier.  Use the \texttt{lsusb} command to get
+the correct values for different devices.
+
+\subsection{Fuse and Lock Bits} \label{ssec:FWFuseBits}
+The AVR microcontroller have special locations in flash memory that hold configuration registers for
+the device.  These control hardware configuration options such as the size of bootloader space, the
+clock source, and write-protection features.  The mapping for the fuse and lock registers is given
+in Section 28 of the ATMega's datasheet.  The following table summarizes the fuse bit configuration
+used by the Projector Controller.
+
+\begin{center}
+    \begin{tabular}{l|c|p{0.45\textwidth}}
+        Register & Value & Notes \\
+        \hline
+        lfuse & 0xF7 & Use external full-swing crystal and longest startup time \\
+        hfuse & 0xD8 & Defaults except set to use bootloader reset vector; that is, start in the
+        bootloader rather than application \\
+        efuse & 0x04 & Brown-out detection enabled at 4.3V \\
+        lock  & 0x3F & Defaults; no lock features enabled \\
+    \end{tabular}
+\end{center}
+
+The fuse and lock bit values programmed onto the device are stored in
+\path{firmware/bootloader/SConscript}.  Use caution when changing these as the wrong values can
+make the device unprogrammable.  In that case, one would need to purchase a parallel programmer to
+correct the problem.  Doing a search for ``AVR fuse calculator'' online will bring up utilities that
+provide help in setting the bits to the correct values.
+
+\subsection{Intel Hex Files} \label{ssec:FWIntelHex}
+The firmwares are stored as Intel hex files, which are text files that store binary information,
+such as program data for the firmware.  Each line is a record which can contain program data, 
+address information, or an indicator that the end of file was reached.  The file is parsed one
+record at a time to ultimately yield a binary image of the data.  Below is a typical record.
+
+\texttt{:10700000CEC00000F3C00000F1C00000EFC00000DF}
+
+The colon (``:'') at the beginning indicates the start of the record.  Every record has this and it
+does not affect the data within.
+
+The first two hex digits give the number of bytes in the data field.  In this record, there are 0x10
+(16 decimal) data bytes.  There are always 2 digits.
+
+The next four digits are the lower 16-bits of the address for the start of the data.  The upper
+16-bits of the address, if needed, are set by different record types.  This field is used only for
+Data Records, which is what this record is.  Other record types leave this as 0.  Note that there
+are always 4 digits.  The address is big endian, meaning that the most significant byte comes first.
+
+Next up are 2 digits that give the record type.  There are six records types.
+
+\begin{description}
+  \item[00,] Data Record \\
+    This type holds data that is part of the firmware and so would be programmed into flash.  The
+    16-bit address would be added to the upper portion given by record types 02 or 04 to get the
+    full address, if needed.
+  \item[01,] End Of File Record \\
+    Indicates that the end of the file has been reached.  This is the last record in the file and
+    usually looks like \texttt{:00000001FF}.  It contains no data.
+  \item[02,] Extended Segment Address Record \\
+    The data field of this record contains two bytes of data that together for the upper 16 bits of
+    a 20-bit address.  The address is big endian.  Shift the data left by 4 bits to get the actual
+    upper portion of the address.
+  \item[03,] Start Segment Address Record \\
+    This record is not relevant to the AVR architecture and so is not used.
+  \item[04,] Extended Linear Address Record \\
+    Simiar to record 02, except the data forms the upper 16 bits of a 32-bit address.  Shift the
+    data left by 16 bits to get the upper portion of the address.  The address is big endian.
+  \item[05,] Start Linear Address Record \\
+    This record is not relevant to the AVR architecture and so is not used.
+\end{description}
+
+The next field is the data field and its size is given by the size field at the start of the
+record.  Its contents depeds on the record type.  In this case, the data field contains 16 bytes of
+program data since this is a Data Record.
+
+The final field is a checksum.  This is the two's complement of the sum of all of the other bytes in
+the record.  To determine the checksum, add up the values of the bytes in the other records, XOR the
+sum with 0xFF, and add 0x01.  The checksum is the lowest byte of that result.  To verify a checksum,
+add up all of the bytes, including the checksum, and check that the result is 0.  If so, then the
+checksum is good.
+
+Software that wants to update the Projector Controller's application through the bootloader will
+need to be able to parse Intel hex files.  The file \path{/software/flashimge.py} contains code
+that parses the hex file and can be used as a reference.
+
+\subsection{Linker Scripts} \label{ssec:FWLinkerScripts}
+The bootloader and application directories contain linker scripts \path{pjcbootloader.x} and
+\path{pjcapp.x}.  The linker scripts serve two purposes.
+
+The first purpose is to partition the flash memory betweent the application and bootloader so that
+they do not collide.  The ATMega328P has hardware support for a bootloader, allowing one to use fuse
+bits to allocate a portion of the end of flash to a bootloader.  The Projector Controller uses the
+last 4KB of flash for the bootloader and so the linker script is set up so that all bootloader
+program data goes into that section of flash.  The application's linker script allocates the lower
+28KB of flash to the application.
+
+The second purpose is to allow the application to jump back into the bootloader by simply clearing a
+flag and performing a soft reset.  The linker scripts define a special NOLOAD section called
+``.shareddata'' that contains a single boolean variable.  A NOLOAD section is one that is not
+initialized during program startup, meaning that the data within it will survive a software reset.
+The bootloader can check the state of the flag to see if it was cleared.  If it was, or if the CPU
+was not reset by software, the bootloader will start the app if able.  Otherwise, it will stay in
+the bootloader.
+
+Firmware support for these linker script features is implemented in \path{sharedmem.c} and
+\path{sharedmem.h} in \path{firmware/common/}.  The files are commented to help explain what
+they are doing.
+
+Performing an online search for ``ld linker scripts'' will produce information about how to use
+linker scripts.  One such manual can be found at
+\url{http://sourceware.org/binutils/docs-2.22/ld/Scripts.html}.
+
+\subsection{Watchdog} \label{ssec:FWWatchdog}
+The firmwares make use of the ATMega's built-in watchdog timer.  The watchdog is a timer that must
+be periodically cleared.  If the watchdog times out before it is cleared, it will reset the device.
+The idea is that this will prevent the device from getting stuck in a never-ending loop since the
+watchdog will reset it.  Both firmwares use a watchdog timeout of 250ms.
+
+Also, because the AVR instruction set does not have a \texttt{reset} instruction, the watchdog is
+used to perform a soft reset.  To reset the device, the watchdog is set to its shortest timeout of
+15ms and the firmware loops until the watchdog trips.
+
+\subsection{LEDs} \label{ssec:FWLEDs}
+The firmwares use the onboard green, yellow, and red LEDs to communicate basic information to the
+outside world.  If no LEDs are lit, then either the board is not powered on or the micrcontroller is
+blank (that is, no firmware is on it).
+
+If only the yellow LED is on, then the bootloader is running.  The bootloader does not use the other
+two LEDs.
+
+The green LED is on if the application is running.  The following table gives the meanings of the
+possible LED combinations used by the firmwares, including the ones listed above.
+
+\begin{center}
+    \begin{tabular}{c|c|c|p{0.45\textwidth}}
+        Green & Yellow & Red & Meaning \\
+        \hline
+        Off & Off & Off & Board not powered or no bootloader or app programmed \\
+        Off & On & Off & Bootloader is running \\
+        On & Off & Off & App is running, but not doing anything \\
+        On & On & Off & App is running; lamp and fan are on \\
+        On & Blink & Off & App is running; lamp is off and fan is on \\
+        On & Off & On & App encountered error, such as over-temp or missing thermistor \\
+        On & Blink & On & App encountered error and fan is on \\
+        On & On & On & Not used; should never see this \\
+    \end{tabular}
+\end{center}
+
+\subsection{Register Map} \label{ssec:FWRegMap}
+The file \path{firmware/common/regmap.h} defines bit fields for most of the ATMega328P registers,
+making accessing them easier.  Registers that do not have any bit fields in them are not defined in
+this file.  All of the registers defined here follow a simple naming convention:
+
+\texttt{REGNAMEbits.field}
+
+where \texttt{REGNAME} is the name of the register, such as \texttt{PORTB}, and \texttt{field} is the
+lower-case name of a field in the register, such as \texttt{pb1}.  In this case, the full qualified
+name would be \texttt{PORTBbits.pb1}.  The register can be read from and written to in this manner.
+The addresses of the registers are known at compile time, meaning that the compiler can use the most
+efficient AVR instruction to access the register.
+
+Register fields that are multiple bits wide can be access either as a whole field or by individual
+bit.  For example the \texttt{SMCR} register, used for controlling sleep modes, has the fields
+\texttt{SM0}, \texttt{SM1}, and \texttt{SM2} which could be treated as a single 3-bit field.  The
+whole field can accessed with \texttt{SMCRbits.sm} or a single bit accessed with
+\texttt{SMCRbits.sm1}, for example.
+
+Section 31 of the ATMega328P datasheet has a list of all of the device's registers.
+
+\subsection{Communication} \label{ssec:FWComm}
+
+The firmware use the ATMega328P's UART module for communicating to whatever PC it is connected to.
+The UART lines go into the onboard FTDI FT232R, which is a UART-to-USB translator that appears to
+the PC as a virtual COM port.  Any software that can talk to serial ports, such as TeraTerm or the
+software used with the Projector Controller, can talk to the device provided the right drivers are
+installed.  Newer operating systems should have drivers for the device pre-installed; however,
+drivers are also available from \url{http://www.ftdichip.com/FTDrivers.htm}.
+
+The firmwares talk at 115200 baud using 8 bits per transfer, no flow control, and one stop bit
+(8-N-1).  Carriage returns are used as line endings.
+
+Communication is handled on two levels.  The first level is the handling of the actual UART
+interface on the device and this is done in \path{firmware/common/uart.c} and its header
+\path{uart.h}.  The module contains a transmit and receive buffer and uses interrupts to transmit
+data from the transmit buffer and receive data into the receiver buffer.  The transmit and receive
+functions in the module access those buffers and can transmit single bytes, byte arrays, or strings.
+
+The default size of each UART buffer is 64 bytes.  Any software talking to the Microcontroller is
+responsible for not overflowing the buffer.
+
+The second level is the command inteface in \path{firmware/common/cmd.c} and its header
+\path{cmd.h}. This module implements a state machine to run a command prompt interface that can be
+used in a program like TeraTerm or HyperTerminal.  The state machine receives data from the UART
+module until either it see a carriage return or until the command buffer is full.  It will also look
+for backspaces to remove the most recent character and the Escape key to clear the buffer entirely.
+When a new command string is received, it assumes that everything until the first space or carriage
+return is the name of the command.  It looks through its list of registered commands for a match
+and, if one is found, calls the function associated with that command.  If no match is found, the
+module outputs ``Unknown command'' to indicate such.
+
+Command are registered via the \texttt{Cmd\_RegisterCommand} function.  This function takes the name
+of the command, a handler function pointer, and a short help string for the command.  The handler
+function signature must match \texttt{void func(const char*, uint8\_t)}, where the parameters are the
+command string and its length.  The handler function would parse the command string as needed,
+execute its command, and send out a response.  The module has a few common commands defined, which
+can be used as examples.
+
+The default size of the command buffer is 32 bytes plus one for a null terminator.  The default
+maximum number of commands is 10.
+
+At startup, the module will transmit the string ``\texttt{---Startup---}'' (without quotes) and a
+version string.  The former string allows software to determine when the device restarted when it
+should not have.
+
+\subsection{Firmware Config} \label{ssec:FWConfig}
+Both the application and bootloader have a file called \path{appcfg.h}.  This file defines
+compile time configuration settings for the firmware such as baud rate or the maximum number of
+serial commands.  The header files for some of the modules in \path{firmware/common} will define
+certain macros if they have not been defined already.  These are what control baud rate, buffer
+sizes, and the like.  To use non-default values, simply define the macros in the \path{appcfg.h}
+files with the desired value.  As an example, take a look at the bootloader's config file
+\path{firmware/bootloader/appcfg.h} as the bootloader uses a couple of non-default values.
+
+Also defined in these files are a version string and version number, which is
+sent over the UART when the device starts up or in reaction to the ``v'' command.  The version
+string for the bootloader should the word ``Bootloader'' (case sensitive) in it; likewise, the
+application should \emph{not} have the word ``Bootloader'' in it.  The Projector Controller software
+looks for that word to determine if the device is running the bootloader.
+
+The bootloader's \path{appcfg.h} also defines the macro \texttt{PJC\_BOOTLOADER\_\_}, which allows
+common code to act differently if the bootloader is being built.  The application should not define
+this macro.
+
+\subsection{Bootloader Specific} \label{ssec:FWBootloader}
+
+\subsubsection{Version Changes} \label{sssec:FWBootChanges}
+
+\subsubsection{Bootloader Startup} \label{sssec:FWBootStartup}
+
+\subsubsection{Bootloader Operation} \label{sssec:FWBootOperation}
+
+\subsubsection{Serial Commands} \label{sssec:FWBootCommands}
+
+\subsubsection{Status Codes} \label{sssec:FWBootStatusCodes}
+
+\subsubsection{Performing an Update} \label{sssec:FWBootUpdate}
+
+
+\subsection{Application Specific} \label{ssec:FWApplication}
+
+\subsubsection{Version Changes} \label{sssec:FWAppChanges}
+
+\subsubsection{Application Startup} \label{sssec:FWAppStartup}
+
+\subsubsection{Application Operation} \label{sssec:FWAppOperation}
+
+\subsubsection{Serial Commands} \label{sssec:FWAppCommands}
+
+\subsubsection{Error Codes} \label{sssec:FWBootStatusCodes}
 
 \end{document}

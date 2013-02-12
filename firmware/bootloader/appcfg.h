@@ -28,7 +28,7 @@
 
 #include "misc.h"
 
-#define __PJC_BOOTLOADER__
+#define PJC_BOOTLOADER__
 
 #define CMD_BUFSIZE 64
 #define CMD_MAXCMDS 13
