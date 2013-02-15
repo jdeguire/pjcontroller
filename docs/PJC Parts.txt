@@ -44,7 +44,8 @@ LEDs:			Kingbright (1206SMT)
 Passive
 -----
 3.3k Resistor:		Stackpole Electronics RMCF1206FT3K30 (1%, 0.25W, 1206 SMT) x3
-10k Resistor:		Stackpole Electronics RMCF1206FT10K0 (1%, 0.25W, 1206 SMT) x9
+10k Resistor:		Stackpole Electronics RMCF1206FT10K0 (1%, 0.25W, 1206 SMT) x8
+20k Resistor:		Stackpole Electronics RMCF1206FT20K0 (1%, 0.25W, 1206 SMT) x1
 2.2k Resistor:		Stackpole Electronics RMCF1206FT2K20 (1%, 0.25W, 1206 SMT) x1
 1.5k Resistor:		Stackpole Electronics RMCF1206FT1K50 (1%, 0.25W, 1206 SMT) x1
 1k Resistor:		Stackpole Electronics RMCF1206FT1K00 (1%, 0.25W, 1206 SMT) x1

@@ -17,11 +17,12 @@
 \usepackage{textcomp}
 \usepackage{textgreek}
 \usepackage{url}
+\usepackage{longtable}
 \usepackage{anysize} 
 \usepackage{graphicx}
 \usepackage{amsmath}
 \usepackage{floatflt} 
-\usepackage{enumerate}
+\usepackage{enumitem}
 \usepackage[pdftex]{hyperref}
 \hypersetup{colorlinks=true, urlcolor=cyan, linkcolor=blue}
 
@@ -59,18 +60,25 @@ Date: \today \\
 \let\stdsection\section
 \renewcommand{\section}{\newpage\stdsection}
 
-% additional space between paragraphs
-\addtolength{\parskip}{6pt}
+% set spacing between paragraphs
+\setlength{\parskip}{8pt}
+
+% set up spacing for lists using 'enumitem' package
+\setlist{labelindent = \parindent, itemsep=0pt}
+
 
 \section*{Revision History}
 \phantomsection
 This section describes revisions made to this document.  Changes made to the hardware, firmware, or
 software are described in their respective sections.
 
-\begin {description}
-  \item[Rev. A:] February 3, 2013 \\
-    Initial revision.
-\end {description}
+\begin{center}
+    \begin{tabular}{c|c|p{0.6\textwidth}}
+        Doc Revision & Date & Changes \\
+        \hline
+        A & Feb. 14, 2013 & Initial revision \\
+    \end{tabular}
+\end{center}
 
 \section{Introduction}
 This document provides implementation details for the various pieces of the Projector Controller
@@ -150,17 +158,17 @@ Datasheets for the various components used are available in the repository under
 respective manufacturers.
 
 \subsection{Hardware Changes} \label{ssec:HWChanges}
-This section lists the changes that have been made to the different board revisions over time.
-Board revisions will be formatted as ``A0'', where the letter indicates a major revision and the
-number is a minor fix.
+This section lists the changes that have been made to the different board revisions over time.  The
+revision is incremented when the board layout is changed and those changes are made into
+manufactured boards.
 
-\begin{enumerate}[A.]
-  \item Initial major revision.
-    \begin{enumerate}[(1)]
-        \setcounter{enumii}{-1}    % make next counter start at 0
-      \item Initial minor revision
-    \end{enumerate}
-\end{enumerate}
+\begin{center}
+    \begin{tabular}{c|c|p{0.6\textwidth}}
+        HW Revision & Date & Changes \\
+        \hline
+        A & Feb. 14, 2013 & Initial revision \\
+    \end{tabular}
+\end{center}
 
 \subsection{Design Considerations} \label{ssec:DesignConsid}
 Becuase the Projector Controller will probably never acheive high-volume production, the main
@@ -169,13 +177,6 @@ consideration was ease of assembly.  When possible, the components used are of a
 accessing them with a soldering iron easier.  The board uses a socket for the 28-pin DIP
 microcontroller to allow easy replacement.  These choices allow the board to be assembled by hand
 for small production runs and allow the user to more easily tinker with the board.
-
-Other considerations were size of the board itself and price, which are related since larger PCBs
-are more expensive.  These may seem to conflict with the previous consideration, but the Controller
-is relatively simple, making use of not many components and reusing multiple of the same component
-when possible (the board uses multiple 10k\textOmega{} resistors, for example).  Fewer components also
-means a smaller board size and less assembly.  A smaller board size means that the device will be
-easier to install into one's projector.
 
 Though not a primary consideration, the board was also designed with an eye on power consumption.
 The board will be able to run certain componenets from USB power.  USB provides 5V at 100mA by
@@ -437,6 +438,11 @@ thermistor is colder than 25\textcelsius{} and positive if warmer.  To get the a
 into the ADC positive input, convert the ADC reading to voltage (remember to sign-extend the
 reading) and then add 2.5V to it.
 
+Note that if the thermistor is not connected, the voltage at the ADC should be 0 and so the reading
+should be 0.  Conversely, if the thermistor input is shorted, then the voltage should be around 5V
+and so the reading should be full-scale.  However, the ADC is not perfect and so such conditions may
+be close to, but not exactly, 0 or full-scale.
+
 The thermistor's current resistance can now be calculated with
 
 \[
@@ -483,16 +489,16 @@ saturated).  The LED on the opto can handle a reverse voltage of 6V, so the user
 when connecting an input greater than that and make sure to not connect it backwards.
 
 The collector of the opto is connected to 5V and the emitter connects to the microcontroller input
-pin and a 10k\textOmega{} pulldown, making the input active-high.  With a typical collector-emitter
+pin and a 20k\textOmega{} pulldown, making the input active-high.  With a typical collector-emitter
 saturation voltage of 0.12V (max is 0.4V), the collector current is
 
 \begin{align*}
     I_C &= \frac{V_{in} - V_{CESat}}{R_L} \\
     &= \frac{5 - 0.12}{10k} \\
-    I_C &= 0.488mA
+    I_C &= 0.244mA
 \end{align*}
 
-so the LED forward current times the current transfer ratio must be greater than 0.488mA in order to
+so the LED forward current times the current transfer ratio must be greater than 0.244mA in order to
 drive the opto in to saturation.  This is much lower than the maximum allowed collector current of
 50mA.
 
@@ -529,13 +535,12 @@ the above math again with a 3.3V signal yields an LED forward current of
 when using the typical LED forward voltage rating.  Because the current is below the 1mA test
 current used by the datasheet, a additional derating of the current transfer ratio needs to be
 applied.  Figure 11 on page 5 of the datasheet shows a derating of about 75\% at 25\textcelsius{}
-ambient.  Applying that to the already-derated current transfer ratio of 1.44 gives 1.08.  This means
-that a 3.3V input will typically have a theoretical collector current of 0.72mA.  This is higher
-than the actual collector current by about 50\%, which should drive the opto into saturation.
-Unfortunately, doing the same math with the max forward voltage of 1.6V gives a forward current of
-0.5mA for a collector current of 0.54mA.  Users are welcome to try a 3.3V signal with the Projector
-Controller, but it is not assured to work as intended.  The user may need to use an external circuit
-with a 3.3V signal to provide a higher voltage to the Projector Controller.
+ambient.  Applying that to the already-derated current transfer ratio of 1.44 gives 1.08.  This
+means that a 3.3V input will typically have a theoretical collector current of 0.72mA.  This is 3x
+higher than the actual collector current, which should easily drive the opto into saturation.  Doing
+the same math with the max forward voltage of 1.6V gives a forward current of 0.5mA for a collector
+current of 0.54mA.  This is a bit over twice the actual collector current, so the opto should still
+be driven into saturation.
 
 It should be noted that orignially a more standard zener diode circuit was considered.  However,
 zener diodes appeared to be rated with a 5mA current.  This would mean that more current is required
@@ -574,23 +579,23 @@ by its voltage input will give the power used.
         MCP3301 Operating Current & 0.45 & \\
         MCP3301 2.5V Divider & 0.25 & R1 = R2 = 10k\textOmega{} \\
         Thermistor Input Current & 0.5 & Worst case is shorted thermistor \\
-        VOM618A-4T Collector Current & 0.5 & Assumes $V_{CE} = 0$ \\
+        VOM618A-4T Collector Current & 0.25 & Assumes $V_{CE} = 0$ \\
         Green LED & 6.1 & \\
         Yellow LED & 2 & \\
         Red LED & 1.3  & \\
         5V, 10k\textOmega{} Pulldowns (4) & 0.5 x4 & \\
         5V, 10k\textOmega{} Pullups (2) & 0.5 x2 & \\
-        \textbf{Total} & \textbf{53.815} & \\ 
+        \textbf{Total} & \textbf{53.565} & \\ 
 
         \hline
         \hline
 
         \multicolumn{3}{|c|}{\textbf{12V Components}} \\
         \hline
-        5V Component Draw & 53.815 & See above \\
+        5V Component Draw & 53.565 & See above \\
         L78M05C Quiescent Current & 6 & \\
         BSP762T Operating Current & 1.3 & \\
-        \textbf{Total} & \textbf{61.115} & \\
+        \textbf{Total} & \textbf{60.865} & \\
         \hline
     \end{tabular}
 \end{center}
@@ -604,7 +609,7 @@ devices can use up to 46mA or so.
 
 In addition to the loads shown here, the 12V supply also needs to be able to handle the external fan
 and 4 outputs.  Therefore, the user will need to determine the current draw of his or her choosen
-components and size a power supply that can handle those plus another 62mA for this board.
+components and size a power supply that can handle those plus another 61mA for this board.
 
 \subsection{Microcontroller Pinout} \label{ssec:MicroPinout}
 Following is a table showing how the pins on the microcontroller are used and their net names on the
@@ -651,7 +656,7 @@ connectors can be found by looking for the square solder pad around the through-
 connector is the only surface mount connector and pin 1 is denoted by a small circle next to the
 pin.
 
-\begin{description}
+\begin{description}[itemsep = 18pt]
   \item[CON1:] Communication (USB Mini-B)
     \begin{center}
         \begin{tabular}{l|l}
@@ -787,7 +792,7 @@ convenience.
 The MCP3301 is a signed 13-bit ADC, so the reading must be sign-extended first.
 
 \begin{align*}
-    V_{ADC} &= \frac{5 * Counts}{4096} + 2.5 \\
+    V_{ADC} &= \frac{2.5 * Counts}{4096} + 2.5 \\
     R &= \frac{5}{V_{ADC}} - 1 \\
     T &= \frac{1}{A + BlnR + Cln^2R + Dln^3R}
 \end{align*}
@@ -827,11 +832,11 @@ requires Python 2.4 or higher.
 On Ubuntu, the following packages need to be installed to get everything:
 
 \begin{itemize}
-\item gcc-avr
-\item gcc-binutils
-\item avr-libc
-\item avrdude
-\item scons
+  \item gcc-avr
+  \item gcc-binutils
+  \item avr-libc
+  \item avrdude
+  \item scons
 \end{itemize}
 
 The \texttt{scons} package should also grab the needed Python package.  If not, then that will need to be
@@ -1053,7 +1058,7 @@ The green LED is on if the application is running.  The following table gives th
 possible LED combinations used by the firmwares, including the ones listed above.
 
 \begin{center}
-    \begin{tabular}{c|c|c|p{0.45\textwidth}}
+    \begin{tabular}{c|c|c|p{0.5\textwidth}}
         Green & Yellow & Red & Meaning \\
         \hline
         Off & Off & Off & Board not powered or no bootloader or app programmed \\
@@ -1088,9 +1093,25 @@ whole field can accessed with \texttt{SMCRbits.sm} or a single bit accessed with
 
 Section 31 of the ATMega328P datasheet has a list of all of the device's registers.
 
-\subsection{Communication} \label{ssec:FWComm}
+\subsection{Flash and EEPROM} \label{ssec:FWflasheeprom}
+The ATMega328P has 32KB of flash memory, divded into 128-byte pages.  The top 4KB of flash are
+configured for use by the bootloader, making the lower 28KB available to an application.  Since each
+page is 128 bytes, there are 224 pages avilable for the application.  Flash can be programmed one
+byte at a time, but must be erased one page at a time.  The bootloader will always program one page
+at a time and erase the entire 28KB app space.
 
-The firmware use the ATMega328P's UART module for communicating to whatever PC it is connected to.
+The last page of flash is used by the bootloader to store the application's 16-bit CRC and a key
+that is present when an app is programmed.  The bootloader uses these to verify that there is an
+application onboard and that it is valid.
+
+The microcontroller also has 1KB of EEPROM that the application uses to store setting that need to
+be restored on start up.  These include things like the minimum fan speed, over-tempearture limit,
+and control loop settings.  The application can read and write this EEPROM space.  The bootloader
+does not read it, but can be instructed to erase the contents of EEPROM.  This is useful in the case
+that some bad EEPROM settings are causing the application to misbehave.
+
+\subsection{Communication} \label{ssec:FWComm}
+The firmwares use the ATMega328P's UART module for communicating to whatever PC it is connected to.
 The UART lines go into the onboard FTDI FT232R, which is a UART-to-USB translator that appears to
 the PC as a virtual COM port.  Any software that can talk to serial ports, such as TeraTerm or the
 software used with the Projector Controller, can talk to the device provided the right drivers are
@@ -1153,29 +1174,158 @@ common code to act differently if the bootloader is being built.  The applicatio
 this macro.
 
 \subsection{Bootloader Specific} \label{ssec:FWBootloader}
+The bootloader firmware is the first to run when the microcontroller powers up and is responsible
+for making sure that an application is on board and jumping to it.  The bootloader can also be told
+to stay there instead of jumping to the application firmware, allowing one to perform an application
+update in the field without a programmer.
 
 \subsubsection{Version Changes} \label{sssec:FWBootChanges}
+This section describes changes made to the different release versions of firmware.  Minor updates
+commited only to the reposity and not released for public download may not be shown here.  In that
+case, take a look at the repository logs to see what has changed.
+
+\begin{center}
+    \begin{tabular}{c|c|p{0.6\textwidth}}
+        Revision & Date & Changes \\
+        \hline
+        0 & Feb. 14, 2013 & Initial revision \\
+    \end{tabular}
+\end{center}
 
 \subsubsection{Bootloader Startup} \label{sssec:FWBootStartup}
+When the bootloader starts up, it goes through a series of checks to see whether it should start the
+application or stay in the bootloader.
+
+If any checks turn up something that suggest the bootloader should not start the application, the
+bootloader will turn on the yellow LED and print a message to the serial console stating the reason
+why the bootloader is running.  The message is formatted as ``(N) Text'', where 'N' is one of the
+following numbers corresonding to a check and ``Text'' is a textual explanation of the check.  This
+format allows software to simply look for the number rather than having to parse the string to
+determine why the bootloader is running.  The number is always 2 digits, so an example message would
+look like ``(01) Bootloader pin set''.  The message is followed by a carriage return.
+
+\begin{enumerate}
+  \item \textbf{Is the bootloader pin set?} \\
+    The board has a jumper on it going into pin 6 (PD4) that can be shorted to tell the bootloader
+    to not jump to the applcation.  This is useful for recovering from an application that will
+    not start correctly.
+  \item \textbf{Did the watchdog reset the application?} \\
+    If the watchdog resets the device, it should end up back in the bootloader so that the
+    application is not stuck in a reboot loop.  The application can also purposefully reset the
+    CPU by waiting for the watchdog to timeout.  See the \hyperref[ssec:FWWatchdog]{Watchdog}
+    section for more info.
+  \item \textbf{Is there no application on the board?} \\
+    The bootloader stores the application's CRC and a key indicating that an application is
+    programmed onto the device.  If the key is not present or incorrect, the bootloader will
+    assume that no valid application is loaded.
+  \item \textbf{Is the application's CRC bad?} \\
+    The bootloader calculates the CRC of the application data stored in flash memory and compares
+    that to the CRC stored in flash (which is calculated when the application is updated).  If the
+    CRCs do not match, the bootloader will not start the application.
+\end{enumerate}
+
+Issuing the ``j'' command over the serial interface will tell the bootloader to jump to the
+appication, ignoring the above checks.  The ``s'' command will reprint the status message described
+above.
 
 \subsubsection{Bootloader Operation} \label{sssec:FWBootOperation}
+If the bootloader does not jump to the application, it simply wait for incoming serial commands and
+act on them. 
 
 \subsubsection{Serial Commands} \label{sssec:FWBootCommands}
+Below is a list of serial commands the bootloader recognizes.  See the
+\hyperref[ssec:FWComm]{Communication} section for more information on how to talk to the
+bootloader. The ``Syntax'' column shows how a valid command string is formed along with its
+arguments.
 
-\subsubsection{Status Codes} \label{sssec:FWBootStatusCodes}
+\begin{longtable}{l|l|p{0.15\textwidth}|p{0.45\textwidth}}
+    \centering
+    Command & Name & Syntax & Description \\
+    \hline
+    \endhead
+    crc & App CRC & crc & Calculate the 16-bit for the application and print it as a four-digit
+    hexadecimal number. \\
+    h & Help & h & Print of list of these commands with short help strings. \\
+    v & Version & v & Print firmware version information. \\
+    j & Jump & j & Jump to application. \\
+    r & Reset & r & Reset device and stay in bootloader. \\
+    ea & Erase App & ea yes & Erase the application from flash.  The first argument must be the
+    word ``yes'' as a confirmation of the action. Prints a status code to indicate success. \\
+    ee & Erase EEPROM & ee yes & Erase the onboard EEPROM.  The first argument must be the word
+    ``yes'' as a confirmation of the action. Prints a status code to indicate success. \\
+    pd & Page Data & pd \emph{offset checksum data} & Write \emph{data} to a temporary page 
+    buffer, where it is stored before being programmed to flash with the ``pp'' command.  The
+    \emph{offset} is the starting position in the buffer in which to put the \emph{data}.  The
+    \emph{checksum} is calculated by adding all of the bytes in \emph{data}.  Prints a status
+    code to indicate success. \\
+    pp & Program Page & pp \emph{pagenum} & Program the flash page given by \emph{pagenum}
+    with the data stored using the ``pd'' command.  The \emph{pagenum} parameter can range from
+    0 to 223 for the ATMega328P.  The contents of the page are verified by comparing it to the
+    data stored in the page buffer to make sure the flash ware written correctly.  Prints a
+    status code to indicate success. \\
+    wc & Write CRC & wc & Calculate the application's CRC and write it to a special spot in 
+    flash.  Do this after all of the application pages were successfully written to complete the
+    update.  The bootloader will calculate the application's CRC on startup and compare it to
+    this value to make sure the app is valid before jumping to it.  Prints a status code to
+    indicate success.  \\
+    ps & Page Size & ps & Print the size of a single flash page, which is 128 on the ATMega328P.
+    This is useful mainly for porting the bootloader to other devices.  Software can query this
+    value to know how much data to load with the ``pd'' command.  The value is printed as 4
+    hexadecimal digits.  \\
+    pn & Number of Pages & pn & Print the number of flash pages availabe to the application,
+    which is 224 on the ATMega328P.  This is useful mainly for porting the bootloader to other
+    devices.  Software can query this value to know how many pages of data it must be able to
+    handle.  The value is printed as 4 hexadecimal digits. \\
+    s & Boot Status & s & Reprint the status message that appears when the bootloader starts
+    up.  See the \hyperref[sssec:FWBootStartup]{Bootloader Startup} section for more info. \\
+\end{longtable}
+
+The first three commands are common to the bootloader and app and so are implemented in
+\path{firmware/common/cmd.c}.  The rest are bootloader-specific and are implemented in
+\path{firmware/bootloader/localcmd.c}.
 
 \subsubsection{Performing an Update} \label{sssec:FWBootUpdate}
-
+A firmware update is performed using the serial commands given in the
+\hyperref[sssec:FWBootCommands]{Serial Commands} section above.
 
 \subsection{Application Specific} \label{ssec:FWApplication}
 
 \subsubsection{Version Changes} \label{sssec:FWAppChanges}
+This section describes changes made to the different release versions of firmware.  Minor updates
+commited only to the reposity and not released for public download may not be shown here.  In that
+case, take a look at the repository logs to see what has changed.
+
+\begin{center}
+    \begin{tabular}{c|c|p{0.6\textwidth}}
+        Revision & Date & Changes \\
+        \hline
+        0 & Feb. 14, 2013 & Initial revision \\
+    \end{tabular}
+\end{center}
 
 \subsubsection{Application Startup} \label{sssec:FWAppStartup}
 
 \subsubsection{Application Operation} \label{sssec:FWAppOperation}
 
 \subsubsection{Serial Commands} \label{sssec:FWAppCommands}
+Below is a list of serial commands the application recognizes.  See the
+\hyperref[ssec:FWComm]{Communication} section for more information on how to talk to the bootloader.
+The ``Syntax'' column shows how a valid command string is formed along with its arguments.
+
+\begin{center}
+    \begin{tabular}{l|l|l|p{0.6\textwidth}}
+        Command & Name & Syntax & Description \\
+        \hline
+        crc & App CRC & crc & Calculate the 16-bit for the application and print is as a four-digit
+        hexadecimal number. \\
+        h & Help & h & Print of list of these commands with short help strings. \\
+        v & Version & v & Print firmware version information. \\
+    \end{tabular}
+\end{center}
+
+The first three commands are common to the bootloader and app and so are implemented in
+\path{firmware/common/cmd.c}.  The rest are bootloader-specific and are implemented in
+\path{firmware/bootloader/localcmd.c}.
 
 \subsubsection{Error Codes} \label{sssec:FWBootStatusCodes}
 

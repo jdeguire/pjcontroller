@@ -7,6 +7,11 @@ If you plan on building the firmware, you'll need a few things.
 --avrdude
 --scons, which in turn requires Python
 
+To modify or run the software, you'll need:
+--Python (written in v2.7)
+--PySide
+--PySerial
+
 The SConscript/SConstruct files assume that you are using the avr-gcc toolchain and avrdude as your
 ICSP programmer.  You can modify the files if this is not the case.
 
