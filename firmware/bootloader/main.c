@@ -34,6 +34,12 @@
 #include <avr/interrupt.h>
 #include <util/delay.h>
 
+#define UseBootloaderIVT() do{MCUCR = (1 << IVCE); MCUCR = (1 << IVSEL);} while(0)
+#define UseAppIVT()        do{MCUCR = (1 << IVCE); MCUCR = 0;} while(0)
+
+// Check the state of the bootloader pin, which is active high
+// Uses GCC Statement Expressions; see http://gcc.gnu.org/onlinedocs/gcc/Statement-Exprs.html
+#define BootloaderPinSet() ({DDRDbits.ddd4 = 0; PINDbits.pind4;})
 
 typedef enum
 {
@@ -46,16 +52,6 @@ typedef enum
 
 static bootstatus_t m_status;
 
-
-/* Get the state of the Bootloader Pin.  If True, stay in the bootloader without attempting to start
- * the app.  Otherwise, try to start the application.
- */
-static bool BootloaderPinSet()
-{
-	// we'll use an external pull-down for this
-	DDRDbits.ddd4 = 0;        // 0 for input
-	return PINDbits.pind4;
-}
 
 /* Check if there is any reason why the bootloader should not start the app and sets 'm_status' to
  * indicate the reason.
@@ -83,40 +79,6 @@ static void GetAppStartupStatus()
 	}
 
 	ClearAppRestartRequest();
-}
-
-/* Turn on or off LED used as a visual notice that the board is in the bootloader.
- */
-static void LightBootloaderLED(bool enable)
-{
-	if(enable)
-	{
-		YELLOW_LED_DDR = 1;    // output
-		YELLOW_LED_PORT = 1;   // turn on
-	}
-	else
-	{
-		// return to defaults
-		YELLOW_LED_DDR = 0;
-		YELLOW_LED_PORT = 0;
-	}
-}
-
-/* True enables the bootloader IVT and False returns to the app's IVT.  Set the False before jumping
- * to the application.
- */
-static void SetBootIVT(bool bootIVT)
-{
-	if(bootIVT)
-	{
-		MCUCR = (1 << IVCE);
-		MCUCR = (1 << IVSEL);
-	}
-	else
-	{
-		MCUCR = (1 << IVCE);
-		MCUCR = 0;
-	}
 }
 
 /* Print a message stating why we're in the bootloader along with the value of m_status.  This is
@@ -154,8 +116,8 @@ void RewindSettings()
 {
 	cli();                    // disable interrupts
 	wdt_reset();
-	SetBootIVT(false);
-	LightBootloaderLED(false);
+	UseAppIVT();
+	ClrYellowLED();
 
 	// initial UART register values
 	UCSR0C = (1 << UCSZ01) | (1 << UCSZ00);
@@ -182,10 +144,11 @@ int main(void)
 		Cmd_InitInterface();
 		RegisterBootloaderCommands();
 
-		SetBootIVT(true);
+		UseBootloaderIVT();
 		sei();                    // enable interrupts
 
-		LightBootloaderLED(true);
+		InitLEDs();
+		SetYellowLED();
 		PrintBootStatus();
 		wdt_reset();
 

@@ -32,8 +32,8 @@
 
 int main(void)
 {
-	GREEN_LED_DDR = 1;   // output
-	GREEN_LED_PORT = 1;  // turn on
+	InitLEDs();
+	SetGreenLED();
 
 	wdt_enable(WDTO_250MS);
 

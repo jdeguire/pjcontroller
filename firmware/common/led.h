@@ -18,7 +18,7 @@
  * File:   led.h
  * Author: Jesse DeGuire
  * 
- * Contains macros mapping LED colors to the pins on the device to which they are connected.
+ * Contains macros for setting and inverting the LEDs connected to the microcontroller.
  */
 
 #ifndef INCLUDE_LED_H_
@@ -26,16 +26,22 @@
 
 #include "regmap.h"
 
-#define GREEN_LED_DDR  DDRDbits.ddd7
-#define GREEN_LED_PORT PORTDbits.pd7
-#define GREEN_LED_PIN  PINDbits.pind7
+// set LED pins as outputs and disable them
+#define InitLEDs() do{DDRD |= 0xE0; PORTD &= 0x1F;} while(0)
 
-#define YELLOW_LED_DDR  DDRDbits.ddd6
-#define YELLOW_LED_PORT PORTDbits.pd6
-#define YELLOW_LED_PIN  PINDbits.pind6
+#define SetGreenLED() (PORTDbits.pd7  = 1)
+#define ClrGreenLED() (PORTDbits.pd7  = 0)
+#define InvGreenLED() (PINDbits.pind7 = 1)
+#define GetGreenLED() (PORTDbits.pd7)
 
-#define RED_LED_DDR  DDRDbits.ddd5
-#define RED_LED_PORT PORTDbits.pd5
-#define RED_LED_PIN  PINDbits.pind5
+#define SetYellowLED() (PORTDbits.pd6  = 1)
+#define ClrYellowLED() (PORTDbits.pd6  = 0)
+#define InvYellowLED() (PINDbits.pind6 = 1)
+#define GetYellowLED() (PORTDbits.pd6)
+
+#define SetRedLED() (PORTDbits.pd5  = 1)
+#define ClrRedLED() (PORTDbits.pd5  = 0)
+#define InvRedLED() (PINDbits.pind5 = 1)
+#define GetRedLED() (PORTDbits.pd5)
 
 #endif // INCLUDE_LED_H_
