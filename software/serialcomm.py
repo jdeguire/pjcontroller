@@ -35,7 +35,7 @@ from flashimage import FlashImage
 from connmanager import ConnectionManager
 import pjcexcept
 
-# This package is available in PySerial 2.6, but at this time (Feb. 1, 2013) still comes with
+# This package is available in PySerial 2.6, but at this time (Feb. 1, 2013) Ubuntu still comes with
 # PySerial 2.5, so make sure we can go on without it.
 try:
     from serial.tools.list_ports import comports
