@@ -100,7 +100,9 @@ anyone can build and modify the various pieces.
 \subsection{Sources and Licenses} \label{ssec:SourceLic}
 All source files used to create the board, software, and firmwares are available in a Git repository
 on GitHub at \url{https://github.com/jdeguire/pjcontroller}.  The repository also contains
-datasheets for the hardware components and other reference material.
+datasheets for the hardware components and other reference material.  This document will often
+reference paths within the repository.  For example, the path \path{firmware/common/uart.c} should
+be read as ``\path{[location to which repository was cloned]/firmware/common/uart.c}''.
 
 The firmware and software, the sources of which are located in the \path{firmware/} and
 \path{software/} directories in the aforementioned repository, are made available under the GNU
@@ -830,7 +832,7 @@ the associated LibC and Binutils packages.  AVRDUDE is used to program the built
 board.  Building and programming the firmware is handled by the SCons build tool, which itself
 requires Python 2.4 or higher.
 
-On Ubuntu, the following packages need to be installed to get everything:
+On Ubuntu 12.10, the following packages need to be installed to get everything:
 
 \begin{itemize}
   \item gcc-avr
@@ -1181,7 +1183,7 @@ update in the field without a programmer.
 
 \subsubsection{Version Changes} \label{sssec:FWBootChanges}
 This section describes changes made to the different release versions of firmware.  Minor updates
-commited only to the reposity and not released for public download may not be shown here.  In that
+commited only to the repository and not released for public download may not be shown here.  In that
 case, take a look at the repository logs to see what has changed.
 
 \begin{center}
@@ -1384,7 +1386,7 @@ ATMega328P device.
 
 \subsubsection{Version Changes} \label{sssec:FWAppChanges}
 This section describes changes made to the different release versions of firmware.  Minor updates
-commited only to the reposity and not released for public download may not be shown here.  In that
+commited only to the repository and not released for public download may not be shown here.  In that
 case, take a look at the repository logs to see what has changed.
 
 \begin{center}
@@ -1418,11 +1420,12 @@ assuming the IO ports on the microcontroller used to communicate with them are s
 The main task of the application is to control the fan speed while the lamp is running and shut the
 lamp down if the temperature of the thermistor exceeds the programmed limit.  This is done by
 running a state machine on a regular interval in which the state depends on the state of the lamp
-and fan.  See the \hyperref[sssec:FWAPPStateMachine]{State Machine} section for more information.
+and fan.  See the \hyperref[sssec:FWAppStateMachine]{State Machine} section for more information.
 This state machine controls the yellow and red LEDs.
 
 The application will also monitor the command interface for new commands as well as monitor the
-digital and analog inputs.  The ADCs are read at 5Hz.
+digital and analog inputs.  The ADCs are read at 5Hz and the digital input is monitored once every
+10ms.
 
 \subsubsection{Free-Running Timer} \label{sssec:FWAppTimer}
 The firmware uses Timer 0 to create a free-running millisecond timer.  Timer 0 is an 8-bit timer and
@@ -1451,6 +1454,8 @@ Commands that set values will not save the values; use the ``sv'' command to do 
     hexadecimal number. \\
     h & Help & h & Print of list of these commands with short help strings. \\
     v & Version & v & Print firmware version information. \\
+    j & Jump & j & Jump to bootloader by resetting device. \\
+    r & Reset & r & Reset device and restart application. \\
     a & ADCs & a & Print a list of ADC readings with one reading per line.  Each reading is a
     four-digit hexadecimal number. \\
     dc & Duty Cycle & dc & Print the current fan duty cycle, which is proportional to its speed, as
@@ -1533,11 +1538,11 @@ at 0x80.  The exception is the code 0x00, which indicates no error.
         81 & Thermistor Short & The thermistor input is shorted and so the application cannot determine
         the actual temperature it is controlling.  This is sensed by the ADC reading being near
         positive full-scale.  If the lamp was on, it will be shut down immediately and the fan will
-        run at 50\% duty cycle for one minute and then shut off. \\
+        run at 50\% duty cycle for 30 seconds and then shut off. \\
         82 & Thermistor Open & The thermistor input is open, which could mean that no thermistor is
         connected.  This means that the application cannot read the correct temperature.  This is
         sensed by the ADC reading being near negative full-scale. If the lamp was on, it will be
-        shut down immediately and the fan will run at 50\% duty cycle for one minute and then shut 
+        shut down immediately and the fan will run at 50\% duty cycle for 30 seconds and then shut 
         off. \\
     \end{tabular}
 \end{center}
@@ -1548,14 +1553,13 @@ back on until the error condition clears.  The lamp is not turned back on automa
 \subsubsection{Control Loop} \label{sssec:FWAppCLoop}
 A control loop runs once every 2 seconds (0.5Hz) while the fan is on.  The input to the control loop
 is the temperature read from the thermistor and the output is a duty cycle value used to control the
-fan PWM.  The closer the actual temperature is to the target temperature (use the ``tt'' to set and
-get this), the more slowly the fan will spin.  Fans react slowly to changes in speed since they take
-time to accelerate; this is why the control loop runs so slowly.
+fan PWM.  The closer the actual temperature is to the target temperature (use the ``tt'' command to
+set and get this), the more slowly the fan will spin.  Fans react slowly to changes in speed since
+they take time to accelerate; this is why the control loop runs so slowly.
 
 A basic control loop algorithm is implemented in \path{firmware/common/pidloop.c} and
 \path{pidloop.h}.  The \hyperref[sssec:FWAppStateMachine]{application state machine} controls when
 it runs.
-
 
 \subsubsection{State Machine} \label{sssec:FWAppStateMachine}
 The main control function of the application firmware is implemented as a state machine, in which
@@ -1569,16 +1573,179 @@ states used.
     meaning that nothing needs to be done.
   \item[Lamp Start] \hfill \\
     This state is entered when the lamp is first turned on.  The runs the fan at 50\% duty cycle for
-The state machine is implemented in \path{firmware/app/control.c} and \path{control.h}2 se
+    2 seconds before starting the control loop.  This gives the fan a moment to start up and
+    provides a good starting point for control.  This turns on the yellow LED.
+  \item[Lamp Run] \hfill \\
+    The lamp has started up and the control loop is now running.  The control loop runs once every 2
+    seconds.
+  \item[Lamp Off Delay] \hfill \\
+    The lamp was told to shut off either from the serial console or via the Projector On input.
+    This will wait for the delay time set by the ``lod'' command before actually turning the lamp
+    off.  The lamp can be turned back on in this state, in which case the state machine will go back
+    to the Lamp Run state.
+  \item[Cooldown] \hfill \\
+    The lamp has been shut down normally and the fan will remain on until the projector has cooled
+    sufficiently.  This is controlled by the ``ft'' command.  This goes back to the Idle state when
+    completed.  This will blink the yellow LED.
+  \item[Overtemp Error Init] \hfill \\
+    Turns on the red LED due to an overtemp error and sets the error code, then immediately moves on
+    to the Overtemp Cooldown state.
+  \item[Overtemp Cooldown] \hfill \\
+    This works just like the Cooldown state except it does not allow the lamp to be turned back on.
+    Transitions to the normal Cooldown state when the thermistor temperature is below the over-temp
+    limit and turns off the red LED in the process.  This blinks the yellow LED.
+  \item[Short Error Init] \hfill \\
+    Turns on the red LED and sets the error code.  If the lamp was on, it will shut the lamp off and
+    move to the Bad Thermistor Cooldown state; otherwise, it will move to the Bad Thermistor Idle
+    state.
+  \item[Open Error Init] \hfill \\
+    Turns on the red LED and sets the error code.  If the lamp was on, it will shut the lamp off and
+    move to the Bad Thermistor Cooldown state; otherwise, it will move to the Bad Thermistor Idle
+    state.
+  \item[Bad Thermistor Cooldown] \hfill \\
+    Runs the fan at 50\% duty cycle for 30 seconds and then moves to the Bad Thermistor Idle state.
+    Blinks the yellow LED.
+  \item[Bad Thermistor Idle] \hfill \\
+    Similar to the Idle state except the lamp cannot be turned on while in this state.  This state
+    is used to wait for the thermistor error to clear before transistioning to the Idle state, at
+    which point the red LED will be cleared.
 \end{description}
 
 The state machine is implemented in \path{firmware/app/control.c} and \path{control.h}.
 
 \subsubsection{Fan Control} \label{sssec:FWAppFanControl}
+The fan is controlled with a 25kHz PWM from pin5 of the microcontroller, which is port PD3 and Timer
+2's OC2B output.  Timer 2 is a 8-bit timer with a PWM module attached.  The PWM output is configured
+with a 8:1 prescaler and a period of 100 counts.  This gives a control resolution of 1\%, which
+should be more than adequate for this application.
+
+The fan PWM code is implemented in \path{fimrware/app/fanpwm.c} and \path{fanpwm.h}.
 
 \subsubsection{Input Debounce} \label{sssec:FWAppDebounce}
+The Projector On input goes through a software debounce routine designed to account for possible
+noise from the input.  The debounce routine essentially waits for the input to stabilize before
+reporting its new state to the rest of the application.  The input is checked once every 10ms.
+The state of the input must remain the same for 10 readings (or 100ms) before that new state is
+reported.
+
+The debounce algorithm is implemented in \path{firmware/common/debounce.c} and \path{debounce.h}.
 
 \subsubsection{EEPROM Storage} \label{sssec:FWAppStorage}
+Most of the values settable via serial commands are stored in the microcontroller's built-in
+EEPROM.  The EEPROM storage will start with a key to indicate that data exists in the EEPROM, a size
+field, and a version field to allow for new additions in future application updates.
+
+The following values are stored in the EEPROM.  If that item is not found in EEPROM, then the given
+default is used.
+
+\begin{center}
+    \begin{tabular}{l|l|c}
+        Item Name & Type & Default Value \\
+        \hline
+        Control Loop P-Gain & float & 0.002 \\
+        Control Loop I-Gain & float & 0.01 \\
+        Control Loop D-Gain & float & 0 \\
+        Control Loop I-Seed & float & 0 \\
+        Minimum Duty Cycle & float & 30.0\% \\
+        Maximum Duty Cycle & float & 100.0\% \\
+        Target Temperature & float & 35.0\textcelsius{} \\
+        Overtemp Limit & float & 45.0\textcelsius{} \\
+        Lamp Off Delay & float & 0s \\
+        Fan Off Temperature & float & 5\textcelsius{} above ambient \\
+    \end{tabular}
+\end{center}
+
+
+\section{Software} \label{sec:software}
+The software is a simple applet that allows the user to monitor information read from the connected
+Projector Controller and to change settings on it.  It also has a section for performing application
+updates using the bootloader.  The software is written in Python and so can be run on Windows,
+GNU/Linux, Mac OS X, and possibly other Unixes.  A prebuilt binary is available for Windows; Linux
+and OS X users will need to go get Python and needed libaries, but this is not too hard.
+
+\subsection{Tools Used} \label{ssec:SWTools} 
+The software is written entirely in Python, which is what allows it to be cross-platform.  The
+interface uses PySide, which is the official set of Qt bindings for Python.  The communication with
+the board makes use of PySerial, an independent library for serial port access (the FT232R on the
+board acts as a Virtual COM Port).
+
+The software was written with Python 2.7 and needs PySerial and PySide.  Linux users should be able
+to get these from their distributions' repositories.  Ubuntu users will need the following packages
+(as of Ubuntu 12.10):
+
+\begin{itemize}
+  \item python
+  \item python-serial
+  \item python-pyside
+\end{itemize}
+
+Windows and Mac OS X users can download the needed packages online.  Python 2.7 is available for
+both at \url{http://www.python.org/download/releases/2.7/}.  Windows users can download either the
+32-bit (x86) or, if using a 64-bit version of Windows, the 64-bit (x86-64) version.
+
+PySide installers are available from \url{http://qt-project.org/wiki/PySideDownloads}.  Follow the
+links at the top of the page for the correct operating system.  Windows users just need to make sure
+to match the correct Python version (2.7) and architecture.  That is, get 32-bit PySide for 32-bit
+Python and 64-bit PySide for 64-bit Python.
+
+OS X users will need to get both PySide and the corresponding version of Qt.  The important thing is
+to get the versions of PySide and Qt that go together.  The downloads are under the headings
+showing the version numbers (eg. ``PySide 1.1.1 / Qt 4.8'').  The links at the top of the page just
+go to the main Qt website, so don't bother with those.
+
+Getting PySerial is the same on both Windows and OS X.  The instructions are availabe on the
+official PySerial site at \url{http://pyserial.sourceforge.net/pyserial.html}.  Following the
+instructions under the ``From Source'' heading are probably the easiest since that involves just
+downloading the compressed file, extracting it, and running the command shown on that page.  Windows
+users will need a program that can handle \texttt{tar.gz} files; \href{http://www.7-zip.org/}{7-Zip}
+works well.  Mac OS X and many Linux distributions can open those files natively.
+
+To make sure everything is installed properly, open up a terminal or console window and navigate to
+the \path{software/} directory.  Run \texttt{./main.py} (Windows users may need to run
+\texttt{python main.py}) and see if the program starts up and can connect to the device.  If not,
+make sure the packages are installed correctly and see if any errors are output to the console.
+Note that it might be necessary to run the program as root (or as Administrator in Windows) in order
+to open the serial port.  It may also be necessary to manually type in the serial port path due to
+issues certain version of PySerial seem to have with USB serial devices.
+
+\subsection{Building a Binary} \label{ssec:SWBuildBinary}
+Users can build a binary of the application using PyInstaller, a program that converts Python
+scripts into executable files.  PyInstaller claims to be able to generate executables under 32-bit
+and 64-bit Windows XP and later, Mac OS X 10.4 and later, and various Linux distros, as well as
+Solaris and AIX.  At the the time of this writing, PyInstaller has been tried on Windows 7 64-bit
+without trouble.
+
+The PyInstaller package and documentation can be found at \url{http://www.pyinstaller.org/}.  The
+``Installing PyInstaller'' and ``Getting Started'' sections in the documentation should be helpful,
+but the instructions essentially are to download and extract PyInstaller to some directory and run
+the \path{pyinstaller.py} file from that directory, giving it the path to \path{software/main.py}.
+
+Windows users will also need \texttt{pywin32}, a package that adds Windows-specific extensions to
+Python.  The package is availabe at \url{http://sourceforge.net/projects/pywin32/files/}.  The
+documentation on that page explains how to get the right file.
+
+To build the software into an executable, navigate to the PyInstaller directory and run
+
+\begin{center}
+    \texttt{python pyinstaller.py -F -w \textit{path/to/software/main.py}}
+\end{center}
+
+The \texttt{-F} option packs all of the needed files into a single compressed executable.  When the
+executable runs, it will decompress the files to a temporary directory and run them from there.  The
+files are deleted when the program exits (unless the program is closed abnormally).  The \texttt{-w}
+option tells PyInstaller that this is a windowed application.  The documentation states that this is
+necessary for apps built for OS X.
+
+\subsection{Architecture} \label{ssec:Architecture} 
+
+The software is a simple interface for sending commands to the connected Projector Controller and
+performing application firmware updates.  The entry point for the software is
+\path{software/main.py}.  When the application starts up, it creates the application window and an
+object that talks over the serial port (\path{/software/serialcomm.py}).  The latter is moved into
+its own thread, a \texttt{QThread} (types starting with 'Q' are a part of PySide/Qt) and the entry
+function continues on to show the window and then start the main interface event loop.  The
+application exits when the user click the close button on the window header.
+
 
 
 \end{document}

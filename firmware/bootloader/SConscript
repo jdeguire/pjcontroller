@@ -1,3 +1,4 @@
+
 # Hey Emacs, this is a -*- python -*- file
 #
 # Copyright 2011-2013 Jesse DeGuire
@@ -77,7 +78,7 @@ hexfile = ourdir + os.sep + outputfile
 boothex_act = Action(env['OBJCOPY'] + ' -O ihex -R .eeprom \"' + elffile  + '\" \"' + hexfile + '\"')
 
 # a string forming a base avrdude command that we can just add on to in the targets
-prog_base = avr_prog + ' -p ' + env['MCU'] + ' -B0.3 -c ' + icspdevice
+prog_base = avr_prog + ' -p ' + env['MCU'] + ' -B0.4 -c ' + icspdevice
 
 
 # Create a clone of the base environment we can set up just for the bootloader
