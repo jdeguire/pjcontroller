@@ -93,13 +93,13 @@ class PJCApplication(PJCInterface):
         off.  This is useful for LCD controllers that turn off the backlight while changing inputs
         since the firmware can keep the lamp on while during this time.
         """
-        return self.execCommand('lod ' + str(delay), PJCIntefface.RespFloat)
+        return self.execCommand('lod ' + str(delay), PJCInterface.RespFloat)
 
     def getLampOffDelay(self):
         """Get the time in seconds the firmware will keep the lamp on after being told to turn it
         off.
         """
-        return self.execCommand('lod', PJCIntefface.RespFloat)
+        return self.execCommand('lod', PJCInterface.RespFloat)
 
     def setMinDutyCycle(self, mindc):
         """Set the minimum duty cycle in percent for the PWM controlling the fan speed and return
