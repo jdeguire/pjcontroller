@@ -172,7 +172,14 @@ class SerialComm(QObject):
                     self.serialdev.close()
                 self.serialdev.port = serialpath
                 self.serialdev.open()
-                self.devicestarted.emit(self.pjcboot.isApplication())
+
+                version = self.pjcboot.getVersion()
+                if self.pjcboot.isApplication():
+                    self.devicestarted.emit(True)
+                    self._print('Application version ' + str(version) + '.')
+                else:
+                    self.devicestarted.emit(False)
+                    self._print('Bootloader vesrion ' + str(version) + '.')
         except serial.SerialException:
             self._print('Could not open serial port at ' + serialpath + '.')
 
