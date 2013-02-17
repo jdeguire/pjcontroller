@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright © 2011-2013 Jesse DeGuire
+# Copyright 2011-2013 Jesse DeGuire
 #
 # This file is part of Projector Controller.
 #
@@ -61,6 +61,7 @@ class SerialComm(QObject):
     targettempupdated = QtCore.Signal(float)
     overtempupdated = QtCore.Signal(float)
     fanoffupdated = QtCore.Signal(float)
+    lampdelayupdated = QtCore.Signal(float)
     mindutycycleupdated = QtCore.Signal(float)
     monitorrefreshed = QtCore.Signal(tuple)
 
@@ -87,11 +88,13 @@ class SerialComm(QObject):
         connmgr.addSignal(self.targettempupdated, 'TargetTempChanged')
         connmgr.addSignal(self.overtempupdated, 'OvertempChanged')
         connmgr.addSignal(self.fanoffupdated, 'FanOffTempChanged')
+        connmgr.addSignal(self.lampdelayupdated, 'LampOffDelayChanged')
         connmgr.addSignal(self.mindutycycleupdated, 'MinDutyCycleChanged')
         connmgr.addSlot(self.setLampState, 'SetLampEnable')
         connmgr.addSlot(self.setTargetTemp, 'SetTargetTemp')
         connmgr.addSlot(self.setOvertempLimit, 'SetOvertemp')
         connmgr.addSlot(self.setFanOffTemp, 'SetFanOffTemp')
+        connmgr.addSlot(self.setLampOffDelay, 'SetLampOffDelay')
         connmgr.addSlot(self.setMinDutyCycle, 'SetMinDutyCycle')
         connmgr.addSlot(self.refreshAppSettings, 'RefreshSettings')
         connmgr.addSlot(self.saveAppSettings, 'SaveSettings')
@@ -239,6 +242,11 @@ class SerialComm(QObject):
 
     @QtCore.Slot(float)
     @_handlesPJCExceptions
+    def setLampOffDelay(self, delay):
+        self.lampdelayupdated.emit(self.pjcapp.setLampOffDelay(delay))
+
+    @QtCore.Slot(float)
+    @_handlesPJCExceptions
     def setMinDutyCycle(self, mindc):
         self.mindutycycleupdated.emit(self.pjcapp.setMinDutyCycle(mindc))
 
@@ -249,6 +257,7 @@ class SerialComm(QObject):
         self.targettempupdated.emit(self.pjcapp.getTargetTemperature())
         self.overtempupdated.emit(self.pjcapp.getOvertempLimit())
         self.fanoffupdated.emit(self.pjcapp.getFanOffPoint())
+        self.lampdelayupdated.emit(self.pjcapp.getLampOffDelay())
         self.mindutycycleupdated.emit(self.pjcapp.getMinDutyCycle())
 
     @QtCore.Slot()

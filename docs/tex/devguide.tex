@@ -318,7 +318,8 @@ creates a connection to ground.
 
 \subsubsection{Analog Inputs} \label{sssec:AnalogIn}
 Two of the microcontroller's analog inputs are used to monitor the 12V input and ambient temperature
-from an Analog Devices TMP36 temperature sensor.
+from an Analog Devices TMP36 temperature sensor.  The microcontroller's analog inputs are 10-bit
+single-ended ADCs.
 
 The 12V input is divided down using a simple resistive divider in an approximate 3:1 ratio, meaning that the
 input into the ADC is about 1/4 the actual voltage.  More specifically, to determine the actual
@@ -439,18 +440,18 @@ into the ADC positive input, convert the ADC reading to voltage (remember to sig
 reading) and then add 2.5V to it.
 
 Note that if the thermistor is not connected, the voltage at the ADC should be 0 and so the reading
-should be 0.  Conversely, if the thermistor input is shorted, then the voltage should be around 5V
-and so the reading should be full-scale.  However, the ADC is not perfect and so such conditions may
-be close to, but not exactly, 0 or full-scale.
+should be negative full-scale.  Conversely, if the thermistor input is shorted, then the voltage
+should be around 5V and so the reading should be full-scale.  However, the ADC is not perfect and so
+such conditions may be close to, but not exactly, the full-scale conditions.
 
-The thermistor's current resistance can now be calculated with
+The thermistor's actual resistance can now be calculated with
 
 \[
 R_T = \frac{R_2*V_{in}}{V_{ADC}} - R_2
 \]
 
 which is just the standard resistor divider equation solved for $R1$ (which is $R_T$ in this case).
-To get the ratio between the current resistance and the reference resistance required by the 
+To get the ratio between the actual resistance and the reference resistance required by the 
 Steinhart-Hart equation, the above equation can be divided by $R_{25}$.  Doing that and plugging in
 the appropriate values for $V_{in}$ and $R_2$ yields
 
@@ -906,7 +907,7 @@ programmers and so there are multiple programmers that will work.
 
 The build scripts are configured to use the ``usbtiny'' programmer protocol with AVRDUDE.  Any
 programmer that conforms to that protocol will work.  Two such low-cost examples are the Adafruit
-USBtinyISP (available at \url{http://www.ladyada.net/make/usbtinyisp/}) and the Sparkfun Pocket AVR
+USBtinyISP (available at \url{http://www.ladyada.net/make/usbtinyisp/}) and the SparkFun Pocket AVR
 Programmer (available at \url{https://www.sparkfun.com/products/9825}).
 
 To use a different programmer, open \path{firmware/bootloader/SConscript} and look for the line
@@ -922,11 +923,11 @@ are stored, and add the line
 \texttt{SUBSYSTEM=="usb", ATTR{idProduct}=="0c9f", ATTR{idVendor}=="1781", MODE="0666", GROUP="adm"}
 
 Save the file with a descriptive name, such as \path{90-avrisp.rules}.  The number determines the
-order in which the rule is processed.  In this case, 90 means that the rule is processed later and
-so overrides lower-numbered rules.  Disconnect and reconnect the programmer and try again.  Note
-that the ``idProduct'' (0c9f) and ``idVendor'' (1781) are dependent on the actual device; the values
-shown are for the ``usbtiny'' programmers mentioned earlier.  Use the \texttt{lsusb} command to get
-the correct values for different devices.
+order in which the rule is processed.  Higher-numbered rules override lower-numbered rules.
+Disconnect and reconnect the programmer and try again.  Note that the ``idProduct'' (0c9f) and
+``idVendor'' (1781) are dependent on the actual device; the values shown are for the ``usbtiny''
+programmers mentioned earlier.  Use the \texttt{lsusb} command to get the correct values for
+different devices.
 
 \subsection{Fuse and Lock Bits} \label{ssec:FWFuseBits}
 The AVR microcontroller have special locations in flash memory that hold configuration registers for
@@ -1118,16 +1119,16 @@ software used with the Projector Controller, can talk to the device provided the
 installed.  Newer operating systems should have drivers for the device pre-installed; however,
 drivers are also available from \url{http://www.ftdichip.com/FTDrivers.htm}.
 
-The firmwares talk at 115200 baud using 8 bits per transfer, no flow control, and one stop bit
-(8-N-1).  Carriage returns are used as line endings.
+The firmwares talk at 115200 baud using 8 bits per transfer, no parity bit, no flow control, and one
+stop bit (8-N-1).  Carriage returns are used as line endings.
 
 Communication is handled on two levels.  The first level is the handling of the actual UART
 interface on the device and this is done in \path{firmware/common/uart.c} and its header
 \path{uart.h}.  The module contains a transmit and receive buffer and uses interrupts to transmit
-data from the transmit buffer and receive data into the receiver buffer.  The transmit and receive
+data from the transmit buffer and receive data into the receive buffer.  The transmit and receive
 functions in the module access those buffers and can transmit single bytes, byte arrays, or strings.
 
-The default size of each UART buffer is 64 bytes.  Any software talking to the Microcontroller is
+The default size of each UART buffer is 64 bytes.  Any software talking to the firmwares is
 responsible for not overflowing the buffer.
 
 The second level is the command inteface in \path{firmware/common/cmd.c} and its header
@@ -1163,12 +1164,11 @@ sizes, and the like.  To use non-default values, simply define the macros in the
 files with the desired value.  As an example, take a look at the bootloader's config file
 \path{firmware/bootloader/appcfg.h} as the bootloader uses a couple of non-default values.
 
-Also defined in these files are a version string and version number, which is
-sent over the UART when the device starts up or in reaction to the ``v'' command.  The version
-string for the bootloader should the word ``Bootloader'' (case sensitive) in it; likewise, the
-application should \emph{not} have the word ``Bootloader'' in it.  The Projector Controller software
-looks for that word to determine if the device is running the bootloader.
-
+Also defined in these files are a version string and version number, which is sent over the UART
+when the device starts up or in reaction to the ``v'' command.  The version string for the
+bootloader should contain the word ``Bootloader'' (case sensitive) in it; likewise, the application
+should \emph{not} have the word ``Bootloader'' in it.  The Projector Controller software looks for
+that word to determine if the device is running the bootloader.
 The bootloader's \path{appcfg.h} also defines the macro \texttt{PJC\_BOOTLOADER\_\_}, which allows
 common code to act differently if the bootloader is being built.  The application should not define
 this macro.
@@ -1228,15 +1228,18 @@ Issuing the ``j'' command over the serial interface will tell the bootloader to 
 appication, ignoring the above checks.  The ``s'' command will reprint the status message described
 above.
 
+If the bootloader does not start up the application, it will instead set up the UART module and the
+command interface.  The bootloader will also enable the watchdog timer and enable interrupts.
+
 \subsubsection{Bootloader Operation} \label{sssec:FWBootOperation}
-If the bootloader does not jump to the application, it simply wait for incoming serial commands and
-act on them. 
+If the bootloader does not jump to the application, it simply waits for incoming serial commands and
+acts on them.
 
 \subsubsection{Serial Commands} \label{sssec:FWBootCommands}
 Below is a list of serial commands the bootloader recognizes.  See the
 \hyperref[ssec:FWComm]{Communication} section for more information on how to talk to the
 bootloader. The ``Syntax'' column shows how a valid command string is formed along with its
-arguments.
+arguments. The command and it arguments are separated by a single space between each one.
 
 \begin{longtable}{l|l|p{0.15\textwidth}|p{0.45\textwidth}}
     \centering
@@ -1280,15 +1283,104 @@ arguments.
     up.  See the \hyperref[sssec:FWBootStartup]{Bootloader Startup} section for more info. \\
 \end{longtable}
 
-The first three commands are common to the bootloader and app and so are implemented in
+The first three commands are common to the bootloader and application and so are implemented in
 \path{firmware/common/cmd.c}.  The rest are bootloader-specific and are implemented in
 \path{firmware/bootloader/localcmd.c}.
 
+Some of these commands return a status code to indicate what happened with the command.  The
+possible codes are as follows.  The codes are printed as ``!00'' (exclamation point and two hex
+digits) followed by a carriage return.
+
+\label{tab:FWBootErrors}
+\begin{center}
+    \begin{tabular}{c|l|p{0.6\textwidth}}
+        Code & Name & Description \\
+        \hline
+        00 & OK & No error; this is returned when the command executes successfully. \\
+        01 & Argument Error & The command sent to the bootloader is missing a required argument.
+        Verify that the arguments sent down are correct (see the list above) and they are are
+        separated by a space. \\
+        02 & Range Error & An argument is out of range and so is not valid.  This can happen, for
+        example, when trying to write page to an offset outside of the page or when trying to
+        program a page that is not in app space. \\
+        03 & Mismatch Error & The command executed, but could not complete because an expected value
+        was not found.  This can happen when a flash write fails or when a page checksum does not
+        match the data. \\
+    \end{tabular}
+\end{center}
+
 \subsubsection{Performing an Update} \label{sssec:FWBootUpdate}
 A firmware update is performed using the serial commands given in the
-\hyperref[sssec:FWBootCommands]{Serial Commands} section above.
+\hyperref[sssec:FWBootCommands]{Serial Commands} section above.  In essence, the software talking to
+the bootloader to do the update must parse the application's Intel hex file into a binary image of
+the micontroller's memory and send that down to the bootloader in chunks to program the device.
+When all of the data is sent, the software will finalize the update by telling the bootloader to
+calculate and write the application's CRC to a special location at the end of flash.
+
+Following is a basic outline of how to perform an update.  Anyone trying to write software to do
+this will need to be familiar with the Intel hex file format.  There are many sources available
+online that can help with this and the \hyperref[ssec:FWIntelHex]{Intel Hex Files} section above may
+be of use.  This section assumes that the ATMega328P is being used, though one could conceivably
+port the bootloader to a different device and follow a similar procedure.
+
+\begin{enumerate}
+  \item Make sure the microcontroller is running the bootloader.  To do this, run the ``v'' command
+    to get version information and look for the word ``Bootloader'' (case sensitive).  If it is
+    present, move to the next step.  If not, jump to it using the ``j'' command.  The version is
+    printed during startup, so look for ``Bootloader'' again to see if the jump succeeded.
+  \item Create a block of memory the size of the microcontroller's flash.  The ``ps'' and ``pn''
+    commands are useful for doing this generically.  The page size of the ATMega328P is 128 bytes
+    and it has 224 pages available to the application for 28KB total.  This will be referred to as
+    the ``flash image''.  Initialize this so that every byte is 0xFF.
+  \item Open the application's Intel hex file.  For each line, parse the record and build up the
+    data for the flash image.  Remember that Data Records (type 00) are the only ones that contain
+    actual flash data and that the Extended Segment Address Record (type 02) and Extended Linear
+    Address Record (type 04) contain the upper portion of the flash address.  Be sure the validate
+    the record's checksum and to make sure the address is within the app space (this is 0 to 0x6FFF
+    for the ATMega328P).
+  \item Erase the old application using the ``ea yes'' command.  The ``yes'' argument is required as
+    a confirmation of the action.  It will return when the erase is complete, which may take a few
+    seconds.  Move on if successful.
+  \item Begin sending data to the bootloader.  Read the first 16 bytes from the flash image and send
+    them using the ``pd'' command.  In this case, the \emph{offset} will be 0.  Add those 16 bytes
+    together to get the \emph{checksum}.  The \emph{data} for the command is those 16 bytes
+    concatenated into a string of their hex digits.  For example, if the data read from the flash
+    image was \{0x00, 0x11, 0x22,\ldots, 0xEE, 0xFF\}, then the string would look like
+    ``001122\ldots EEFF''. Send the command down with the arguments and look for the status code coming
+    back.  If the status code indicates a problem, verify that the command was sent correctly and
+    that the checksum is correct.
+  \item Do the previous step 7 more times, increasing the \emph{offset} by 16 and reading the next
+    16 bytes from the flash image each time.  This will have sent 128 bytes--a single page's
+    worth--of data to the bootloader.
+  \item Now that enough data was written to the bootloader to fill a page, program the page using
+    the ``pp'' command.  The \emph{pagenum} parameter is 0 in this case since this is the first page
+    being written.  Look for the status the bootloader prints to make sure the command executed
+    successfully.
+  \item Perform the previous three steps repeatedly while reading the next 16 bytes from the flash
+    image, starting the \emph{offset} back at 0, and incrementing the \emph{pagenum} by 1 each time,
+    until all of the flash data has been programmed.  Note that it is not necessary to program pages
+    that have no data in them (all bytes are 0xFF).  The software can stop short if it knows where
+    the program would end.  One way to do this is to find the last byte that is not equal to 0xFF
+    and make the containing page the last one to be programmed.
+  \item If the programming operations completed successfully, tell the bootloader to calculate a CRC
+    for the application and write it to flash by sending it the ``wc'' command.  If the status code
+    returned by it indicates success, then the update is complete.
+  \item If the update has completed successfully, jump to the newly-programmed application by sending
+    the ``j'' command.
+\end{enumerate}
+
+The Projector Controller software follows this procedure for performing an application update.  The
+file \path{software/serialcomm.py} has the function \texttt{doFirmwareUpdate} that performs the
+update.  It makes use of the class found in \path{software/flashimage.py} to parse the hex file and
+store the data and uses the class in \path{software/pjcbootloader.py} to send the commands needed.
+One familiar with Python can use this as a reference for updating application firmware.
 
 \subsection{Application Specific} \label{ssec:FWApplication}
+The application is what performs the actual controlling functions of the Projector Controller.  It
+sets up and controls the microcontroller's IO pins and the various onboard devices.  More
+information about these devices is available in the \hyperref[sec:Hardware]{Hardware} section.  The
+\hyperref[ssec:MicroPinout]{Microcontroller Pinout} section lists the uses of the pins on the
+ATMega328P device.
 
 \subsubsection{Version Changes} \label{sssec:FWAppChanges}
 This section describes changes made to the different release versions of firmware.  Minor updates
@@ -1304,29 +1396,189 @@ case, take a look at the repository logs to see what has changed.
 \end{center}
 
 \subsubsection{Application Startup} \label{sssec:FWAppStartup}
+The following steps are performed when the application starts up in order to set up the needed
+modules for operation.
 
-\subsubsection{Application Operation} \label{sssec:FWAppOperation}
+\begin{enumerate}
+  \item Light green LED to indicate the application is running.
+  \item Start one-millisecond free-running timer.
+  \item Set used digital IO pins to their proper input or ouput states.
+  \item Initialize SPI module used to talk to MCP3301.
+  \item Set up analog inputs and start conversion.
+  \item Enable 250ms watchdog timer.
+  \item Initialize UART module.
+  \item Initialize command interface and register application commands.
+  \item Enable interrupts.
+\end{enumerate}
+
+None of the external devices require an explicit setup sequence and so are immediately usable
+assuming the IO ports on the microcontroller used to communicate with them are set up correctly.
+
+\subsubsection{Application Operation} \label{sssec:FWAppOperation} 
+The main task of the application is to control the fan speed while the lamp is running and shut the
+lamp down if the temperature of the thermistor exceeds the programmed limit.  This is done by
+running a state machine on a regular interval in which the state depends on the state of the lamp
+and fan.  See the \hyperref[sssec:FWAPPStateMachine]{State Machine} section for more information.
+This state machine controls the yellow and red LEDs.
+
+The application will also monitor the command interface for new commands as well as monitor the
+digital and analog inputs.  The ADCs are read at 5Hz.
+
+\subsubsection{Free-Running Timer} \label{sssec:FWAppTimer}
+The firmware uses Timer 0 to create a free-running millisecond timer.  Timer 0 is an 8-bit timer and
+so does not have enough range to actually acheive a one-millisecond period.  Instead, it is set up
+for a 100\textmu s period.  The timer will fire an interrupt when the period ends.  After the
+interrupt fires 10 times, a counter will be incremented to indicate one millisecond of time.  This
+interrupt routine is provided in \path{firmware/common/freetimer.c} and \path{freetimer.h} along
+with a delay routine and macros to check if a given amount of time has expired.
 
 \subsubsection{Serial Commands} \label{sssec:FWAppCommands}
 Below is a list of serial commands the application recognizes.  See the
 \hyperref[ssec:FWComm]{Communication} section for more information on how to talk to the bootloader.
-The ``Syntax'' column shows how a valid command string is formed along with its arguments.
+The ``Syntax'' column shows how a valid command string is formed along with its arguments.  The
+command and it arguments are separated by a single space between each one.
+
+Command arguments are optional.  The commands with arguments will set some value if the argument is
+present; otherwise, they will print the current value of the command without changing anything.
+Commands that set values will not save the values; use the ``sv'' command to do that.
+
+\begin{longtable}{l|l|p{0.15\textwidth}|p{0.45\textwidth}}
+    \centering
+    Command & Name & Syntax & Description \\
+    \hline
+    \endhead
+    crc & App CRC & crc & Calculate the 16-bit for the application and print is as a four-digit
+    hexadecimal number. \\
+    h & Help & h & Print of list of these commands with short help strings. \\
+    v & Version & v & Print firmware version information. \\
+    a & ADCs & a & Print a list of ADC readings with one reading per line.  Each reading is a
+    four-digit hexadecimal number. \\
+    dc & Duty Cycle & dc & Print the current fan duty cycle, which is proportional to its speed, as
+    a float. \\
+    dcl & Duty Cycle Low & dcl \emph{dutycycle} & Set the minimum duty cycle in percent for the PWM
+    controlling the fan speed and print that as a floating point value.  Range is 0 to 100\%, but
+    must be lower than or equal to the Duty Cycle High value.  Setting this below 30\% is not
+    recommended since the fan may not run at such a low duty cycle. \\
+    dch & Duty Cycle High & dch \emph{dutycycle} & Set the maximum duty cycle in percent for the PWM
+    controlling the fan speed and print that as a floating point value.  Range is 0 to 100\%, but
+    must be higher than or equal to the Duty Cycle Low value.  Setting this below 30\% is not
+    recommended since the fan may not run at such a low duty cycle. \\
+    le & Lamp Enable & le \emph{en} & Enable or disable the lamp and print a non-zero decimal value
+    if the lamp is enabled or 0 otherwise.  The state of the lamp will be overriden by the Projector
+    On input, so this is only useful for testing.  This also starts the control loop and
+    fan control. \\
+    lod & Lamp Off Delay & lod \emph{delay} & Set the time in seconds the application will keep the
+    lamp on after being told to turn it off and print the delay value as a float.  Some LCD
+    controllers disable their backlight while switching inputs.  This command allows users to
+    overcome that behavior by waiting to see if the LCD controller turns the lamp back on. \\
+    ft & Fan Off Temperature & ft \emph{offset} & Set the temperature, relative to ambient, at which
+    the fan will turn off after cooling the lamp down.  Value is in degrees Celsius and is printed
+    as a float.  As an example, if this value is 5.0 and the ambient temperature is
+    27\textcelsius{}, then the fan would shut off at 32\textcelsius{}.  This takes effect only when
+    the lamp was turned off; the fan is always on when the lamp is on.  Range is 0 to
+    125\textcelsius{}. \\
+    ot & Over-temp Limit & ot \emph{limit} & Set the temperature in degrees Celsius at which the
+    lamp will shut down due to an over-temp condition and print the new limit as a float. Range is 0
+    to 125\textcelsius{}. \\
+    tt & Target Temperature & tt \emph{target} & Set the target temperature in degrees Celsius,
+    which is the temperature the application will try to maintain by controlling fan speed.  The
+    closer the actual temperature is to this value, the slower the fan will spin.  Prints the target
+    temperature as a float.  Range is 0 to 125\textcelsius{}. \\
+    er & Print Error & er \emph{clear} & Print the most recent error code from the device as a
+    hexadecimal value.  See the \hyperref[sssec:FWAppErrCodes]{Error Codes} section for a list of
+    possible return values.  If \emph{clear} is present and non-zero, the error code will be cleared
+    so that future calls do not return the same code. \\
+    sv & Save Settings & sv & Save settings to the built-in EEPROM memory.  See the
+    \hyperref[sssec:FWAppStorage]{EEPROM Storage} section to see what is stored there. \\
+    clp & CLoop P-Gain & clp \emph{gain} & Set the fan control loop's proportional gain value and
+    print the value as a float. \\
+    cli & CLoop I-Gain & cli \emph{gain} & Set the fan control loop's integral gain value and
+    print the value as a float. \\
+    cld & CLoop D-Gain & cld \emph{gain} & Set the fan control loop's derivative gain value and
+    print the value as a float. \\
+    cls & CLoop I-Seed & cls \emph{seed} & Set the fan control loop's integral seed and
+    print the value as a float. The integral seed is the initial value of the integral tank. \\
+\end{longtable}
+
+Software should read back the printed value even when setting a value.  This is because some
+commands have limits they will enforce on the input.  For example, the minimum duty cycle can be in
+the range 0 to 100\%.  Trying to set it to, for example, 200\% will return 100\%.
+
+The first three commands are common to the bootloader and application and so are implemented in
+\path{firmware/common/cmd.c}.  The rest are application-specific and are implemented in
+\path{firmware/app/localcmd.c}.
+
+\subsubsection{Error Codes} \label{sssec:FWAppErrCodes}
+The application will keep track of the most recent error that occurred and turn on the red LED when
+it does.  The error is stored as a hexadecimal value and is retrievable with the ``er'' command.
+If a numerical argument is given to the ``er'' command and that argument is non-zero, then the error
+code will be cleared after the command executes.  Clearing the error code will prevent it from being
+reported with future calls unless the error condition goes away and returns again later.  The red
+LED will remain lit until the error condition goes away, at which point the LED will turn off.
+
+The ``er'' command will print the error as a two-digit hexadecimal value, such as ``00''.
+
+Here is a list of error codes the application can print.  In order to make a distinction between
+application and \hyperref[tab:FWBootErrors]{bootloader error codes}, application errors will start
+at 0x80.  The exception is the code 0x00, which indicates no error.
 
 \begin{center}
-    \begin{tabular}{l|l|l|p{0.6\textwidth}}
-        Command & Name & Syntax & Description \\
+    \begin{tabular}{c|l|p{0.6\textwidth}}
+        Code & Name & Description \\
         \hline
-        crc & App CRC & crc & Calculate the 16-bit for the application and print is as a four-digit
-        hexadecimal number. \\
-        h & Help & h & Print of list of these commands with short help strings. \\
-        v & Version & v & Print firmware version information. \\
+        00 & OK & No error was recorded since startup or since the last error was cleared. \\
+        80 & Over-temp & The thermistor temperature was higher than the stored temperature limit (use
+        the ``ot'' command to get and set this). The lamp will be shut down immediately and the fan
+        will continue to run as normal.\\
+        81 & Thermistor Short & The thermistor input is shorted and so the application cannot determine
+        the actual temperature it is controlling.  This is sensed by the ADC reading being near
+        positive full-scale.  If the lamp was on, it will be shut down immediately and the fan will
+        run at 50\% duty cycle for one minute and then shut off. \\
+        82 & Thermistor Open & The thermistor input is open, which could mean that no thermistor is
+        connected.  This means that the application cannot read the correct temperature.  This is
+        sensed by the ADC reading being near negative full-scale. If the lamp was on, it will be
+        shut down immediately and the fan will run at 50\% duty cycle for one minute and then shut 
+        off. \\
     \end{tabular}
 \end{center}
 
-The first three commands are common to the bootloader and app and so are implemented in
-\path{firmware/common/cmd.c}.  The rest are bootloader-specific and are implemented in
-\path{firmware/bootloader/localcmd.c}.
+These errors will turn the lamp off if it is on when the error occurs.  The lamp cannot be turned
+back on until the error condition clears.  The lamp is not turned back on automatically.
 
-\subsubsection{Error Codes} \label{sssec:FWBootStatusCodes}
+\subsubsection{Control Loop} \label{sssec:FWAppCLoop}
+A control loop runs once every 2 seconds (0.5Hz) while the fan is on.  The input to the control loop
+is the temperature read from the thermistor and the output is a duty cycle value used to control the
+fan PWM.  The closer the actual temperature is to the target temperature (use the ``tt'' to set and
+get this), the more slowly the fan will spin.  Fans react slowly to changes in speed since they take
+time to accelerate; this is why the control loop runs so slowly.
+
+A basic control loop algorithm is implemented in \path{firmware/common/pidloop.c} and
+\path{pidloop.h}.  The \hyperref[sssec:FWAppStateMachine]{application state machine} controls when
+it runs.
+
+
+\subsubsection{State Machine} \label{sssec:FWAppStateMachine}
+The main control function of the application firmware is implemented as a state machine, in which
+each state represents a different stage of control.  The application moves between states in
+reaction to external inputs, error conditions, or after a certain amount of time.  Here are the
+states used.
+
+\begin{description}
+  \item[Idle] \hfill \\
+    The application is in this state when the lamp and fan are both off and there are no errors,
+    meaning that nothing needs to be done.
+  \item[Lamp Start] \hfill \\
+    This state is entered when the lamp is first turned on.  The runs the fan at 50\% duty cycle for
+The state machine is implemented in \path{firmware/app/control.c} and \path{control.h}2 se
+\end{description}
+
+The state machine is implemented in \path{firmware/app/control.c} and \path{control.h}.
+
+\subsubsection{Fan Control} \label{sssec:FWAppFanControl}
+
+\subsubsection{Input Debounce} \label{sssec:FWAppDebounce}
+
+\subsubsection{EEPROM Storage} \label{sssec:FWAppStorage}
+
 
 \end{document}

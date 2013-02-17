@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright © 2011-2013 Jesse DeGuire
+# Copyright 2011-2013 Jesse DeGuire
 #
 # This file is part of Projector Controller.
 #
@@ -38,7 +38,7 @@ def main(argv = None):
     if argv is None:
         argv = sys.argv
 
-    version = '20130201'      # modification date in yyyymmdd format
+    version = '20130216'      # modification date in yyyymmdd format
 
     connmgr = ConnectionManager()
     comm = SerialComm(connmgr)

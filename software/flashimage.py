@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright © 2011-2013 Jesse DeGuire
+# Copyright 2011-2013 Jesse DeGuire
 #
 # This file is part of Projector Controller.
 #

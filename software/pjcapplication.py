@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright © 2011-2013 Jesse DeGuire
+# Copyright 2011-2013 Jesse DeGuire
 #
 # This file is part of Projector Controller.
 #
@@ -88,6 +88,19 @@ class PJCApplication(PJCInterface):
         """
         return self.execCommand('ft', PJCInterface.RespFloat)
 
+    def setLampOffDelay(self, delay):
+        """Set the time in seconds the firmware will keep the lamp on after being told to turn it
+        off.  This is useful for LCD controllers that turn off the backlight while changing inputs
+        since the firmware can keep the lamp on while during this time.
+        """
+        return self.execCommand('lod ' + str(delay), PJCIntefface.RespFloat)
+
+    def getLampOffDelay(self):
+        """Get the time in seconds the firmware will keep the lamp on after being told to turn it
+        off.
+        """
+        return self.execCommand('lod', PJCIntefface.RespFloat)
+
     def setMinDutyCycle(self, mindc):
         """Set the minimum duty cycle in percent for the PWM controlling the fan speed and return
         the new duty cycle.
@@ -100,7 +113,7 @@ class PJCApplication(PJCInterface):
         return self.execCommand('dcl', PJCInterface.RespFloat)
 
     def getCurrentDutyCycle(self):
-        """Get the current duty cycle in percent.  The high this value, the faster the fan speed.
+        """Get the current duty cycle in percent.  The higher this value, the faster the fan speed.
         """
         return self.execCommand('dc', PJCInterface.RespFloat)
 
