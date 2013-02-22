@@ -420,14 +420,15 @@ the best one.
 The thermistor input is a 2-pin JST PH Series connector, which is 2.0mm pitch and rated for 2A maximum.
 
 The equation for getting the temperature from a thermistor is the Steinhart-Hart equation, which is
-given by Vishay as
 
 \[
 T = \frac{1}{A + B\ln(\frac{R_T}{R_{25}}) + C\ln^2(\frac{R_T}{R_{25}}) + D\ln^3(\frac{R_T}{R_{25}})}
+- 273.15
 \]
 
 where $R_T/R_{25}$ is the ratio between the thermistor's actual resistance and its reference
-resistance (10k\textOmega{} in this case).  This means that it is necessary to determine the
+resistance (10k\textOmega{} in this case).  The basic equation gives the result in Kelvin, so 273.15
+is subtracted to convert that to Celsius.  To get the temperature, it is necessary to determine the
 thermistor's actual resistance and that can be done using the voltage going into the ADC.
 
 The ADC is a Microchip MCP3301 differential SPI ADC that returns data in 13-bit two's complement
@@ -797,7 +798,7 @@ The MCP3301 is a signed 13-bit ADC, so the reading must be sign-extended first.
 \begin{align*}
     V_{ADC} &= \frac{2.5 * Counts}{4096} + 2.5 \\
     R &= \frac{5}{V_{ADC}} - 1 \\
-    T &= \frac{1}{A + B\ln(R) + C\ln^2(R) + D\ln^3(R)}
+    T &= \frac{1}{A + B\ln(R) + C\ln^2(R) + D\ln^3(R)} - 273.15
 \end{align*}
 
 where
