@@ -38,7 +38,7 @@ LEDs:			Kingbright (1206SMT)
 			Green:	APT3216CGCK (50mcd, 2.1V, 20mA)
 			Red:	APT3216SURCK (220mcd, 1.95V, 20mA) 
 			Yellow:	APT3216SYCK (150mcd, 2.0V, 20mA)
-20MHz Oscillator:	Fox FOXSDLF/200-20, HC49SDLF Series (SMD 2-lead)
+20MHz Oscillator:	ECS ECS-200-20-3X-EN-TR (SMD 2-lead)
 
 -----
 Passive

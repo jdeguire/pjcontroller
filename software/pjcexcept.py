@@ -68,6 +68,6 @@ class DeviceRestartError(PJCError):
     pass
 
 class SerialPortNotOpenError(PJCError):
-    """ Exception raised if the response to a command cannot be parsed properly.
+    """ Exception raised if the command cannot be sent because the serial port is not open.
     """
     pass
