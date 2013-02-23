@@ -102,7 +102,7 @@ All source files used to create the board, software, and firmwares are available
 on GitHub at \url{https://github.com/jdeguire/pjcontroller}.  The repository also contains
 datasheets for the hardware components and other reference material.  This document will often
 reference paths within the repository.  For example, the path \path{firmware/common/uart.c} should
-be read as ``\path{[location to which repository was cloned]/firmware/common/uart.c}''.
+be read as ``\path{[\emph{location/to/which/repository/was/cloned}]/firmware/common/uart.c}''.
 
 The firmware and software, the sources of which are located in the \path{firmware/} and
 \path{software/} directories in the aforementioned repository, are made available under the GNU
@@ -216,7 +216,8 @@ microcontroller's logic-level UART pins on the other, acting as a translator bet
 protocols.  The chip presents itself to the connected USB host as a virutal COM port to
 allow one to communicate with the board using a terminal program such as TeraTerm or HyperTerminal.
 Newer operating systems should have drivers for the device pre-installed; however, drivers are also
-available from \url{http://www.ftdichip.com/FTDrivers.htm}.
+available from \url{http://www.ftdichip.com/FTDrivers.htm}.  Windows users may need to download the
+needed drivers from Windows Update.
 
 The circuit used is similar to the one presented in Section 6.3 of the FT232R datasheet.  Because
 the 5V components on the board can be powered over USB (see the \hyperref[sssec:MainPower]{Main
@@ -259,7 +260,8 @@ resistance of 100\textcelsius{}/W, at 40\textcelsius{} ambient\footnote{The insi
   will certainly be warmer then the outside air temperature, with the actual ambient temperature
   depending on where inside the projector the board is placed.  The chosen 40\textcelsius{} value is
   probably on the warmer side of normal, but provides some safety margin.  This is used as the
-  ambient temp throughout this document.} the maximum power dissipated by the device is given by
+  ambient temperature throughout this document.} the maximum power dissipated by the device is given
+by
 
 \begin{align*}
     P_{max} &= \frac{T_{max}-T_{amb}}{R_{th}} \\
@@ -344,7 +346,7 @@ Three of the driver outputs are controlled by the three LED outputs on the micro
 to these outputs and mount them to the projector's chassis so that the firmware's diagnostic
 signaling is visible from outside the projector.  The outputs provide 12V power, so the user will
 need to use an appropriate current-limiting resistor with the external LED.  Alternatively,
-electronics stores sell LEDs packages with the proper resistor built in.  The current-limiting
+electronics stores sell LED packages with the proper resistor built in.  The current-limiting
 resistors for the onboard LEDs also act as pulldowns for these outputs.
 
 The fourth output is used as a lamp enable output and can be used to turn on, for example, an
@@ -401,9 +403,10 @@ the Intel 4-pin fan specification (available in the \path{/hardware/datasheets} 
 repository), the nominal PWM output is 25kHz.  The PWM signal goes through a TI SN74LVC1G07
 non-inverting open-drain buffer since the fan pulls up the signal internally. The buffer has a max
 switching time of 3.5ns, which is far faster then required by the PWM signal.  The Intel fan spec
-recommends a current sink capability of 8mA.  The recommended max for the buffer is 32mA (the
-absolute max is 50mA), so a user could theoretically control 4 fans using splitters assuming they do
-not overload the high-side driver.
+recommends a current sink capability of 8mA, though the maximum current a fan is allowed to source
+is 5mA.  The recommended max for the buffer is 32mA (the absolute max is 50mA), so a user could
+theoretically control 4 fans using splitters assuming each fan sources less than the recommended
+current sink capability of the controlling device.
 
 If the connected fan does not have a PWM input signal (standard PC 3-pin fan), the Projector
 Controller will still provide basic on/off control with the high-side driver.
@@ -439,13 +442,14 @@ voltage divider with two 10k\textOmega{} resistors splits the 5V input in half a
 2.5V is fed into both the $V_{REF}$ and $IN-$ inputs.  If the thermistor is 25\textcelsius{}, it
 will also be at 2.5V and so the ADC reading will be 0.  The ADC reading will be negative if the
 thermistor is colder than 25\textcelsius{} and positive if warmer.  To get the actual voltage going
-into the ADC positive input, convert the ADC reading to voltage (remember to sign-extend the
+into the ADC positive in put, convert the ADC reading to voltage (remember to sign-extend the
 reading) and then add 2.5V to it.
 
 Note that if the thermistor is not connected, the voltage at the ADC should be 0 and so the reading
-should be negative full-scale.  Conversely, if the thermistor input is shorted, then the voltage
-should be around 5V and so the reading should be full-scale.  However, the ADC is not perfect and so
-such conditions may be close to, but not exactly, the full-scale conditions.
+should be negative full-scale (-4096).  Conversely, if the thermistor input is shorted, then the
+voltage should be around 5V and so the reading should be positive full-scale (4095).  However, the
+ADC is not perfect and so such conditions may be close to, but not exactly, the full-scale
+conditions.
 
 The thermistor's actual resistance can now be calculated with
 
@@ -459,10 +463,16 @@ Steinhart-Hart equation, the above equation can be divided by $R_{25}$.  Doing t
 the appropriate values for $V_{in}$ and $R_2$ yields
 
 \begin{align*}
-    \frac{R_T}{R_{25}} &= \frac{\frac{10k * 5}{V_{out}} - 10k}{R_{25}} \\
-    &= \frac{\frac{50k}{V_{out}} - 10k}{10k} \\
-    \frac{R_T}{R_{25}} &= \frac{5}{V_{out}} - 1
+    \frac{R_T}{R_{25}} &= \frac{\frac{10k * 5}{V_{ADC}} - 10k}{R_{25}} \\
+    &= \frac{\frac{50k}{V_{ADC}} - 10k}{10k} \\
+    \frac{R_T}{R_{25}} &= \frac{5}{V_{ADC}} - 1
 \end{align*}
+
+Notice that when the ADC reading is at negative full-scale (-4096 counts), $V_{ADC}$ will be zero
+and so will cause a divide by zero error.  As mentioned above, this happens when the thermistor is
+not connected and is an abnormal condition.  To avoid the divide by zero and other problems, clamp
+the ADC reading input to \textpm 4095.  Firmware or software can look for the negative full-scale
+reading and treat that as a special case.
 
 The cofficients for the Steinhart-Hart equation come from a Microsoft Excel spreadsheet on Vishay's
 website at \url{http://www.vishay.com/resistors-non-linear/curve-computation-list/}.  The
@@ -476,6 +486,9 @@ spreadsheet and are
     C &= 2.605970e-6 \\
     D &= 6.329261e-8
 \end{align*}
+
+These coefficients and the previous equation provide enough information to evaluate the
+Steinhart-Hart equation.
 
 \subsubsection{Projector On Input} \label{sssec:PJOnInput}
 The controller card for the projector's LCD panel also controls the LCD's backlight and will output
@@ -578,7 +591,7 @@ by its voltage input will give the power used.
         FT232R USB\_PWREN Current & 0.5 & Powered only from USB VBUS \\
         12V Feedback Divider & 0.9 & R1 = 10k\textOmega{}, R2 = 3.3k\textOmega{} \\
         TMP36 Supply Current & 0.05 & \\
-        BSP772T Input Current & 0.015 & Current at IN pin while device is on \\
+        BSP762T Input Current & 0.015 & Current at IN pin while device is on \\
         MCP3301 $V_{REF}$ Current &  0.15 & Current at $V_{REF}$ while clocking data \\
         MCP3301 Operating Current & 0.45 & \\
         MCP3301 2.5V Divider & 0.25 & R1 = R2 = 10k\textOmega{} \\
@@ -793,7 +806,10 @@ convenience.
 \end{align*}
 
 \subsubsection{Thermistor Temperature}
-The MCP3301 is a signed 13-bit ADC, so the reading must be sign-extended first.
+The MCP3301 is a signed 13-bit ADC, so the reading must be sign-extended first.  Notice that a
+reading of -4096 will cause a divide by zero error with these formulas.  This indicates a
+disconnected thermistor and so is an abnormal condition.  When calculating temperature with this
+conversion, the input should be clamped to \textpm 4095.
 
 \begin{align*}
     V_{ADC} &= \frac{2.5 * Counts}{4096} + 2.5 \\
@@ -837,7 +853,7 @@ On Ubuntu 12.10, the following packages need to be installed to get everything:
 
 \begin{itemize}
   \item gcc-avr
-  \item gcc-binutils
+  \item binutils-avr
   \item avr-libc
   \item avrdude
   \item scons
@@ -849,7 +865,7 @@ installed as well.
 Windows users can use Atmel Studio, which is a free IDE provided by Atmel which also includes the
 needed toolchain.  The IDE is available on Atmel's website at
 \url{http://www.atmel.com/tools/atmelstudio.aspx?tab=overview}.  Using the IDE itself would require
-one to create projects, one each for the bootloader and application, for the IDE since they are not
+one to create two projects, one each for the bootloader and application, for the IDE since they are not
 provided here.  Another possibility is to install SCons for Windows and Python alongside the IDE and
 build using SCons.  The SCons Windows installer is available on the SCons website at
 \url{http://www.scons.org/download.php}.  SCons should be able to find the toolchain as long as it
@@ -933,14 +949,14 @@ programmers mentioned earlier.  Use the \texttt{lsusb} command to get the correc
 different devices.
 
 \subsection{Fuse and Lock Bits} \label{ssec:FWFuseBits}
-The AVR microcontroller have special locations in flash memory that hold configuration registers for
+The AVR microcontrollers have special locations in flash memory that hold configuration registers for
 the device.  These control hardware configuration options such as the size of bootloader space, the
-clock source, and write-protection features.  The mapping for the fuse and lock registers is given
+clock source, and write-protection features.  The mappings for the fuse and lock registers are given
 in Section 28 of the ATMega's datasheet.  The following table summarizes the fuse bit configuration
 used by the Projector Controller.
 
 \begin{center}
-    \begin{tabular}{l|c|p{0.45\textwidth}}
+    \begin{tabular}{l|c|p{0.5\textwidth}}
         Register & Value & Notes \\
         \hline
         lfuse & 0xF7 & Use external full-swing crystal and longest startup time \\
@@ -1006,8 +1022,8 @@ program data since this is a Data Record.
 The final field is a checksum.  This is the two's complement of the sum of all of the other bytes in
 the record.  To determine the checksum, add up the values of the bytes in the other records, XOR the
 sum with 0xFF, and add 0x01.  The checksum is the lowest byte of that result.  To verify a checksum,
-add up all of the bytes, including the checksum, and check that the result is 0.  If so, then the
-checksum is good.
+add up all of the bytes, including the checksum, and check that the lowest byte of the result is 0.
+If so, then the checksum is good.
 
 Software that wants to update the Projector Controller's application through the bootloader will
 need to be able to parse Intel hex files.  The file \path{/software/flashimge.py} contains code
@@ -1017,7 +1033,7 @@ that parses the hex file and can be used as a reference.
 The bootloader and application directories contain linker scripts \path{pjcbootloader.x} and
 \path{pjcapp.x}.  The linker scripts serve two purposes.
 
-The first purpose is to partition the flash memory betweent the application and bootloader so that
+The first purpose is to partition the flash memory between the application and bootloader so that
 they do not collide.  The ATMega328P has hardware support for a bootloader, allowing one to use fuse
 bits to allocate a portion of the end of flash to a bootloader.  The Projector Controller uses the
 last 4KB of flash for the bootloader and so the linker script is set up so that all bootloader
@@ -1120,7 +1136,8 @@ The UART lines go into the onboard FTDI FT232R, which is a UART-to-USB translato
 the PC as a virtual COM port.  Any software that can talk to serial ports, such as TeraTerm or the
 software used with the Projector Controller, can talk to the device provided the right drivers are
 installed.  Newer operating systems should have drivers for the device pre-installed; however,
-drivers are also available from \url{http://www.ftdichip.com/FTDrivers.htm}.
+drivers are also available from \url{http://www.ftdichip.com/FTDrivers.htm}.  Windows users may need
+to download the needed drivers from Windows Update.
 
 The firmwares talk at 115200 baud using 8 bits per transfer, no parity bit, no flow control, and one
 stop bit (8-N-1).  Carriage returns are used as line endings.
@@ -1304,7 +1321,7 @@ digits) followed by a carriage return.
         Verify that the arguments sent down are correct (see the list above) and they are are
         separated by a space. \\
         02 & Range Error & An argument is out of range and so is not valid.  This can happen, for
-        example, when trying to write page to an offset outside of the page or when trying to
+        example, when trying to write data to an offset outside of the page or when trying to
         program a page that is not in app space. \\
         03 & Mismatch Error & The command executed, but could not complete because an expected value
         was not found.  This can happen when a flash write fails or when a page checksum does not
@@ -1574,8 +1591,8 @@ states used.
     The application is in this state when the lamp and fan are both off and there are no errors,
     meaning that nothing needs to be done.
   \item[Lamp Start] \hfill \\
-    This state is entered when the lamp is first turned on.  The runs the fan at 50\% duty cycle for
-    2 seconds before starting the control loop.  This gives the fan a moment to start up and
+    This state is entered when the lamp is first turned on.  This runs the fan at 50\% duty cycle
+    for 2 seconds before starting the control loop.  This gives the fan a moment to start up and
     provides a good starting point for control.  This turns on the yellow LED.
   \item[Lamp Run] \hfill \\
     The lamp has started up and the control loop is now running.  The control loop runs once every 2
@@ -1616,7 +1633,7 @@ states used.
 The state machine is implemented in \path{firmware/app/control.c} and \path{control.h}.
 
 \subsubsection{Fan Control} \label{sssec:FWAppFanControl}
-The fan is controlled with a 25kHz PWM from pin5 of the microcontroller, which is port PD3 and Timer
+The fan is controlled with a 25kHz PWM from pin 5 of the microcontroller, which is port PD3 and Timer
 2's OC2B output.  Timer 2 is a 8-bit timer with a PWM module attached.  The PWM output is configured
 with a 8:1 prescaler and a period of 100 counts.  This gives a control resolution of 1\%, which
 should be more than adequate for this application.
@@ -1658,7 +1675,7 @@ default is used.
 \end{center}
 
 
-\section{Software} \label{sec:software}
+\section{Software} \label{sec:Software}
 The software is a simple applet that allows the user to monitor information read from the connected
 Projector Controller and to change settings on it.  It also has a section for performing application
 updates using the bootloader.  The software is written in Python and so can be run on Windows,
@@ -1779,7 +1796,7 @@ application do not need to know anything about each other.  They can simply use 
 object to advertise what signals and slots they have and the object will handle everything itself
 without requiring the different parts of the program to directly expose their data.
 
-The user interface and the SerialComm class mentioned \hyperref[ssec:Architecture]{above}
+The user interface and the SerialComm class mentioned \hyperref[ssec:SWArchitecture]{above}
 communicate through signals and slots connected via the ConnectionManager.  The user interface will
 send signals to the SerialComm object telling it to set or get data from the connected board.  The
 SerialComm object will do that and then fire its own signal back to the UI containing the result of

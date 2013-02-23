@@ -24,11 +24,25 @@ Author: Jesse DeGuire
 Contains the MonitorPage class.
 """
 
+import math
+
 from PySide import QtCore
 from PySide.QtCore import *
 from PySide.QtGui import *
 
 from connmanager import ConnectionManager
+
+# constants for the Steinhart-Hart equation for the board's 10k thermistor
+THM_A = 0.0033540164
+THM_B = 0.0002565236
+THM_C = 2.605970e-6
+THM_D = 6.329261e-8
+
+# application error codes
+errorNone = 0                 # no error
+errorOvertemp = 0x80          # thermistor temp over limit
+errorThmShort = 0x81          # thermistor input shorted
+errorThmOpen = 0x82           # thermistor input open (no thermistor connected)
 
 
 class MonitorPage(QDialog):
@@ -95,15 +109,14 @@ class MonitorPage(QDialog):
 
     @QtCore.Slot(tuple)
     def setMonitorData(self, monitordata):
-        self.involtagespin.setValue(monitordata[0][0])
-        self.ambientspin.setValue(monitordata[0][1])
-        self.sensortempspin.setValue(monitordata[0][2])
+        self.involtagespin.setValue(_get12VFromADC(monitordata[0][0]))
+        self.ambientspin.setValue(_getAmbientFromADC(monitordata[0][1]))
+        self.sensortempspin.setValue(_getThermistorTempFromADC(monitordata[0][2]))
         self.dutycyclespin.setValue(monitordata[1])
         
         self.lampstateupdate.emit(monitordata[2] != 0)
 
-        if monitordata[3] != 0:
-            self._print('Device reported error code ' + str(monitordata[3]) + '.')
+        _printErrorFromCode(monitordata[3])
 
     @QtCore.Slot(bool)
     def doDeviceStartAction(self, isApp):
@@ -120,3 +133,45 @@ class MonitorPage(QDialog):
 
     def _print(self, text):
         self.newlogmessage.emit(text)
+
+    def _get12VFromADC(self, adcreading):
+        Vadc = (5.0 * adcreading) / 1024.0
+        return 4.03 * Vadc
+
+    def _getAmbientFromADC(self, adcreading):
+        Vadc = (5.0 * adcreading) / 1024.0
+        return 100 * (Vadc - 0.5)
+
+    def _getThermistorTempFromADC(self, adcreading):
+        # This is a 13-bit signed ADC that that the firmware extends to 16 bits, but it needs to be
+        # extended again since Python integers are infinite-width.
+        if adcreading & 0x8000:
+            adcreading = ((adcreading * -1) & 0xFFFF) * -1
+
+        # clamp input to valid domain (-4096 indicates missing thermistor; firmware handles that)
+        if adcreading > 4095:
+            adcreading = 4095
+        elif adcreading < -4095:
+            adcreading = -4095
+
+        Vadc = (2.5 * adcreading) / 4096 + 2.5
+        R = (5.0 / Vadc) - 1.0
+        lnR = math.log(R)
+
+        T = 1.0 / (THM_A + THM_B*lnR + THM_C*(lnR**2) + THM_D*(lnR**3))
+        T -= 273.15
+
+        return T
+
+    def _printErrorFromCode(self, errcode):
+        if errcode == errorNone:
+            pass
+        elif errcode == errorOvertemp:
+            self._print('Temperature over limit; lamp disabled.')
+        elif errcode == errorThmShort:
+            self._print('Temperature sensor shorted; lamp disabled.')
+        elif errcode == errorThmOpen:
+            self._print('Temperature sensor missing; lamp disabled.')
+        else:
+            self._printf('Received unrecognized error code ' + hex(errcode) + '.')
+
