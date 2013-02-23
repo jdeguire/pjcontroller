@@ -470,9 +470,9 @@ the appropriate values for $V_{in}$ and $R_2$ yields
 
 Notice that when the ADC reading is at negative full-scale (-4096 counts), $V_{ADC}$ will be zero
 and so will cause a divide by zero error.  As mentioned above, this happens when the thermistor is
-not connected and is an abnormal condition.  To avoid the divide by zero and other problems, clamp
-the ADC reading input to \textpm 4095.  Firmware or software can look for the negative full-scale
-reading and treat that as a special case.
+not connected and is an abnormal condition.  To avoid the divide by zero problem, look for the
+negative full-scale reading and treat that as a special case.  One possible solution is to clamp the
+input range to \textpm 4095.
 
 The cofficients for the Steinhart-Hart equation come from a Microsoft Excel spreadsheet on Vishay's
 website at \url{http://www.vishay.com/resistors-non-linear/curve-computation-list/}.  The
@@ -808,8 +808,9 @@ convenience.
 \subsubsection{Thermistor Temperature}
 The MCP3301 is a signed 13-bit ADC, so the reading must be sign-extended first.  Notice that a
 reading of -4096 will cause a divide by zero error with these formulas.  This indicates a
-disconnected thermistor and so is an abnormal condition.  When calculating temperature with this
-conversion, the input should be clamped to \textpm 4095.
+disconnected thermistor and so is an abnormal condition that the software or firmware will need to
+look out for.  One way to handle this is to clamp the input to \textpm 4095 and handle -4096 as a
+special case.
 
 \begin{align*}
     V_{ADC} &= \frac{2.5 * Counts}{4096} + 2.5 \\
