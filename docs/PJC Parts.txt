@@ -29,10 +29,9 @@ Open-drain buffer:	TI SN74LVC1G07DVB (SOT23-5, "DBV" in datasheet)
 Thermistor ADC:		Microchip MCP3301 (SOIC 8-pin)
 Relay/LED LSD:		ON Semiconductor NUD3124DMT1G (SOT23-6, "SC-74" in datasheet) x2
 5V regulator:		ST Microeletronics L78M05C (DPAK)
-Reverse Polarity:	Rohm Semiconductor RSQ045N03 (TSOT-23-6, Thin SOT-23-6)
+Reverse Polarity:	Rohm Semiconductor RSQ04Fa5N03 (TSOT-23-6, Thin SOT-23-6)
 USB Suspend FET:	Diodes Inc. DMP2215L (SOT-23)
-Fan High-side Driver:	Infineon ISP762T (DSO-8/SOIC 8-pin)
-PTC Fuse:		Cooper Bussmann PTS120630V012 (1206 SMT) x5
+Fan High-side Driver:	Infineon BSP762T (DSO-8/SOIC 8-pin)
 Input Optoisolator:	Vishay VOM618A-4T (SOP-4)
 LEDs:			Kingbright (1206SMT)
 			Green:	APT3216CGCK (50mcd, 2.1V, 20mA)
@@ -43,6 +42,7 @@ LEDs:			Kingbright (1206SMT)
 -----
 Passive
 -----
+PTC Fuse:		Cooper Bussmann PTS120630V012 (1206 SMT) x5
 3.3k Resistor:		Stackpole Electronics RMCF1206FT3K30 (1%, 0.25W, 1206 SMT) x3
 10k Resistor:		Stackpole Electronics RMCF1206FT10K0 (1%, 0.25W, 1206 SMT) x8
 20k Resistor:		Stackpole Electronics RMCF1206FT20K0 (1%, 0.25W, 1206 SMT) x1
@@ -62,7 +62,7 @@ Backfeed Diode:		Diodes Inc. S1M-13-F (SMA)
 -----
 Other
 -----
-Reset Button:		TE Connectivity FSM4JH (PTH 4-pin)
+Reset Button:		TE Connectivity FSM4JH / 3-1977120-6 (PTH 4-pin)
 MCU Socket:		TE Connectivity 390261 (DIP-28 300mil)
-5V Selector Switch:	J&S JS102011SAQN (3-pin SMT)
+5V Selector Switch:	C&K JS102011SAQN (3-pin SMT)
 Thermistor:		Vishay NTCALUG02A103G 10k (Ring Terminal, M3 screw)
