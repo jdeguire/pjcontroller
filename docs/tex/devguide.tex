@@ -250,12 +250,12 @@ higher than the continuous current the board is designed for (see the
 \hyperref[ssec:PowerUsage]{Power Usage} and \hyperref[sssec:FanControl]{Fan Control} descriptions).
 
 To help prevent damage from occurring due to hooking up the power supply backwards, a Rohm
-Semiconductor RSQ035N03 N-channel MOSFET is placed across what is normally the current return path
+Semiconductor RSQ045N03 N-channel MOSFET is placed across what is normally the current return path
 and the gate connected through a 3.3k\textOmega{} resistor to the normally-positive side.  When the
 power is connected correctly, the gate is pulled up to 12V and the FET is fully-on.  When the power
 is connected backwards, the gate is pulled low and the MOSFET is turned off.  The MOSFET has a
-steady-state current rating of 3.5A and a peak rating of 14A.  The device also has a max
-on-resistance of 62m\textOmega{}.  With a maximum temperature of 150\textcelsius{} and a thermal
+steady-state current rating of 4.5A and a peak rating of 18A.  The device also has a max
+on-resistance of 38m\textOmega{}.  With a maximum temperature of 150\textcelsius{} and a thermal
 resistance of 100\textcelsius{}/W, at 40\textcelsius{} ambient\footnote{The inside of a projector
   will certainly be warmer then the outside air temperature, with the actual ambient temperature
   depending on where inside the projector the board is placed.  The chosen 40\textcelsius{} value is
@@ -273,11 +273,11 @@ which gives a maximum current of
 
 \begin{align*}
     I &= \sqrt{\frac{P}{R_{th}}} \\
-    &= \sqrt{\frac{1.1}{0.062}} \\
-    I &\approx 4.21A
+    &= \sqrt{\frac{1.1}{0.038}} \\
+    I &\approx 5.38A
 \end{align*}
 
-meaning that the device is limited by the specified limit of 3.5A rather than by heat.
+meaning that the device is limited by the specified limit of 4.5A rather than by heat.
 
 The 5V supply comes from an ST Microelectronics L78M05C linear regulator fed from the 12V supply.
 The device is rated to output currents up to 0.5A and features thermal overload shutdown that will

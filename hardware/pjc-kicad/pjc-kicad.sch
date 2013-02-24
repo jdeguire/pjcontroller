@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Wed 13 Feb 2013 07:00:38 PM EST
+EESchema Schematic File Version 2  date Sat 23 Feb 2013 07:02:45 PM EST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -38,7 +38,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 1 1
 Title "Projector Controller Board"
-Date "13 feb 2013"
+Date "24 feb 2013"
 Rev "A"
 Comp ""
 Comment1 ""
@@ -1189,7 +1189,7 @@ L RSQ035N03 Q2
 U 1 1 50FBC0B2
 P 11090 3730
 F 0 "Q2" V 11350 3720 60  0000 R CNN
-F 1 "RSQ035N03" V 11600 3970 60  0000 R CNN
+F 1 "RSQ045N03" V 11600 3970 60  0000 R CNN
 F 2 "" H 11090 3730 60  0001 C CNN
 F 3 "" H 11090 3730 60  0001 C CNN
 	1    11090 3730
