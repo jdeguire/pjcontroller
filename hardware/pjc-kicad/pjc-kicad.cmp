@@ -1,4 +1,4 @@
-Cmp-Mod V01 Created by CvPcb (2013-feb-21)-testing date = Sun 24 Feb 2013 01:38:56 AM EST
+Cmp-Mod V01 Created by CvPcb (2013-feb-21)-testing date = Sun 24 Feb 2013 01:56:33 AM EST
 
 BeginCmp
 TimeStamp = /50E8F575;
@@ -151,7 +151,7 @@ BeginCmp
 TimeStamp = /50E93F52;
 Reference = CON8;
 ValeurCmp = AVR-ISP-10;
-IdModule  = AVR-ISP-10;
+IdModule  = AVR_ISP_PTH;
 EndCmp
 
 BeginCmp
