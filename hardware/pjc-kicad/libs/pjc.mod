@@ -1,4 +1,4 @@
-PCBNEW-LibModule-V1  Sun 24 Feb 2013 10:36:29 PM EST
+PCBNEW-LibModule-V1  Fri 01 Mar 2013 08:55:06 PM EST
 # encoding utf-8
 Units mm
 $INDEX
@@ -1345,7 +1345,7 @@ Po -4.2291 -3.937
 $EndPAD
 $EndMODULE SSOP28_LP
 $MODULE SWITCH_SPDT_LP
-Po 0 0 0 15 51047CEF 00000000 ~~
+Po 0 0 0 15 51315BF8 00000000 ~~
 Li SWITCH_SPDT_LP
 Cd SPDT SMD Switch with Long Pads
 Kw SPDT Switch
@@ -1391,15 +1391,15 @@ Ne 0 ""
 Po 2.5 3
 $EndPAD
 $PAD
-Sh "" C 0.95 0.95 0 0 0
-Dr 0.95 0 0
+Sh "" C 0.9 0.9 0 0 0
+Dr 0.9 0 0
 At HOLE N 00E0FFFF
 Ne 0 ""
 Po 3.4 0
 $EndPAD
 $PAD
-Sh "" C 0.95 0.95 0 0 0
-Dr 0.95 0 0
+Sh "" C 0.9 0.9 0 0 0
+Dr 0.9 0 0
 At HOLE N 00E0FFFF
 Ne 0 ""
 Po -3.4 0
