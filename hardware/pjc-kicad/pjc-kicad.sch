@@ -1,4 +1,4 @@
-EESchema Schematic File Version 2  date Tue 26 Feb 2013 09:13:41 PM EST
+EESchema Schematic File Version 2  date Sun 03 Mar 2013 10:54:55 PM EST
 LIBS:power
 LIBS:device
 LIBS:transistors
@@ -38,7 +38,7 @@ $Descr A2 23386 16535
 encoding utf-8
 Sheet 1 1
 Title "Projector Controller Board"
-Date "26 feb 2013"
+Date "4 mar 2013"
 Rev "A"
 Comp ""
 Comment1 ""
@@ -150,7 +150,7 @@ L C C13
 U 1 1 50E3B58C
 P 14410 7820
 F 0 "C13" V 14570 7780 50  0000 L CNN
-F 1 "22pF" V 14250 7720 50  0000 L CNN
+F 1 "33pF" V 14250 7720 50  0000 L CNN
 F 2 "" H 14410 7820 60  0001 C CNN
 F 3 "" H 14410 7820 60  0001 C CNN
 	1    14410 7820
@@ -172,7 +172,7 @@ L C C12
 U 1 1 50E3B309
 P 14410 7220
 F 0 "C12" V 14570 7180 50  0000 L CNN
-F 1 "22pF" V 14250 7120 50  0000 L CNN
+F 1 "33pF" V 14250 7120 50  0000 L CNN
 F 2 "" H 14410 7220 60  0001 C CNN
 F 3 "" H 14410 7220 60  0001 C CNN
 	1    14410 7220
