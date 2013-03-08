@@ -1,6 +1,6 @@
-update=Sun 13 Jan 2013 11:24:34 PM EST
+update=Thu 07 Mar 2013 07:26:57 PM EST
 version=1
-last_client=kicad
+last_client=pcbnew
 [cvpcb]
 version=1
 NetIExt=net
@@ -47,18 +47,21 @@ LibName29=contrib
 LibName30=valves
 LibName31=SparkFun
 LibName32=pjc
+[general]
+version=1
 [pcbnew]
 version=1
 LastNetListRead=
-PadDrill=0.75
-PadSizeH=1.25
-PadSizeV=1.25
+UseCmpFile=1
+PadDrill=1.02
+PadSizeH=1.75
+PadSizeV=1.75
 PcbTextSizeV=1
 PcbTextSizeH=1
 PcbTextThickness=0.3
-ModuleTextSizeV=1
-ModuleTextSizeH=1
-ModuleTextSizeThickness=0.15
+ModuleTextSizeV=1.143
+ModuleTextSizeH=1.143
+ModuleTextSizeThickness=0.1524
 SolderMaskClearance=0
 SolderMaskMinWidth=0
 DrawSegmentWidth=0.2
@@ -79,5 +82,3 @@ LibName10=pga_sockets
 LibName11=valves
 LibName12=SparkFun
 LibName13=pjc
-[general]
-version=1
