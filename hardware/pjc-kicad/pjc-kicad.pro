@@ -1,4 +1,4 @@
-update=Thu 07 Mar 2013 07:26:57 PM EST
+update=Fri 08 Mar 2013 07:53:34 PM EST
 version=1
 last_client=pcbnew
 [cvpcb]
@@ -53,9 +53,9 @@ version=1
 version=1
 LastNetListRead=
 UseCmpFile=1
-PadDrill=1.02
-PadSizeH=1.75
-PadSizeV=1.75
+PadDrill=0.9
+PadSizeH=0.9
+PadSizeV=0.9
 PcbTextSizeV=1
 PcbTextSizeH=1
 PcbTextThickness=0.3
